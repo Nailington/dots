@@ -34,6 +34,7 @@
   # X11 & Desktop Environment
   services.xserver.enable = true;
   services.displayManager.sddm.enable = true;
+  services.displayManager.sddm.settings.General.Numlock = "on";
   services.desktopManager.plasma6.enable = true;
 
   services.xserver.xkb = {
@@ -119,6 +120,9 @@
     enable = true;
     useRoutingFeatures = "both";
   };
+
+  # Enable KWallet PAM auto-unlock (works for both KDE and Hyprland via SDDM)
+  security.pam.services.sddm.kwallet.enable = true;
 
   # Enable flakes
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
