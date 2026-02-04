@@ -66,6 +66,8 @@
     extraGroups = [ "networkmanager" "wheel" ];
     packages = with pkgs; [
       kdePackages.kate
+      kdePackages.kwallet
+      kdePackages.kwallet-pam
     ];
   };
 

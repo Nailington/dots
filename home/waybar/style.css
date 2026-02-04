@@ -1,0 +1,145 @@
+* {
+    border: none;
+    border-radius: 0;
+    font-family: "RobotoMono Nerd Font";
+    font-size: 13px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: rgba(26, 27, 38, 0.9);
+    color: #ffffff;
+    transition-property: background-color;
+    transition-duration: .5s;
+}
+
+window#waybar.hidden {
+    opacity: 0.2;
+}
+
+#workspaces button {
+    padding: 0 8px;
+    background-color: transparent;
+    color: #ffffff;
+    border-bottom: 3px solid transparent;
+}
+
+#workspaces button:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#workspaces button.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-bottom: 3px solid #33ccff;
+}
+
+#workspaces button.urgent {
+    background-color: #eb4d4b;
+}
+
+#clock,
+#battery,
+#cpu,
+#memory,
+#temperature,
+#network,
+#pulseaudio,
+#tray,
+#window {
+    padding: 0 10px;
+    margin: 0 2px;
+    color: #ffffff;
+}
+
+#window {
+    font-weight: bold;
+}
+
+#clock {
+    background-color: rgba(33, 204, 255, 0.2);
+    color: #33ccff;
+    font-weight: bold;
+}
+
+#battery {
+    background-color: rgba(0, 255, 153, 0.2);
+    color: #00ff99;
+}
+
+#battery.charging {
+    color: #26A65B;
+}
+
+#battery.warning:not(.charging) {
+    background-color: rgba(255, 153, 0, 0.3);
+    color: #ff9900;
+}
+
+#battery.critical:not(.charging) {
+    background-color: rgba(242, 54, 69, 0.3);
+    color: #f23645;
+    animation-name: blink;
+    animation-duration: 0.5s;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+}
+
+@keyframes blink {
+    to {
+        background-color: #ffffff;
+        color: #000000;
+    }
+}
+
+#cpu {
+    background-color: rgba(102, 153, 255, 0.2);
+    color: #6699ff;
+}
+
+#memory {
+    background-color: rgba(153, 102, 255, 0.2);
+    color: #9966ff;
+}
+
+#temperature {
+    background-color: rgba(255, 102, 102, 0.2);
+    color: #ff6666;
+}
+
+#temperature.critical {
+    background-color: #eb4d4b;
+}
+
+#network {
+    background-color: rgba(51, 204, 255, 0.2);
+    color: #33ccff;
+}
+
+#network.disconnected {
+    background-color: rgba(242, 54, 69, 0.3);
+    color: #f23645;
+}
+
+#pulseaudio {
+    background-color: rgba(255, 204, 102, 0.2);
+    color: #ffcc66;
+}
+
+#pulseaudio.muted {
+    background-color: rgba(144, 148, 175, 0.2);
+    color: #9094af;
+}
+
+#tray {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+#tray > .passive {
+    -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+    background-color: #eb4d4b;
+}

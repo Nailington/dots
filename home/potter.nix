@@ -34,6 +34,9 @@
     flameshot       # Screenshot tool (SUPER_SHIFT+X)
     brightnessctl   # Brightness control (laptop keys)
     playerctl       # Media player control (media keys)
+    networkmanagerapplet  # nm-applet for network management
+    pavucontrol     # PulseAudio/PipeWire volume control GUI
+    blueman         # Bluetooth manager GUI
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -97,10 +100,15 @@
     };
   };
 
-  # Waybar configuration (basic setup, customize as needed)
-  programs.waybar = {
-    enable = true;
-    # Uses default config, you can customize with `settings` and `style` options
+  # Waybar configuration (loaded from separate files)
+  programs.waybar.enable = true;
+  
+  # Symlink waybar config files to ~/.config/waybar
+  xdg.configFile."waybar/config" = {
+    source = ./waybar/config;
+  };
+  xdg.configFile."waybar/style.css" = {
+    source = ./waybar/style.css;
   };
 
   # Rofi configuration
