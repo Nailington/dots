@@ -1,0 +1,65 @@
+{
+  "nodes": {
+    "home-manager": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1770164260,
+        "narHash": "sha256-mQgOAYWlVJyuyXjZN6yxqXWyODvQI5P/UZUCU7IOuYo=",
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "rev": "4fda26500b4539e0a1e3afba9f0e1616bdad4f85",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "home-manager",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1770115704,
+        "narHash": "sha256-KHFT9UWOF2yRPlAnSXQJh6uVcgNcWlFqqiAZ7OVlHNc=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e6eae2ee2110f3d31110d5c222cd395303343b08",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "rofi-themes": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770172600,
+        "narHash": "sha256-gYQ8Ajsf0taIC98e2YhmB1FzyZAa2viVJBPzevAfa/k=",
+        "owner": "Nailington",
+        "repo": "rofi",
+        "rev": "618882be4a501113f3c9828944294561fe9e6ed7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Nailington",
+        "repo": "rofi",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "home-manager": "home-manager",
+        "nixpkgs": "nixpkgs",
+        "rofi-themes": "rofi-themes"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
