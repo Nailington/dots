@@ -22,6 +22,8 @@
     # Browsers & Apps
     google-chrome
     code-cursor
+    github-desktop
+    gh              # GitHub CLI
 
     # Fonts
     nerd-fonts.roboto-mono
