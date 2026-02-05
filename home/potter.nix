@@ -37,6 +37,8 @@
     networkmanagerapplet  # nm-applet for network management
     pavucontrol     # PulseAudio/PipeWire volume control GUI
     blueman         # Bluetooth manager GUI
+    hyprlock        # Hyprland screen locker
+    hypridle        # Idle daemon for auto-lock
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -109,6 +111,16 @@
   };
   xdg.configFile."waybar/style.css" = {
     source = ./waybar/style.css;
+  };
+  
+  # Hyprlock config
+  xdg.configFile."hypr/hyprlock.conf" = {
+    source = ./hyprlock.conf;
+  };
+  
+  # Hypridle config
+  xdg.configFile."hypr/hypridle.conf" = {
+    source = ./hypridle.conf;
   };
 
   # Rofi configuration
