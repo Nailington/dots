@@ -6,7 +6,7 @@
     
     "modules-left": ["hyprland/workspaces", "hyprland/window"],
     "modules-center": ["clock"],
-    "modules-right": ["pulseaudio", "network", "cpu", "memory", "temperature", "battery", "tray"],
+    "modules-right": ["pulseaudio", "pulseaudio#microphone", "network", "cpu", "memory", "temperature", "battery", "tray"],
 
     "hyprland/workspaces": {
         "format": "{name}",
@@ -24,8 +24,8 @@
     },
 
     "clock": {
-        "format": "{:%I:%M %p}",
-        "format-alt": "{:%A, %B %d, %Y (%I:%M %p)}",
+        "format": "󰥔 {:%I:%M %p}",
+        "format-alt": "󰃭 {:%A, %B %d, %Y (%I:%M %p)}",
         "tooltip-format": "<tt><small>{calendar}</small></tt>",
         "calendar": {
             "mode": "year",
@@ -48,20 +48,20 @@
     },
 
     "cpu": {
-        "format": "  {usage}%",
+        "format": "󰍛 {usage}%",
         "tooltip": true,
         "interval": 2
     },
 
     "memory": {
-        "format": "  {}%",
+        "format": "󰘚 {}%",
         "tooltip-format": "Memory: {used:0.1f}G / {total:0.1f}G"
     },
 
     "temperature": {
         "critical-threshold": 80,
         "format": "{icon} {temperatureC}°C",
-        "format-icons": ["", "", ""]
+        "format-icons": ["󱃃", "󰔏", "󱃂"]
     },
 
     "battery": {
@@ -70,36 +70,46 @@
             "critical": 15
         },
         "format": "{icon} {capacity}%",
-        "format-charging": " {capacity}%",
-        "format-plugged": " {capacity}%",
+        "format-charging": "󰂄 {capacity}%",
+        "format-plugged": "󰚥 {capacity}%",
         "format-alt": "{icon} {time}",
-        "format-icons": ["", "", "", "", ""]
+        "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"]
     },
 
     "network": {
-        "format-wifi": "  {essid} ({signalStrength}%)",
-        "format-ethernet": "  {ipaddr}/{cidr}",
+        "format-wifi": "󰤨 {essid} ({signalStrength}%)",
+        "format-ethernet": "󰈀 {ipaddr}/{cidr}",
         "tooltip-format": "{ifname} via {gwaddr}",
-        "format-linked": "  {ifname} (No IP)",
-        "format-disconnected": "⚠  Disconnected",
+        "format-linked": "󰈀 {ifname} (No IP)",
+        "format-disconnected": "󰤭 Disconnected",
         "format-alt": "{ifname}: {ipaddr}/{cidr}",
         "on-click-right": "nm-connection-editor"
     },
 
     "pulseaudio": {
         "format": "{icon} {volume}%",
-        "format-bluetooth": "{icon} {volume}%",
-        "format-bluetooth-muted": " {icon}",
-        "format-muted": " {volume}%",
+        "format-bluetooth": "󰂯 {volume}%",
+        "format-bluetooth-muted": "󰂲 {icon}",
+        "format-muted": "󰝟 {volume}%",
         "format-icons": {
-            "headphone": "",
-            "hands-free": "",
-            "headset": "",
-            "phone": "",
-            "portable": "",
-            "car": "",
-            "default": ["", "", ""]
+            "headphone": "󰋋",
+            "hands-free": "󰋎",
+            "headset": "󰋎",
+            "phone": "󰏲",
+            "portable": "󰏲",
+            "car": "󰄋",
+            "default": ["󰕿", "󰖀", "󰕾"]
         },
         "on-click": "pavucontrol"
+    },
+
+    "pulseaudio#microphone": {
+        "format": "{format_source}",
+        "format-source": "󰍬 {volume}%",
+        "format-source-muted": "󰍭",
+        "on-click": "pavucontrol -t 4",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-",
+        "tooltip-format": "Microphone: {source_volume}%"
     }
 }

@@ -24,6 +24,7 @@
     code-cursor
     github-desktop
     gh              # GitHub CLI
+    geekbench
 
     # Fonts
     nerd-fonts.roboto-mono
@@ -39,6 +40,8 @@
     blueman         # Bluetooth manager GUI
     hyprlock        # Hyprland screen locker
     hypridle        # Idle daemon for auto-lock
+    xev
+    libnotify       # Provides notify-send
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -104,6 +107,39 @@
 
   # Waybar configuration (loaded from separate files)
   programs.waybar.enable = true;
+
+  # Dunst notification daemon
+  services.dunst = {
+    enable = true;
+    settings = {
+      global = {
+        width = 300;
+        height = 300;
+        offset = "30x50";
+        origin = "top-right";
+        transparency = 10;
+        frame_color = "#33ccff";
+        font = "RobotoMono Nerd Font 10";
+        corner_radius = 10;
+      };
+      urgency_low = {
+        background = "#1a1b26";
+        foreground = "#ffffff";
+        timeout = 5;
+      };
+      urgency_normal = {
+        background = "#1a1b26";
+        foreground = "#ffffff";
+        timeout = 10;
+      };
+      urgency_critical = {
+        background = "#f23645";
+        foreground = "#ffffff";
+        frame_color = "#f23645";
+        timeout = 0;
+      };
+    };
+  };
   
   # Symlink waybar config files to ~/.config/waybar
   xdg.configFile."waybar/config" = {
@@ -121,6 +157,11 @@
   # Hypridle config
   xdg.configFile."hypr/hypridle.conf" = {
     source = ./hypridle.conf;
+  };
+  
+  # Flameshot config
+  xdg.configFile."flameshot/flameshot.ini" = {
+    source = ./flameshot.ini;
   };
 
   # Rofi configuration

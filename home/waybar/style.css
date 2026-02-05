@@ -103,12 +103,13 @@ window#waybar.hidden {
 }
 
 #temperature {
-    background-color: rgba(255, 102, 102, 0.2);
-    color: #ff6666;
+    background-color: rgba(102, 204, 153, 0.2);
+    color: #66cc99;
 }
 
 #temperature.critical {
-    background-color: #eb4d4b;
+    background-color: rgba(242, 54, 69, 0.3);
+    color: #f23645;
 }
 
 #network {
@@ -127,8 +128,18 @@ window#waybar.hidden {
 }
 
 #pulseaudio.muted {
-    background-color: rgba(144, 148, 175, 0.2);
-    color: #9094af;
+    background-color: rgba(242, 54, 69, 0.3);
+    color: #f23645;
+}
+
+#pulseaudio.microphone {
+    background-color: rgba(255, 153, 204, 0.2);
+    color: #ff99cc;
+}
+
+#pulseaudio.microphone.source-muted {
+    background-color: rgba(242, 54, 69, 0.3);
+    color: #f23645;
 }
 
 #tray {

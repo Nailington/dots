@@ -68,6 +68,16 @@
       kdePackages.kate
       kdePackages.kwallet
       kdePackages.kwallet-pam
+      # KDE Games
+      kdePackages.kmines
+      kdePackages.kpat
+      kdePackages.ksudoku
+      kdePackages.knetwalk
+      kdePackages.kapman
+      kdePackages.kblocks
+      kdePackages.kbounce
+      kdePackages.kollision
+      kdePackages.kolf
     ];
   };
 
@@ -98,7 +108,7 @@
 
   hardware.nvidia = {
     modesetting.enable = true;
-    powerManagement.enable = false;
+    powerManagement.enable = true;  # Helps with sleep/wake
     powerManagement.finegrained = false;
     open = true;
     nvidiaSettings = true;
@@ -116,6 +126,14 @@
     device = "/swapfile";
     size = 32 * 1024;
   }];
+
+  # Disable hibernation completely
+  systemd.sleep.extraConfig = ''
+    AllowHibernation=no
+    AllowSuspendThenHibernate=no
+    AllowHybridSleep=no
+  '';
+  boot.kernelParams = [ "nohibernate" ];
 
   # Tailscale VPN
   services.tailscale = {
