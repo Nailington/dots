@@ -41,6 +41,7 @@
       
       modules = [
         ./hosts/nixos/configuration.nix
+        ./modules/damx  # DAMX - Acer laptop control
         
         # Apply our overlay to the system
         { nixpkgs.overlays = [ self.overlays.default ]; }

@@ -59,11 +59,25 @@
     pulse.enable = true;
   };
 
+  # Bluetooth (used by both KDE and Blueman)
+  hardware.bluetooth.enable = true;
+  hardware.bluetooth.powerOnBoot = true;
+  services.blueman.enable = true;
+  
+  # Use a different MAC address than Windows to avoid pairing conflicts when dual-booting
+  hardware.bluetooth.settings = {
+    General = {
+      Privacy = "device";
+      JustWorksRepairing = "always";
+      FastConnectable = true;
+    };
+  };
+
   # User account
   users.users.potter = {
     isNormalUser = true;
     description = "Potter";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" ];
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kwallet
@@ -88,6 +102,21 @@
   # Firefox
   programs.firefox.enable = true;
 
+  # Steam
+  programs.steam = {
+    enable = true;
+    remotePlay.openFirewall = true;
+    dedicatedServer.openFirewall = true;
+  };
+
+  # CoolerControl - cooling device control
+  programs.coolercontrol = {
+    enable = true;
+  };
+
+  # DAMX - Div Acer Manager Max (NitroSense for Linux)
+  programs.damx.enable = true;
+
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
@@ -98,6 +127,8 @@
     wget
     curl
     nh
+    lm_sensors    # Hardware sensor monitoring
+    nbfc-linux    # Notebook fan control
   ];
 
   # Graphics
