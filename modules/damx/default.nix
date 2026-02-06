@@ -33,7 +33,7 @@ in {
     boot.kernelModules = [ "linuwu_sense" ];
     
     # Blacklist conflicting acer_wmi module
-    boot.blacklistedKernelModules = [ "acer_wmi" ];
+#    boot.blacklistedKernelModules = [ "acer_wmi" ];
     
     # Create linuwu_sense group
     users.groups.linuwu_sense = { };
@@ -49,6 +49,7 @@ in {
       description = "DAMX Daemon for Acer laptop control";
       wantedBy = [ "multi-user.target" ];
       after = [ "systemd-modules-load.service" ];
+      path = [ pkgs.kmod pkgs.sudo pkgs.coreutils pkgs.util-linux ];
       
       serviceConfig = {
         Type = "simple";

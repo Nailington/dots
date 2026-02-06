@@ -1,7 +1,7 @@
 { stdenv
 , lib
-, autoPatchelfHook
-, makeWrapper
+, buildFHSEnv
+, writeShellScript
 , fontconfig
 , freetype
 , xorg
@@ -9,71 +9,94 @@
 , icu
 , openssl
 , zlib
-, glibc
+, krb5
+, libunwind
 }:
 
-stdenv.mkDerivation rec {
-  pname = "damx-gui";
-  version = "0.9.1";
+let
+  # The actual DAMX GUI files
+  damxFiles = stdenv.mkDerivation {
+    pname = "damx-gui-files";
+    version = "0.9.1";
+    
+    src = ../../DAMX-0.9.1/DAMX-GUI;
+    
+    dontBuild = true;
+    dontConfigure = true;
+    dontPatchELF = true;
+    dontStrip = true;
+    
+    installPhase = ''
+      mkdir -p $out
+      cp -r * $out/
+      chmod +x $out/DivAcerManagerMax
+    '';
+  };
 
-  # Pre-compiled .NET Avalonia binary from the release
-  src = ../../DAMX-0.9.1/DAMX-GUI;
-
-  nativeBuildInputs = [ 
-    autoPatchelfHook 
-    makeWrapper 
+in buildFHSEnv {
+  name = "damx";
+  
+  targetPkgs = pkgs: [
+    pkgs.stdenv.cc.cc.lib
+    pkgs.fontconfig
+    pkgs.freetype
+    # X11 libraries
+    pkgs.xorg.libX11
+    pkgs.xorg.libXcursor
+    pkgs.xorg.libXi
+    pkgs.xorg.libXrandr
+    pkgs.xorg.libXext
+    pkgs.xorg.libXrender
+    pkgs.xorg.libXfixes
+    pkgs.xorg.libICE
+    pkgs.xorg.libSM
+    pkgs.xorg.libXtst
+    pkgs.xorg.libXcomposite
+    pkgs.xorg.libXdamage
+    pkgs.xorg.libxcb
+    # Graphics
+    pkgs.libGL
+    pkgs.mesa
+    # .NET / System
+    pkgs.icu
+    pkgs.openssl
+    pkgs.zlib
+    pkgs.krb5
+    pkgs.libunwind
+    # GTK / UI
+    pkgs.glib
+    pkgs.gtk3
+    pkgs.pango
+    pkgs.cairo
+    pkgs.gdk-pixbuf
+    pkgs.atk
+    pkgs.harfbuzz
+    pkgs.libdrm
+    pkgs.expat
   ];
   
-  buildInputs = [
-    stdenv.cc.cc.lib  # libstdc++
-    fontconfig
-    freetype
-    xorg.libX11
-    xorg.libXcursor
-    xorg.libXi
-    xorg.libXrandr
-    libGL
-    icu
-    openssl
-    zlib
-    glibc
-  ];
-
-  dontBuild = true;
-  dontConfigure = true;
-
-  installPhase = ''
-    runHook preInstall
-    
-    mkdir -p $out/bin
+  runScript = writeShellScript "damx-wrapper" ''
+    exec ${damxFiles}/DivAcerManagerMax "$@"
+  '';
+  
+  extraInstallCommands = ''
     mkdir -p $out/share/applications
     mkdir -p $out/share/icons/hicolor/256x256/apps
     
-    # Install the binary
-    install -D -m755 DivAcerManagerMax $out/lib/damx/DivAcerManagerMax
+    cp ${damxFiles}/icon.png $out/share/icons/hicolor/256x256/apps/damx.png || true
     
-    # Install icons
-    install -D -m644 icon.png $out/share/icons/hicolor/256x256/apps/damx.png
-    
-    # Create wrapper script
-    makeWrapper $out/lib/damx/DivAcerManagerMax $out/bin/damx \
-      --prefix LD_LIBRARY_PATH : "${lib.makeLibraryPath buildInputs}"
-    
-    # Create desktop entry
     cat > $out/share/applications/damx.desktop << EOF
-    [Desktop Entry]
-    Name=DAMX
-    Comment=Div Acer Manager Max - Acer Laptop Control
-    Exec=$out/bin/damx
-    Icon=damx
-    Type=Application
-    Categories=System;Settings;HardwareSettings;
-    Keywords=acer;nitro;predator;fan;cooling;
-    EOF
-    
-    runHook postInstall
+[Desktop Entry]
+Name=DAMX
+Comment=Div Acer Manager Max - Acer Laptop Control
+Exec=$out/bin/damx
+Icon=damx
+Type=Application
+Categories=System;Settings;HardwareSettings;
+Keywords=acer;nitro;predator;fan;cooling;
+EOF
   '';
-
+  
   meta = with lib; {
     description = "DAMX GUI - Acer laptop control application (NitroSense/PredatorSense for Linux)";
     homepage = "https://github.com/PXDiv/Div-Acer-Manager-Max";
