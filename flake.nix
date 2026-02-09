@@ -32,6 +32,7 @@
       rofi-themes-collection = final.callPackage ./pkgs/rofi-themes {
         rofiThemesSrc = rofi-themes;
       };
+      posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
     };
 
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {

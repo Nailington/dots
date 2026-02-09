@@ -44,7 +44,11 @@
 
   # Hyprland
   programs.hyprland.enable = true;
-  environment.sessionVariables.NIXOS_OZONE_WL = "1";
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    LIBVA_DRIVER_NAME = "nvidia";  # Use NVIDIA for VA-API (hardware encoding)
+    NVD_BACKEND = "direct";        # Direct NVDEC/NVENC access
+  };
 
   # Printing
   services.printing.enable = true;
@@ -132,7 +136,12 @@
   ];
 
   # Graphics
-  hardware.graphics.enable = true;
+  hardware.graphics = {
+    enable = true;
+    extraPackages = with pkgs; [
+      nvidia-vaapi-driver  # NVENC via VA-API for OBS/FFmpeg
+    ];
+  };
 
   # NVIDIA Configuration
   services.xserver.videoDrivers = [ "nvidia" ];

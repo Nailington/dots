@@ -25,6 +25,19 @@
     github-desktop
     gh              # GitHub CLI
     geekbench
+    heroic          # Epic/GOG/Amazon Games launcher
+    # OBS with NVENC support
+    (wrapOBS {
+      plugins = with obs-studio-plugins; [
+        obs-vaapi           # Hardware encoding (VA-API)
+        obs-vkcapture       # Vulkan/OpenGL game capture
+        obs-pipewire-audio-capture  # PipeWire audio capture
+      ];
+    })
+
+    # GPU Screen Recorder - lightweight replay buffer
+    gpu-screen-recorder      # CLI tool
+    gpu-screen-recorder-gtk  # GTK GUI
 
     # Fonts
     nerd-fonts.roboto-mono
@@ -176,5 +189,15 @@
   xdg.configFile."rofi" = {
     source = "${pkgs.rofi-themes-collection}/share/rofi";
     recursive = true;
+  };
+
+  # Cursor theme - handles symlinking to ~/.local/share/icons/ automatically
+  home.pointerCursor = {
+    name = "theme_Posys-Cursor-Scalable-Black";
+    package = pkgs.posys-cursor-scalable;
+    size = 24;
+    gtk.enable = true;
+    x11.enable = true;
+    hyprcursor.enable = true;
   };
 }
