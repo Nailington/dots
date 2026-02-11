@@ -25,6 +25,11 @@
     github-desktop
     gh              # GitHub CLI
     geekbench
+
+    # JavaScript/TypeScript development
+    nodejs          # Node.js runtime
+    bun             # Fast JavaScript runtime & bundler
+    
     heroic          # Epic/GOG/Amazon Games launcher
     bluebubbles     # iMessage client
     mcpelauncher-client  # Minecraft Bedrock launcher
@@ -71,6 +76,8 @@
     lxappearance       # GTK theme switcher (classic)
     libsForQt5.qt5ct   # Qt5 configuration tool
     qt6Packages.qt6ct  # Qt6 configuration tool
+    gtk3               # Includes gtk3-demo
+    gtk4               # Includes gtk4-demo
   ];
 
   # Environment variables
@@ -219,7 +226,7 @@
   gtk = {
     enable = true;
     theme = {
-      name = "Breeze";
+      name = "Breeze-Dark";
       package = pkgs.kdePackages.breeze-gtk;
     };
     iconTheme = {
@@ -236,13 +243,17 @@
     };
     gtk4.extraConfig = {
       gtk-application-prefer-dark-theme = true;
+      gtk-font-name = "Roboto 12";
     };
   };
 
-  # GTK monospace font (for terminals, code, etc.)
+  # Force GTK4/libadwaita apps to respect dark theme
   dconf.settings."org/gnome/desktop/interface" = {
+    color-scheme = "prefer-dark";
     monospace-font-name = "RobotoMono Nerd Font 12";
+    font-name = "Roboto 12";
   };
+
 
   # Qt theming - Breeze Dark via qt5ct/qt6ct
   qt = {
