@@ -51,6 +51,7 @@
         {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
+          home-manager.backupFileExtension = "backup";  # Backup conflicting files
           home-manager.users.potter = import ./home/potter.nix;
           home-manager.extraSpecialArgs = { inherit inputs; };
         }

@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }:
+{ config, pkgs, lib, inputs, ... }:
 
 {
   home.username = "potter";
@@ -26,6 +26,9 @@
     gh              # GitHub CLI
     geekbench
     heroic          # Epic/GOG/Amazon Games launcher
+    bluebubbles     # iMessage client
+    mcpelauncher-client  # Minecraft Bedrock launcher
+    mcpelauncher-ui-qt
     # OBS with NVENC support
     (wrapOBS {
       plugins = with obs-studio-plugins; [
@@ -39,8 +42,12 @@
     gpu-screen-recorder      # CLI tool
     gpu-screen-recorder-gtk  # GTK GUI
 
-    # Fonts
-    nerd-fonts.roboto-mono
+    # Fonts - Roboto family
+    roboto                   # Roboto sans-serif
+    nerd-fonts.roboto-mono   # Roboto Mono (monospace)
+    roboto-slab              # Roboto Slab (serif)
+    roboto-serif             # Roboto Serif
+    nerd-fonts.roboto-mono   # Roboto Mono with Nerd Font icons
 
     # Hyprland ecosystem
     waybar          # Status bar (used in hyprland.conf)
@@ -58,11 +65,18 @@
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
+
+    # Theme testing tools
+    nwg-look           # GTK theme switcher (Wayland-native)
+    lxappearance       # GTK theme switcher (classic)
+    libsForQt5.qt5ct   # Qt5 configuration tool
+    qt6Packages.qt6ct  # Qt6 configuration tool
   ];
 
   # Environment variables
   home.sessionVariables = {
     EDITOR = "nano";
+#    QT_QPA_PLATFORMTHEME = lib.mkForce "qt6ct";  # Use qt6ct for Qt theming
   };
 
   # Let Home Manager install and manage itself
@@ -200,4 +214,73 @@
     x11.enable = true;
     hyprcursor.enable = true;
   };
+
+  # GTK theming - Breeze Dark
+  gtk = {
+    enable = true;
+    theme = {
+      name = "Breeze";
+      package = pkgs.kdePackages.breeze-gtk;
+    };
+    iconTheme = {
+      name = "breeze-dark";
+      package = pkgs.kdePackages.breeze-icons;
+    };
+    font = {
+      name = "Roboto";
+      size = 12;
+    };
+    gtk3.extraConfig = {
+      gtk-application-prefer-dark-theme = true;
+      gtk-font-name = "Roboto 12";
+    };
+    gtk4.extraConfig = {
+      gtk-application-prefer-dark-theme = true;
+    };
+  };
+
+  # GTK monospace font (for terminals, code, etc.)
+  dconf.settings."org/gnome/desktop/interface" = {
+    monospace-font-name = "RobotoMono Nerd Font 12";
+  };
+
+  # Qt theming - Breeze Dark via qt5ct/qt6ct
+  qt = {
+    enable = true;
+    platformTheme.name = "qtct";
+  };
+
+  # qt5ct config
+  xdg.configFile."qt5ct/qt5ct.conf".text = ''
+    [Appearance]
+    color_scheme_path=${pkgs.libsForQt5.qt5ct}/share/qt5ct/colors/darker.conf
+    custom_palette=true
+    icon_theme=breeze-dark
+    standard_dialogs=default
+    style=Breeze
+
+    [Fonts]
+    fixed="RobotoMono Nerd Font Propo [GOOG],12,-1,5,50,0,0,0,0,0,Regular"
+    general="Roboto,12,-1,5,50,0,0,0,0,0,Regular"
+
+    [Interface]
+    stylesheets=
+  '';
+
+  # qt6ct config
+  xdg.configFile."qt6ct/qt6ct.conf".text = ''
+    [Appearance]
+    color_scheme_path=${pkgs.qt6Packages.qt6ct}/share/qt6ct/colors/darker.conf
+    custom_palette=true
+    icon_theme=breeze-dark
+    standard_dialogs=default
+    style=Breeze
+
+    [Fonts]
+    fixed="RobotoMono Nerd Font Propo [GOOG],12,-1,5,50,0,0,0,0,0,Regular"
+    general="Roboto,12,-1,5,50,0,0,0,0,0,Regular"
+
+    [Interface]
+    stylesheets=
+  '';
 }
