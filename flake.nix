@@ -14,9 +14,13 @@
       url = "github:Nailington/rofi";
       flake = false;
     };
+
+    nix-index = {
+      url = "github:nix-community/nix-index";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, rofi-themes, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, ... }@inputs:
   let
     system = "x86_64-linux";
     
@@ -27,12 +31,20 @@
     };
   in
   {
+    packages.${system} = {
+      twitch-drops-miner = pkgs.twitch-drops-miner;
+    };
+
     # Custom packages overlay
     overlays.default = final: prev: {
       rofi-themes-collection = final.callPackage ./pkgs/rofi-themes {
         rofiThemesSrc = rofi-themes;
       };
       posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
+      cider = final.callPackage ./pkgs/cider { };
+      twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
+      # nix-index from flake (replaces nixpkgs version)
+      nix-index = nix-index.packages.${system}.default;
     };
 
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {

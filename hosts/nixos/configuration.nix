@@ -5,16 +5,36 @@
     ./hardware-configuration.nix
   ];
 
+  # NTFS "Acer" partition - same permission style as Dolphin (uid/gid, dmask/fmask)
+  # nofail + 10s timeout: boot proceeds if partition missing (e.g. dual-boot, disk not present)
+  # Get UUID with: blkid -s UUID -o value /dev/nvmeXn1pN
+#  fileSystems."/run/media/potter/Acer" = {
+#    device = "/dev/disk/by-uuid/122AEF932AEF7261";
+#    fsType = "ntfs-3g";
+#    options = [
+#      "uid=${toString config.users.users.potter.uid}"
+#      "gid=${toString config.users.groups.users.gid}"
+#      "dmask=0022"
+#      "fmask=0133"
+#      "windows_names"
+#      "nofail"
+#      "x-systemd.device-timeout=10s"
+#    ];
+#  };
+
   # Bootloader
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Use latest kernel
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # Use default kernel (nvidia-open doesn't support 6.19 yet)
+  boot.kernelPackages = pkgs.linuxPackages;
 
   # Networking
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
+
+  # SSH server (opens port 22 in firewall automatically)
+  services.openssh.enable = true;
 
   # Timezone & Locale
   time.timeZone = "America/New_York";
@@ -48,6 +68,7 @@
     NIXOS_OZONE_WL = "1";
     LIBVA_DRIVER_NAME = "nvidia";  # Use NVIDIA for VA-API (hardware encoding)
     NVD_BACKEND = "direct";        # Direct NVDEC/NVENC access
+    FUSERMOUNT_PROG = "${pkgs.fuse3}/bin/fusermount3";  # AppImage FUSE mount
   };
 
   # Printing
@@ -62,6 +83,13 @@
     alsa.support32Bit = true;
     pulse.enable = true;
   };
+
+  # Disable DualSense/PS5 controller touchpad acting as mouse
+  services.udev.extraRules = ''
+    # DualSense touchpad - USB and Bluetooth
+    ATTRS{name}=="Sony Interactive Entertainment DualSense Wireless Controller Touchpad", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+    ATTRS{name}=="DualSense Wireless Controller Touchpad", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+  '';
 
   # Bluetooth (used by both KDE and Blueman)
   hardware.bluetooth.enable = true;
@@ -81,7 +109,7 @@
   users.users.potter = {
     isNormalUser = true;
     description = "Potter";
-    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" ];
+    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" ];  # fuse: AppImage / FUSE mounts
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kwallet
@@ -126,6 +154,9 @@
 
   # System packages (minimal - most go in home-manager)
   environment.systemPackages = with pkgs; [
+    acpi            # Battery status, thermal info
+    e2fsprogs       # ext2/ext3/ext4 tools (mkfs, fsck, resize2fs, etc.)
+    fuse3           # fusermount3 for FUSE mounts
     vim
     git
     wget
@@ -179,6 +210,13 @@
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "both";
+  };
+
+  # Mullvad VPN (requires systemd-resolved)
+  services.resolved.enable = true;
+  services.mullvad-vpn = {
+    enable = true;
+    package = pkgs.mullvad-vpn;  # GUI app (default is CLI-only mullvad)
   };
 
   # Enable KWallet PAM auto-unlock (works for both KDE and Hyprland via SDDM)

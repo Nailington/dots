@@ -41,19 +41,19 @@ in buildFHSEnv {
     pkgs.fontconfig
     pkgs.freetype
     # X11 libraries
-    pkgs.xorg.libX11
-    pkgs.xorg.libXcursor
-    pkgs.xorg.libXi
-    pkgs.xorg.libXrandr
-    pkgs.xorg.libXext
-    pkgs.xorg.libXrender
-    pkgs.xorg.libXfixes
-    pkgs.xorg.libICE
-    pkgs.xorg.libSM
-    pkgs.xorg.libXtst
-    pkgs.xorg.libXcomposite
-    pkgs.xorg.libXdamage
-    pkgs.xorg.libxcb
+    pkgs.libx11
+    pkgs.libxcursor
+    pkgs.libxi
+    pkgs.libxrandr
+    pkgs.libxext
+    pkgs.libxrender
+    pkgs.libxfixes
+    pkgs.libice
+    pkgs.libsm
+    pkgs.libxtst
+    pkgs.libxcomposite
+    pkgs.libxdamage
+    pkgs.libxcb
     # Graphics
     pkgs.libGL
     pkgs.mesa

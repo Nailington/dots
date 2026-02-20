@@ -24,14 +24,22 @@
     code-cursor
     github-desktop
     gh              # GitHub CLI
+    nix-index       # Index of which packages provide which files (nix-locate)
     geekbench
 
     # JavaScript/TypeScript development
     nodejs          # Node.js runtime
     bun             # Fast JavaScript runtime & bundler
-    
+    pnpm
+
     heroic          # Epic/GOG/Amazon Games launcher
+    protontricks    # Run Winetricks commands for Proton/Steam games
+    twitch-drops-miner  # Auto-farm Twitch drops (AppImage from dev-build)
     bluebubbles     # iMessage client
+    cider           # Apple Music client
+    mullvad-vpn     # Mullvad VPN GUI
+    mpv             # Video player
+    qbittorrent     # BitTorrent client
     mcpelauncher-client  # Minecraft Bedrock launcher
     mcpelauncher-ui-qt
     # OBS with NVENC support
@@ -67,6 +75,7 @@
     hypridle        # Idle daemon for auto-lock
     xev
     libnotify       # Provides notify-send
+    dunst           # Notification daemon (installed but not running)
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -142,9 +151,9 @@
   # Waybar configuration (loaded from separate files)
   programs.waybar.enable = true;
 
-  # Dunst notification daemon
+  # Dunst notification daemon (disabled while testing mako)
   services.dunst = {
-    enable = true;
+    enable = false;
     settings = {
       global = {
         width = 300;
@@ -174,7 +183,40 @@
       };
     };
   };
-  
+
+  # Mako notification daemon
+  services.mako = {
+    enable = true;
+    settings = {
+      font = "RobotoMono Nerd Font 10";
+      background-color = "#1a1b26";
+      text-color = "#ffffff";
+      border-color = "#33ccff";
+      border-radius = 10;
+      border-size = 2;
+      width = 300;
+      height = 300;
+      margin = "10";
+      padding = "15";
+      default-timeout = 5000;
+      layer = "overlay";
+      anchor = "top-right";
+      max-icon-size = 32;
+      #group-by = "none";
+
+      "urgency=low" = {
+        border-color = "#33ccff";
+        default-timeout = 5000;
+      };
+
+      "urgency=critical" = {
+        background-color = "#f23645";
+        border-color = "#f23645";
+        default-timeout = 0;
+      };
+    };
+  };
+
   # Symlink waybar config files to ~/.config/waybar
   xdg.configFile."waybar/config" = {
     source = ./waybar/config;
@@ -295,3 +337,4 @@
     stylesheets=
   '';
 }
+
