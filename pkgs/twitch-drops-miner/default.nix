@@ -65,10 +65,19 @@ appimageTools.wrapAppImage {
   extraPkgs = pkgs: with pkgs; [ tk tcl libffi ];
 
   extraInstallCommands = ''
-    if [ -d $out/share/applications ]; then
-      for f in $out/share/applications/*.desktop; do
-        [ -f "$f" ] && substituteInPlace "$f" --replace 'Exec=AppRun' 'Exec=twitch-drops-miner' || true
-      done
+    mkdir -p $out/share/applications
+    cat > $out/share/applications/twitch-drops-miner.desktop << 'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Twitch Drops Miner
+Comment=Automatically farm Twitch drops without actively watching streams
+Exec=twitch-drops-miner
+Icon=twitch-drops-miner
+Categories=Network;Video;
+DESKTOP
+    if [ -d ${extracted}/usr/share/icons ]; then
+      mkdir -p $out/share/icons
+      cp -r ${extracted}/usr/share/icons/* $out/share/icons/ 2>/dev/null || true
     fi
   '';
 

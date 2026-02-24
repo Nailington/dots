@@ -33,6 +33,7 @@
     pnpm
 
     heroic          # Epic/GOG/Amazon Games launcher
+    prismlauncher  # Minecraft launcher (PolyMC fork)
     protontricks    # Run Winetricks commands for Proton/Steam games
     twitch-drops-miner  # Auto-farm Twitch drops (AppImage from dev-build)
     bluebubbles     # iMessage client
