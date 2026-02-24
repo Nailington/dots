@@ -1,6 +1,7 @@
 { stdenv
 , lib
 , buildFHSEnv
+, fetchurl
 , writeShellScript
 , fontconfig
 , freetype
@@ -14,21 +15,25 @@
 }:
 
 let
-  # The actual DAMX GUI files
+  version = "0.9.1";
+
   damxFiles = stdenv.mkDerivation {
     pname = "damx-gui-files";
-    version = "0.9.1";
-    
-    src = ../../DAMX-0.9.1/DAMX-GUI;
-    
+    inherit version;
+
+    src = fetchurl {
+      url = "https://github.com/PXDiv/Div-Acer-Manager-Max/releases/download/v${version}/DAMX-${version}.tar.xz";
+      hash = "sha256-2amtWkZh+ASPmN6p6alWo8shnrpy7AdhRGlAdc7WlIQ=";
+    };
+
     dontBuild = true;
     dontConfigure = true;
     dontPatchELF = true;
     dontStrip = true;
-    
+
     installPhase = ''
       mkdir -p $out
-      cp -r * $out/
+      cp -r DAMX-GUI/* $out/
       chmod +x $out/DivAcerManagerMax
     '';
   };

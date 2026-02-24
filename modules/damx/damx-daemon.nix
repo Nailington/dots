@@ -1,16 +1,18 @@
-{ stdenv, lib, autoPatchelfHook, zlib, glibc }:
+{ stdenv, lib, autoPatchelfHook, fetchurl, zlib, glibc }:
 
 stdenv.mkDerivation rec {
   pname = "damx-daemon";
-  version = "0.4.6";
+  version = "0.9.1";
 
-  # Pre-compiled PyInstaller binary from the release
-  src = ../../DAMX-0.9.1/DAMX-Daemon;
+  src = fetchurl {
+    url = "https://github.com/PXDiv/Div-Acer-Manager-Max/releases/download/v${version}/DAMX-${version}.tar.xz";
+    hash = "sha256-2amtWkZh+ASPmN6p6alWo8shnrpy7AdhRGlAdc7WlIQ=";
+  };
 
   nativeBuildInputs = [ autoPatchelfHook ];
-  
+
   buildInputs = [
-    stdenv.cc.cc.lib  # libstdc++
+    stdenv.cc.cc.lib
     zlib
     glibc
   ];
@@ -20,7 +22,7 @@ stdenv.mkDerivation rec {
 
   installPhase = ''
     runHook preInstall
-    install -D -m755 DAMX-Daemon $out/bin/DAMX-Daemon
+    install -D -m755 DAMX-Daemon/DAMX-Daemon $out/bin/DAMX-Daemon
     runHook postInstall
   '';
 

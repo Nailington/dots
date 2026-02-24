@@ -1,11 +1,14 @@
-{ stdenv, lib, kernel, kmod }:
+{ stdenv, lib, fetchurl, kernel, kmod }:
 
 stdenv.mkDerivation rec {
   pname = "linuwu-sense";
   version = "25.701";
+  damxVersion = "0.9.1";
 
-  # Source from the extracted release
-  src = ../../DAMX-0.9.1/Linuwu-Sense;
+  src = fetchurl {
+    url = "https://github.com/PXDiv/Div-Acer-Manager-Max/releases/download/v${damxVersion}/DAMX-${damxVersion}.tar.xz";
+    hash = "sha256-2amtWkZh+ASPmN6p6alWo8shnrpy7AdhRGlAdc7WlIQ=";
+  };
 
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
@@ -16,13 +19,14 @@ stdenv.mkDerivation rec {
 
   buildPhase = ''
     runHook preBuild
-    make $makeFlags
+    make -C Linuwu-Sense $makeFlags
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
-    install -D src/linuwu_sense.ko $out/lib/modules/${kernel.modDirVersion}/extra/linuwu_sense.ko
+    install -D Linuwu-Sense/src/linuwu_sense.ko \
+      $out/lib/modules/${kernel.modDirVersion}/extra/linuwu_sense.ko
     runHook postInstall
   '';
 
