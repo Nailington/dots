@@ -213,11 +213,11 @@
   }];
 
   # Disable hibernation completely
-  systemd.sleep.extraConfig = ''
-    AllowHibernation=no
-    AllowSuspendThenHibernate=no
-    AllowHybridSleep=no
-  '';
+  systemd.sleep.settings.Sleep = {
+    AllowHibernation = false;
+    AllowSuspendThenHibernate = false;
+    AllowHybridSleep = false;
+  };
   boot.kernelParams = [ "nohibernate" ];
 
   # Tailscale VPN
