@@ -10,8 +10,11 @@
     # Discord with mods
     (discord.override {
       withOpenASAR = true;
-      withVencord = true;
+#      withVencord = true;
+      withEquicord = true;
     })
+
+
 
     # Terminal & System
     fastfetch
@@ -32,6 +35,7 @@
     bun             # Fast JavaScript runtime & bundler
     pnpm
 
+    discover-overlay  # Discord voice/friends overlay for Linux
     heroic          # Epic/GOG/Amazon Games launcher
     prismlauncher  # Minecraft launcher (PolyMC fork)
     protontricks    # Run Winetricks commands for Proton/Steam games
@@ -62,6 +66,8 @@
     roboto-slab              # Roboto Slab (serif)
     roboto-serif             # Roboto Serif
     nerd-fonts.roboto-mono   # Roboto Mono with Nerd Font icons
+    seguiemj                 # Segoe UI Emoji
+
 
     # Hyprland ecosystem
     waybar          # Status bar (used in hyprland.conf)

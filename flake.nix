@@ -41,6 +41,7 @@
         rofiThemesSrc = rofi-themes;
       };
       posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
+      seguiemj = final.callPackage ./pkgs/seguiemj { };
       cider = final.callPackage ./pkgs/cider { };
       twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
       # nix-index from flake (replaces nixpkgs version)

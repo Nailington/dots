@@ -28,6 +28,17 @@
 
   # Use default kernel (nvidia-open doesn't support 6.19 yet)
   boot.kernelPackages = pkgs.linuxPackages;
+  boot.supportedFilesystems = [ "ntfs" ];
+
+  # Prefer ntfs-3g (fuse) over ntfs3 (kernel) - ntfs3 rejects dirty volumes by default
+  environment.etc."udisks2/mount_options.conf".text = ''
+    [defaults]
+    ntfs_defaults=uid=$UID,gid=$GID,windows_names
+    ntfs_allow=uid=$UID,gid=$GID,umask,dmask,fmask,locale,norecover,ignore_case,windows_names,compression,nocompression,big_writes
+    ntfs:ntfs3_defaults=uid=$UID,gid=$GID
+    ntfs:ntfs3_allow=uid=$UID,gid=$GID,umask,dmask,fmask,iocharset,discard,nodiscard,sparse,nosparse,hidden,nohidden,sys_immutable,nosys_immutable,showmeta,noshowmeta,prealloc,noprealloc
+    ntfs_drivers=ntfs,ntfs3
+  '';
 
   # Networking
   networking.hostName = "nixos";
@@ -140,6 +151,9 @@
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
   };
+
+  # Feral GameMode - CPU/GPU optimisation daemon for games
+  programs.gamemode.enable = true;
 
   # CoolerControl - cooling device control
   programs.coolercontrol = {
