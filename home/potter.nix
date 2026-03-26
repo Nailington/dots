@@ -17,6 +17,13 @@
 
 
     # Terminal & System
+    nix-du
+    unrar
+    altserver-linux
+    althea
+    singularcard
+    libimobiledevice  # idevicepair, ideviceinfo etc. for iOS device management
+    usbmuxd           # USB multiplexer daemon for iOS devices
     fastfetch
     btop
     lshw
@@ -36,7 +43,9 @@
     pnpm
 
     discover-overlay  # Discord voice/friends overlay for Linux
-    heroic          # Epic/GOG/Amazon Games launcher
+    (heroic.override {
+      extraPkgs = pkgs': with pkgs'; [ gamemode ];
+    })
     prismlauncher  # Minecraft launcher (PolyMC fork)
     protontricks    # Run Winetricks commands for Proton/Steam games
     twitch-drops-miner  # Auto-farm Twitch drops (AppImage from dev-build)
@@ -70,6 +79,7 @@
 
 
     # Hyprland ecosystem
+    hyprpicker      # Color picker for Wayland/Hyprland
     waybar          # Status bar (used in hyprland.conf)
     rofi            # App launcher (native Wayland support)
     flameshot       # Screenshot tool (SUPER_SHIFT+X)
@@ -114,7 +124,7 @@
       theme = "essembeh";
     };
     # Add rofi scripts to PATH
-    initExtra = ''
+    initContent = ''
       # Rofi themes scripts are already in PATH via the package
     '';
   };

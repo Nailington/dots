@@ -18,9 +18,11 @@
     nix-index = {
       url = "github:nix-community/nix-index";
     };
+
+    nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
   };
 
-  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, ... }@inputs:
   let
     system = "x86_64-linux";
     
@@ -42,6 +44,8 @@
       };
       posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
       seguiemj = final.callPackage ./pkgs/seguiemj { };
+      althea = final.callPackage ./pkgs/althea { };
+      singularcard = final.callPackage ./pkgs/singularcard { };
       cider = final.callPackage ./pkgs/cider { };
       twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
       # nix-index from flake (replaces nixpkgs version)
@@ -56,6 +60,7 @@
       modules = [
         ./hosts/nixos/configuration.nix
         ./modules/damx  # DAMX - Acer laptop control
+        nix-flatpak.nixosModules.nix-flatpak
         
         # Apply our overlay to the system
         { nixpkgs.overlays = [ self.overlays.default ]; }

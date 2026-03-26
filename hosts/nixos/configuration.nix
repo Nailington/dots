@@ -29,6 +29,8 @@
   # Use default kernel (nvidia-open doesn't support 6.19 yet)
   boot.kernelPackages = pkgs.linuxPackages;
   boot.supportedFilesystems = [ "ntfs" ];
+  boot.extraModprobeConfig = "options cfg80211 ieee80211_regdom=US";
+  networking.networkmanager.wifi.powersave = false;
 
   # Prefer ntfs-3g (fuse) over ntfs3 (kernel) - ntfs3 rejects dirty volumes by default
   environment.etc."udisks2/mount_options.conf".text = ''
@@ -46,6 +48,15 @@
 
   # SSH server (opens port 22 in firewall automatically)
   services.openssh.enable = true;
+  services.davfs2.enable = true;
+  services.usbmuxd.enable = true;
+  virtualisation.docker.enable = true;
+  services.flatpak = {
+    enable = true;
+    packages = [
+      "org.vinegarhq.Sober"
+    ];
+  };
 
   # Timezone & Locale
   time.timeZone = "America/New_York";
@@ -120,7 +131,7 @@
   users.users.potter = {
     isNormalUser = true;
     description = "Potter";
-    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" ];  # fuse: AppImage / FUSE mounts
+    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" "gamemode" "docker" ];  # fuse: AppImage / FUSE mounts
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kwallet
@@ -144,16 +155,43 @@
 
   # Firefox
   programs.firefox.enable = true;
+  programs.kdeconnect.enable = true;
 
   # Steam
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
+    extraPackages = with pkgs; [ gamemode ];
   };
 
+#  # Reduce scheduler and memory latency for Proton/Wine games
+#  boot.kernel.sysctl = {
+#    "vm.compaction_proactiveness" = 0;       # Disable proactive memory compaction (causes latency spikes)
+#    "vm.swappiness" = 10;
+#    "vm.min_free_kbytes" = 524288;           # 512MB - trigger background reclaim earlier to avoid direct reclaim stalls
+#    "vm.watermark_boost_factor" = 0;         # Prevent over-aggressive reclaim after a spike
+#    "vm.watermark_scale_factor" = 125;       # Wider watermark gap for smoother background reclaim
+#    "kernel.sched_min_granularity_ns" = 800000;
+#    "kernel.sched_wakeup_granularity_ns" = 500000;
+#  };
+
+#  # Defer THP defrag asynchronously to prevent game thread stalls
+#  systemd.tmpfiles.rules = [
+#    "w /sys/kernel/mm/transparent_hugepage/defrag - - - - defer+madvise"
+#  ];
+
+
   # Feral GameMode - CPU/GPU optimisation daemon for games
-  programs.gamemode.enable = true;
+
+  programs.gamemode = {
+    enable = true;
+    enableRenice = true;
+    settings.general.renice = 10;
+    settings.general.inhibit_screensaver = 1;
+    settings.cpu.park_cores = "no";
+    settings.cpu.pin_cores = "no";
+  };
 
   # CoolerControl - cooling device control
   programs.coolercontrol = {
@@ -167,7 +205,12 @@
   nixpkgs.config.allowUnfree = true;
 
   # System packages (minimal - most go in home-manager)
+
   environment.systemPackages = with pkgs; [
+    pkgs.gamemode.lib  # exposes libgamemode.so to /run/current-system/sw/lib
+    iw              # WiFi configuration tool
+    wavemon         # WiFi signal monitor TUI
+    usbutils        # lsusb and USB debugging tools
     acpi            # Battery status, thermal info
     e2fsprogs       # ext2/ext3/ext4 tools (mkfs, fsck, resize2fs, etc.)
     fuse3           # fusermount3 for FUSE mounts
