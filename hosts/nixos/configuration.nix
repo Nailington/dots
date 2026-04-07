@@ -163,9 +163,12 @@
     remotePlay.openFirewall = true;
     dedicatedServer.openFirewall = true;
     extraPackages = with pkgs; [ gamemode ];
+    protontricks.enable = true; 
   };
 
-#  # Reduce scheduler and memory latency for Proton/Wine games
+  environment.variables.__GL_SHADER_DISK_CACHE_SKIP_CLEANUP = "1";
+
+  # Reduce scheduler and memory latency for Proton/Wine games
 #  boot.kernel.sysctl = {
 #    "vm.compaction_proactiveness" = 0;       # Disable proactive memory compaction (causes latency spikes)
 #    "vm.swappiness" = 10;

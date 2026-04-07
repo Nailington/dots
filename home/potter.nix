@@ -18,6 +18,9 @@
 
     # Terminal & System
     nix-du
+    ncdu
+    furmark  # GPU benchmark and stress test
+    mprime
     unrar
     altserver-linux
     althea
@@ -30,6 +33,8 @@
     kitty
 
     # Browsers & Apps
+    zoom-us
+    slack
     google-chrome
     code-cursor
     github-desktop
@@ -47,7 +52,11 @@
       extraPkgs = pkgs': with pkgs'; [ gamemode ];
     })
     prismlauncher  # Minecraft launcher (PolyMC fork)
-    protontricks    # Run Winetricks commands for Proton/Steam games
+#    protontricks    # Run Winetricks commands for Proton/Steam games    || Disabled in favor of steam flag
+    wineWow64Packages.stagingFull  # Wine with 32-bit and 64-bit support
+    winetricks                # Wine configuration and dependency installer
+    lutris                    # Game launcher for Linux
+    r2modman                  # Thunderstore mod manager
     twitch-drops-miner  # Auto-farm Twitch drops (AppImage from dev-build)
     bluebubbles     # iMessage client
     cider           # Apple Music client

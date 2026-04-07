@@ -18,7 +18,7 @@ let
   # AppImage is shipped inside a zip on the dev-build release
   zip = fetchurl {
     url = "https://github.com/DevilXD/TwitchDropsMiner/releases/download/dev-build/Twitch.Drops.Miner.Linux.AppImage-x86_64.zip";
-    hash = "sha256-Nm0BZxnC38U/Nu1opog2+2/RYCqJg+e+l887MfDez7M=";
+    hash = "sha256-DBglzGBgb/GawQJbUdy9B8WAUKs86owywV2ue9JUkDU=";
   };
 
   # Extract AppImage from zip (zip contains single .AppImage file)
