@@ -20,9 +20,15 @@
     };
 
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
+    
+    rofi-tools.url = "github:szaffarano/rofi-tools";
+
+    # CachyOS-patched kernel (do not override nixpkgs on this input)
+    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
+
   };
 
-  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, rofi-tools, nix-cachyos-kernel, ... }@inputs:
   let
     system = "x86_64-linux";
     
@@ -44,6 +50,7 @@
       };
       posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
       seguiemj = final.callPackage ./pkgs/seguiemj { };
+      hojas-de-plata = final.callPackage ./pkgs/hojas-de-plata { };
       althea = final.callPackage ./pkgs/althea { };
       singularcard = final.callPackage ./pkgs/singularcard { };
       cider = final.callPackage ./pkgs/cider { };
@@ -62,8 +69,8 @@
         ./modules/damx  # DAMX - Acer laptop control
         nix-flatpak.nixosModules.nix-flatpak
         
-        # Apply our overlay to the system
-        { nixpkgs.overlays = [ self.overlays.default ]; }
+        # Our overlay + CachyOS kernel packages (pkgs.cachyosKernels.*)
+        { nixpkgs.overlays = [ self.overlays.default nix-cachyos-kernel.overlays.default ]; }
         
         home-manager.nixosModules.home-manager
         {

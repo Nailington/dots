@@ -31,6 +31,8 @@
     btop
     lshw
     kitty
+    nmap
+    mesa-demos
 
     # Browsers & Apps
     zoom-us
@@ -41,6 +43,11 @@
     gh              # GitHub CLI
     nix-index       # Index of which packages provide which files (nix-locate)
     geekbench
+    equibop
+
+    krita
+    inkscape
+    blender
 
     # JavaScript/TypeScript development
     nodejs          # Node.js runtime
@@ -55,7 +62,10 @@
 #    protontricks    # Run Winetricks commands for Proton/Steam games    || Disabled in favor of steam flag
     wineWow64Packages.stagingFull  # Wine with 32-bit and 64-bit support
     winetricks                # Wine configuration and dependency installer
+    protonup-qt
     lutris                    # Game launcher for Linux
+    gamescope
+    mangohud
     r2modman                  # Thunderstore mod manager
     twitch-drops-miner  # Auto-farm Twitch drops (AppImage from dev-build)
     bluebubbles     # iMessage client
@@ -79,12 +89,14 @@
     gpu-screen-recorder-gtk  # GTK GUI
 
     # Fonts - Roboto family
-    roboto                   # Roboto sans-serif
+#    roboto                   # Roboto sans-serif
     nerd-fonts.roboto-mono   # Roboto Mono (monospace)
-    roboto-slab              # Roboto Slab (serif)
-    roboto-serif             # Roboto Serif
-    nerd-fonts.roboto-mono   # Roboto Mono with Nerd Font icons
+#    roboto-slab              # Roboto Slab (serif)
+#    roboto-serif             # Roboto Serif
+    google-fonts
+    googlesans-code
     seguiemj                 # Segoe UI Emoji
+    hojas-de-plata           # Hojas De Plata (local TTF)
 
 
     # Hyprland ecosystem
@@ -102,6 +114,10 @@
     xev
     libnotify       # Provides notify-send
     dunst           # Notification daemon (installed but not running)
+    wl-clipboard
+    cliphist
+    inputs.rofi-tools.packages.${pkgs.system}.default
+    
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -240,6 +256,8 @@
         border-color = "#f23645";
         default-timeout = 0;
       };
+
+#      "on-notify" = "exec makoctl menu -- rofi -theme $HOME/.config/rofi/launchers/type-5/style-4.rasi -dmenu ";
     };
   };
 

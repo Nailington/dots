@@ -26,8 +26,10 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # Use default kernel (nvidia-open doesn't support 6.19 yet)
-  boot.kernelPackages = pkgs.linuxPackages;
+#  # Use default kernel (nvidia-open doesn't support 6.19 yet)
+#  boot.kernelPackages = pkgs.linuxPackages;
+  # CachyOS kernel (nvidia-open must support this kernel ABI — verify after upgrades)
+  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
   boot.supportedFilesystems = [ "ntfs" ];
   boot.extraModprobeConfig = "options cfg80211 ieee80211_regdom=US";
   networking.networkmanager.wifi.powersave = false;
@@ -91,6 +93,8 @@
     LIBVA_DRIVER_NAME = "nvidia";  # Use NVIDIA for VA-API (hardware encoding)
     NVD_BACKEND = "direct";        # Direct NVDEC/NVENC access
     FUSERMOUNT_PROG = "${pkgs.fuse3}/bin/fusermount3";  # AppImage FUSE mount
+    __GL_SHADER_DISK_CACHE_SKIP_CLEANUP = "1"; # nvidia shader cache moment
+    __VITE_ADDITIONAL_SERVER_ALLOWED_HOSTS = ".hammerpot.dev"; # Allow my domain for Vite 
   };
 
   # Printing
@@ -166,7 +170,7 @@
     protontricks.enable = true; 
   };
 
-  environment.variables.__GL_SHADER_DISK_CACHE_SKIP_CLEANUP = "1";
+#  environment.variables.__GL_SHADER_DISK_CACHE_SKIP_CLEANUP = "1";
 
   # Reduce scheduler and memory latency for Proton/Wine games
 #  boot.kernel.sysctl = {
@@ -266,11 +270,20 @@
   };
   boot.kernelParams = [ "nohibernate" ];
 
+  # Clipboard manager for rofi (user systemd unit + systemPackages); see nixpkgs modules/services/misc/greenclip.nix
+  #services.greenclip.enable = true;
+
   # Tailscale VPN
   services.tailscale = {
     enable = true;
     useRoutingFeatures = "both";
+    # UDP 41641: helps peers connect directly when not only via DERP
+    openFirewall = true;
   };
+
+  # Allow any TCP/UDP port you listen on to be reached from the tailnet.
+  # Without this, NixOS firewall only allows reply traffic; inbound to e.g. 8080 is dropped.
+  networking.firewall.trustedInterfaces = [ config.services.tailscale.interfaceName ];
 
   # Mullvad VPN (requires systemd-resolved)
   services.resolved.enable = true;
@@ -282,8 +295,12 @@
   # Enable KWallet PAM auto-unlock (works for both KDE and Hyprland via SDDM)
   security.pam.services.sddm.kwallet.enable = true;
 
-  # Enable flakes
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # Flakes + nix-cachyos-kernel binary cache (Hydra/Attic; apply before first kernel switch)
+  nix.settings = {
+    experimental-features = [ "nix-command" "flakes" ];
+    extra-substituters = [ "https://attic.xuyh0120.win/lantian" ];
+    extra-trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ];
+  };
 
   # System state version - don't change unless you know what you're doing
   system.stateVersion = "25.11";
