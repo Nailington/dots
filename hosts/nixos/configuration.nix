@@ -50,13 +50,19 @@
 
   # SSH server (opens port 22 in firewall automatically)
   services.openssh.enable = true;
-  services.davfs2.enable = true;
+#  services.davfs2.enable = true;
   services.usbmuxd.enable = true;
-  virtualisation.docker.enable = true;
+  # Docker CLI + daemon config; daemon is not started at boot (see enableOnBoot).
+  # Socket activation may still start dockerd on first `docker` use unless you override docker.socket.
+  virtualisation.docker = {
+    enable = true;
+    enableOnBoot = false;
+  };
   services.flatpak = {
     enable = true;
     packages = [
       "org.vinegarhq.Sober"
+      "dev.khcrysalis.PlumeImpactor"
     ];
   };
 
@@ -115,6 +121,63 @@
     # DualSense touchpad - USB and Bluetooth
     ATTRS{name}=="Sony Interactive Entertainment DualSense Wireless Controller Touchpad", ENV{LIBINPUT_IGNORE_DEVICE}="1"
     ATTRS{name}=="DualSense Wireless Controller Touchpad", ENV{LIBINPUT_IGNORE_DEVICE}="1"
+
+    # BT5.1 mouse: stable symlinks under /dev/ (udev SYMLINK+= adds top-level links → input/event*)
+    SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="BT5.1 Mouse", SYMLINK+="bt51-mouse"
+    SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="BT5.1 Mouse Keyboard", SYMLINK+="bt51-mouse-kbd"
+
+    # Do *not* set LIBINPUT_IGNORE_DEVICE on "BT5.1 Mouse Keyboard" if you want libinput to expose
+    # hwdb remaps (Calc/Mail → forward/back) the way xev and most apps expect. Ignoring that node
+    # only left remaps via evsieve uinput, which often does not match plain xev/core pointer.
+    #
+    # Trade-off: with both BT nodes visible, libinput may merge pointer state (turbo issues); see
+    # ModelBouncingKeys on "BT5.1 Mouse" and upstream Hyprland/wlroots if clients still drop clicks.
+  '';
+
+  # BT5.1 rapid-fire: libinput bounce debouncing treats very fast press→release→press as chatter.
+  # ModelBouncingKeys disables that (see button debouncing docs). Always verify the quirk applies:
+  #   libinput quirks list --verbose /dev/input/eventN   # expect ModelBouncingKeys; fix .quirks on parse errors
+  # https://wayland.freedesktop.org/libinput/doc/latest/button-debouncing.html
+  environment.etc."libinput/local-overrides.quirks".text = ''
+    [BT5.1 Mouse by name]
+    MatchName=BT5.1 Mouse
+    ModelBouncingKeys=1
+
+    [BT5.1 Mouse by id]
+    MatchBus=bluetooth
+    MatchVendor=0x25A7
+    MatchProduct=0xFA6C
+    ModelBouncingKeys=1
+  '';
+
+  # Multi-interface mouse: firmware sends XF86Calculator / XF86Mail on a second HID endpoint
+  # ("* Mouse Keyboard" / consumer). Remap those scancodes to BTN_FORWARD / BTN_BACK so they
+  # act as extra pointer buttons (commonly XI2 buttons 6 and 7 when side buttons are 8 and 9).
+  #
+  # Those events still arrive on the *keyboard-classified* HID node, so X11/Wayland core pointer
+  # and xev ignore them — use the evsieve user service in home-manager (potter.nix) to clone
+  # them onto a small virtual pointer device.
+  # Same idea as https://github.com/Alekamerlin/keyboard-remap-guide — scancode → evdev code;
+  # BTN_* names use the btn_ prefix per systemd hwdb (60-keyboard.hwdb header).
+  #
+  # Discover: sudo evtest → device that reports KEY_CALC / KEY_MAIL → press key → MSC_SCAN value
+  # → lowercase hex without 0x, e.g. printf '%x\n' DECVAL
+  # Apply after rebuild: sudo nixos-rebuild switch — then udevadm trigger. Do NOT run
+  # `systemd-hwdb update` on NixOS: it replaces /etc/udev/hwdb.bin with a plain file and
+  # overrides the Nix-built database; udev then fails to match evdev:* rules (no KEYBOARD_KEY_*).
+  # Check: udevadm info /dev/input/eventN | grep KEYBOARD_KEY
+  #
+  # If button numbers in xev are swapped, exchange btn_forward and btn_back below.
+  # Match: modalias from `cat /sys/class/input/eventN/device/modalias`.
+  # Use the same hex case as the kernel (here 25A7 / FA6C); lowercase VID/PID will not match.
+  services.udev.extraHwdb = let
+    mouseKeyboardHwdbMatch = "input:b0005v25A7pFA6C*";
+    calculatorScancode = "c0192"; # KEY_CALC / XF86Calculator (AL Calculator, MSC_SCAN)
+    mailScancode = "c018a"; # KEY_MAIL / XF86Mail (AL Mail, MSC_SCAN)
+  in ''
+    evdev:${mouseKeyboardHwdbMatch}
+      KEYBOARD_KEY_${calculatorScancode}=btn_forward
+      KEYBOARD_KEY_${mailScancode}=btn_back
   '';
 
   # Bluetooth (used by both KDE and Blueman)
@@ -135,7 +198,7 @@
   users.users.potter = {
     isNormalUser = true;
     description = "Potter";
-    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" "gamemode" "docker" ];  # fuse: AppImage / FUSE mounts
+    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" "gamemode" "docker" "input" ];  # input: evsieve uinput (BT5.1 button bridge)
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kwallet
@@ -159,7 +222,9 @@
 
   # Firefox
   programs.firefox.enable = true;
-  programs.kdeconnect.enable = true;
+
+
+#  programs.kdeconnect.enable = true;
 
   # Steam
   programs.steam = {
@@ -206,7 +271,11 @@
   };
 
   # DAMX - Div Acer Manager Max (NitroSense for Linux)
-  programs.damx.enable = true;
+  programs.damx = {
+    enable = true;
+    # Laptop not in driver DMI table — same as DAMX "Load with nitrov4", but at module load
+    linuwuSenseForce = "nitrov4";
+  };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
@@ -215,6 +284,7 @@
 
   environment.systemPackages = with pkgs; [
     pkgs.gamemode.lib  # exposes libgamemode.so to /run/current-system/sw/lib
+    evtest          # scancode discovery for services.udev.extraHwdb (MSC_SCAN → hex)
     iw              # WiFi configuration tool
     wavemon         # WiFi signal monitor TUI
     usbutils        # lsusb and USB debugging tools
@@ -298,8 +368,9 @@
   # Flakes + nix-cachyos-kernel binary cache (Hydra/Attic; apply before first kernel switch)
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
-    extra-substituters = [ "https://attic.xuyh0120.win/lantian" ];
-    extra-trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ];
+    extra-substituters = [ "https://attic.xuyh0120.win/lantian" "https://hyprland.cachix.org"];
+    extra-trusted-substituters = [ "https://hyprland.cachix.org" ];
+    extra-trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="];
   };
 
   # System state version - don't change unless you know what you're doing

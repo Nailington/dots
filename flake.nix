@@ -18,6 +18,7 @@
     nix-index = {
       url = "github:nix-community/nix-index";
     };
+    flameshot.url = "github:flameshot-org/flameshot";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
     
@@ -28,7 +29,7 @@
 
   };
 
-  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, rofi-tools, nix-cachyos-kernel, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, rofi-tools, nix-cachyos-kernel, flameshot, ... }@inputs:
   let
     system = "x86_64-linux";
     
@@ -57,6 +58,11 @@
       twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
       # nix-index from flake (replaces nixpkgs version)
       nix-index = nix-index.packages.${system}.default;
+
+      # nixpkgs#426717 — koffydrop: doCheck off only for i686, keeps x86_64 openldap cached
+      openldap = prev.openldap.overrideAttrs (_: {
+        doCheck = !prev.stdenv.hostPlatform.isi686;
+      });
     };
 
     nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {

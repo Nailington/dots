@@ -4,9 +4,16 @@ with lib;
 
 let
   cfg = config.programs.damx;
-  
+
   # Kernel module for Linuwu Sense
   linuwuSenseModule = config.boot.kernelPackages.callPackage ./linuwu-sense.nix { };
+
+  # Same names as linuwu_sense module_param() in Linuwu-Sense (underscores).
+  linuwuSenseModprobeByForce = {
+    nitrov4 = "options linuwu_sense nitro_v4=1";
+    predatorv4 = "options linuwu_sense predator_v4=1";
+    enableall = "options linuwu_sense enable_all=1";
+  };
   
   # DAMX Daemon package
   damxDaemon = pkgs.callPackage ./damx-daemon.nix { };
@@ -23,6 +30,20 @@ in {
       default = damxGui;
       description = "The DAMX GUI package to use";
     };
+
+    linuwuSenseForce = mkOption {
+      type = types.nullOr (types.enum [ "nitrov4" "predatorv4" "enableall" ]);
+      default = null;
+      description = ''
+        Force Linuwu-Sense (linuwu_sense) module parameters at load time — the same
+        effect as DAMX "Load with nitrov4 / predatorv4 / enableall", but permanent
+        and applied before the module probes hardware (avoids failed auto-detection
+        and long retry loops).
+
+        Set to nitrov4 if your laptop is not in the driver's DMI table but works
+        with Nitro Sense v4 overrides.
+      '';
+    };
   };
 
   config = mkIf cfg.enable {
@@ -31,6 +52,10 @@ in {
     
     # Load the module at boot
     boot.kernelModules = [ "linuwu_sense" ];
+
+    boot.extraModprobeConfig = mkIf (cfg.linuwuSenseForce != null) (
+      linuwuSenseModprobeByForce.${cfg.linuwuSenseForce}
+    );
     
     # Blacklist conflicting acer_wmi module
 #    boot.blacklistedKernelModules = [ "acer_wmi" ];

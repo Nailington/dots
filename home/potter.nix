@@ -1,5 +1,26 @@
 { config, pkgs, lib, inputs, ... }:
 
+let
+  # hwdb sends BTN_FORWARD/BTN_BACK on the *keyboard* BT HID node; compositors attach core pointer
+  # to the real mouse only — clone those buttons onto a virtual pointer (no grab of main mouse).
+  # Requires NixOS udev symlink bt51-mouse-kbd (under /dev/, see configuration.nix) and user in `input`.
+  # Wait for the device: SYSTEMD_USER_WANTS from udev is unreliable for user units (often "failed"
+  # before session/graphical-target timing); spinning Restart without wait spams failures at login.
+  bt51-pointer-bridge = pkgs.writeShellScriptBin "bt51-pointer-bridge" ''
+    set -eu
+    dev=/dev/bt51-mouse-kbd
+    echo >&2 "bt51-pointer-bridge: waiting for ''${dev} (connect BT mouse or plug dongle)…"
+    while [ ! -e "''${dev}" ] || [ ! -c "''${dev}" ] || [ ! -r "''${dev}" ]; do
+      ${pkgs.coreutils}/bin/sleep 2
+    done
+    echo >&2 "bt51-pointer-bridge: ''${dev} ready, starting evsieve."
+    exec ${pkgs.evsieve}/bin/evsieve \
+      --input "''${dev}" persist=reopen \
+      --map btn:forward btn:forward@out \
+      --map btn:back btn:back@out \
+      --output @out name="BT5.1 extra pointer buttons"
+  '';
+in
 {
   home.username = "potter";
   home.homeDirectory = "/home/potter";
@@ -22,17 +43,24 @@
     furmark  # GPU benchmark and stress test
     mprime
     unrar
-    altserver-linux
-    althea
+    #altserver-linux
+    #althea
     singularcard
     libimobiledevice  # idevicepair, ideviceinfo etc. for iOS device management
     usbmuxd           # USB multiplexer daemon for iOS devices
     fastfetch
-    btop
+
+    (btop.override {
+      rocmSupport = true;
+      cudaSupport = true;
+    })
+
     lshw
+    libinput # CLI: libinput list-devices, libinput debug-events, etc.
     kitty
     nmap
     mesa-demos
+    screen
 
     # Browsers & Apps
     zoom-us
@@ -66,6 +94,7 @@
     lutris                    # Game launcher for Linux
     gamescope
     mangohud
+    goverlay
     r2modman                  # Thunderstore mod manager
     twitch-drops-miner  # Auto-farm Twitch drops (AppImage from dev-build)
     bluebubbles     # iMessage client
@@ -104,6 +133,8 @@
     waybar          # Status bar (used in hyprland.conf)
     rofi            # App launcher (native Wayland support)
     flameshot       # Screenshot tool (SUPER_SHIFT+X)
+    grim
+    slurp
     brightnessctl   # Brightness control (laptop keys)
     playerctl       # Media player control (media keys)
     networkmanagerapplet  # nm-applet for network management
@@ -112,12 +143,15 @@
     hyprlock        # Hyprland screen locker
     hypridle        # Idle daemon for auto-lock
     xev
+    wev
     libnotify       # Provides notify-send
     dunst           # Notification daemon (installed but not running)
     wl-clipboard
     cliphist
     inputs.rofi-tools.packages.${pkgs.system}.default
-    
+    inxi
+    evsieve
+    bt51-pointer-bridge
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -129,6 +163,11 @@
     qt6Packages.qt6ct  # Qt6 configuration tool
     gtk3               # Includes gtk3-demo
     gtk4               # Includes gtk4-demo
+
+    quickemu
+    unityhub
+    blender
+    godot
   ];
 
   # Environment variables
@@ -139,6 +178,22 @@
 
   # Let Home Manager install and manage itself
   programs.home-manager.enable = true;
+
+  # BT5.1: virtual pointer for HID-keyboard-side mouse buttons (see configuration.nix hwdb + udev).
+  # Starts at user login (default.target); script waits until bt51-mouse-kbd exists (no failure spam).
+  systemd.user.services.bt51-pointer-bridge = {
+    Unit = {
+      Description = "BT5.1 mouse: keyboard iface → virtual pointer (BTN_FORWARD/BTN_BACK for xev/games)";
+      Documentation = "https://github.com/KarsMulder/evsieve";
+    };
+    Service = {
+      Type = "simple";
+      ExecStart = "${bt51-pointer-bridge}/bin/bt51-pointer-bridge";
+      Restart = "always";
+      RestartSec = "3s";
+    };
+    Install.WantedBy = [ "default.target" ];
+  };
 
   # Zsh with Oh My Zsh
   programs.zsh = {
@@ -166,6 +221,11 @@
       "crack" = {
         identityFile = "~/.ssh/oracle.key";
         user = "ubuntu";
+      };
+      "24fire" = {
+        hostname = "24fire";
+        identityFile = "~/.ssh/24fire.key";
+        user = "root";
       };
     };
   };
