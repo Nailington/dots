@@ -30,7 +30,8 @@
 #  boot.kernelPackages = pkgs.linuxPackages;
   # CachyOS kernel (nvidia-open must support this kernel ABI — verify after upgrades)
   boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
-  boot.supportedFilesystems = [ "ntfs" ];
+  boot.supportedFilesystems = [ "ntfs" "vfat" ];
+  boot.initrd.supportedFilesystems = [ "vfat" ];
   boot.extraModprobeConfig = "options cfg80211 ieee80211_regdom=US";
   networking.networkmanager.wifi.powersave = false;
 
