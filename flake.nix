@@ -84,13 +84,13 @@
       });
     };
 
-    nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
+    nixosConfigurations.roundabout = nixpkgs.lib.nixosSystem {
       inherit system;
       
       specialArgs = { inherit inputs; };
       
       modules = [
-        ./hosts/nixos/configuration.nix
+        ./hosts/roundabout/configuration.nix
         ./modules/damx  # DAMX - Acer laptop control
         nix-flatpak.nixosModules.nix-flatpak
         rockpload.nixosModules.default
