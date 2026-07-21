@@ -28,7 +28,7 @@
         "format-alt": "󰃭 {:%A, %B %d, %Y (%I:%M %p)}",
         "tooltip-format": "<tt><small>{calendar}</small></tt>",
         "calendar": {
-            "mode": "year",
+            "mode": "month",
             "mode-mon-col": 3,
             "weeks-pos": "right",
             "on-scroll": 1,
@@ -109,8 +109,8 @@
         "format-source": "󰍬 {volume}%",
         "format-source-muted": "󰍭",
         "on-click": "pavucontrol -t 4",
-        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%+",
-        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%-",
+        "on-scroll-up": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 1%+",
+        "on-scroll-down": "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 1%-",
         "tooltip-format": "Microphone: {source_volume}%"
     }
 }

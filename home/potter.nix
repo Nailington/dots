@@ -20,8 +20,32 @@ let
       --map btn:back btn:back@out \
       --output @out name="BT5.1 extra pointer buttons"
   '';
+
+  # Plan C: submaps disable keyboard binds but bindm (Alt+drag) stays registered globally.
+  plan-c-on = pkgs.writeShellScriptBin "plan-c-on" ''
+    set -eu
+    ${pkgs.hyprland}/bin/hyprctl --batch "\
+      dispatch submap Plan C ; \
+      keyword unbind ALT, mouse:272 ; \
+      keyword unbind ALT, mouse:273"
+  '';
+
+  plan-c-off = pkgs.writeShellScriptBin "plan-c-off" ''
+    set -eu
+    ${pkgs.hyprland}/bin/hyprctl --batch "\
+      dispatch submap reset ; \
+      keyword bindm ALT, mouse:272, movewindow ; \
+      keyword bindm ALT, mouse:273, resizewindow"
+  '';
 in
 {
+  imports = [ ../modules/osx-kvm ];
+
+  programs.osx-kvm = {
+    enable = true;
+    resolution = "1920x1080";
+  };
+
   home.username = "potter";
   home.homeDirectory = "/home/potter";
   home.stateVersion = "25.11";
@@ -66,6 +90,7 @@ in
     zoom-us
     slack
     google-chrome
+    # helium
     code-cursor
     github-desktop
     gh              # GitHub CLI
@@ -76,11 +101,14 @@ in
     krita
     inkscape
     blender
+    aseprite
 
     # JavaScript/TypeScript development
     nodejs          # Node.js runtime
     bun             # Fast JavaScript runtime & bundler
     pnpm
+    nil
+    nixd
 
     discover-overlay  # Discord voice/friends overlay for Linux
     (heroic.override {
@@ -105,13 +133,14 @@ in
     mcpelauncher-client  # Minecraft Bedrock launcher
     mcpelauncher-ui-qt
     # OBS with NVENC support
-    (wrapOBS {
-      plugins = with obs-studio-plugins; [
-        obs-vaapi           # Hardware encoding (VA-API)
-        obs-vkcapture       # Vulkan/OpenGL game capture
-        obs-pipewire-audio-capture  # PipeWire audio capture
-      ];
-    })
+    # (wrapOBS {
+    #   plugins = with obs-studio-plugins; [
+    #     obs-vaapi           # Hardware encoding (VA-API)
+    #     obs-vkcapture       # Vulkan/OpenGL game capture
+    #     obs-pipewire-audio-capture  # PipeWire audio capture
+    #   ];
+    # })
+
 
     # GPU Screen Recorder - lightweight replay buffer
     gpu-screen-recorder      # CLI tool
@@ -152,6 +181,8 @@ in
     inxi
     evsieve
     bt51-pointer-bridge
+    plan-c-on
+    plan-c-off
 
     # Rofi themes collection (provides launcher_t5, powermenu_t1, etc.)
     rofi-themes-collection
@@ -165,10 +196,43 @@ in
     gtk4               # Includes gtk4-demo
 
     quickemu
+    quickgui
+    virt-manager
     unityhub
     blender
     godot
+    zip
+    unzip
+
+    ffmpeg-full
+    imagemagickBig
+    sqlite
+    tea
+
+
+    cemu-ti
+    retroarch-full
+    ryubing
+    azahar
+    dolphin-emu
+    cemu
+    
   ];
+
+  programs.obs-studio = {
+    enable = true;
+    package = (
+      pkgs.obs-studio.override {
+        cudaSupport = true;
+      }
+    );
+    plugins = with pkgs.obs-studio-plugins; [
+      wlrobs
+      obs-pipewire-audio-capture
+      obs-gstreamer
+      obs-vkcapture
+    ];
+  };
 
   # Environment variables
   home.sessionVariables = {
@@ -226,6 +290,19 @@ in
         hostname = "24fire";
         identityFile = "~/.ssh/24fire.key";
         user = "root";
+      };
+      "osx-kvm" = {
+        hostname = "nixos";
+        port = 10022;
+        user = "potter";
+      };
+      "geoimac" = {
+        hostname = "192.168.6.36";
+        user = "gsiii";
+      };
+      "potterimac" = {
+        hostname = "192.168.6.36";
+        user = "potter";
       };
     };
   };

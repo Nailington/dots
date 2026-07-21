@@ -32,7 +32,11 @@
   boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
   boot.supportedFilesystems = [ "ntfs" "vfat" ];
   boot.initrd.supportedFilesystems = [ "vfat" ];
-  boot.extraModprobeConfig = "options cfg80211 ieee80211_regdom=US";
+  boot.extraModprobeConfig = ''
+    options cfg80211 ieee80211_regdom=US
+    options kvm_amd nested=1
+    options kvm ignore_msrs=1 report_ignored_msrs=0
+  '';
   networking.networkmanager.wifi.powersave = false;
 
   # Prefer ntfs-3g (fuse) over ntfs3 (kernel) - ntfs3 rejects dirty volumes by default
@@ -48,6 +52,8 @@
   # Networking
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
+  # netcat listen/connect on 45454 (e.g. nc -l 45454)
+  networking.firewall.allowedTCPPorts = [ 45454 ];
 
   # SSH server (opens port 22 in firewall automatically)
   services.openssh.enable = true;
@@ -59,6 +65,8 @@
     enable = true;
     enableOnBoot = false;
   };
+  virtualisation.libvirtd.enable = true;
+
   services.flatpak = {
     enable = true;
     packages = [
@@ -199,7 +207,7 @@
   users.users.potter = {
     isNormalUser = true;
     description = "Potter";
-    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" "gamemode" "docker" "input" ];  # input: evsieve uinput (BT5.1 button bridge)
+    extraGroups = [ "networkmanager" "wheel" "linuwu_sense" "fuse" "gamemode" "docker" "input" "kvm" "libvirtd" ];  # input: evsieve uinput (BT5.1 button bridge)
     packages = with pkgs; [
       kdePackages.kate
       kdePackages.kwallet
@@ -294,6 +302,7 @@
     fuse3           # fusermount3 for FUSE mounts
     vim
     git
+    git-lfs
     wget
     curl
     nh
@@ -304,9 +313,9 @@
   # Graphics
   hardware.graphics = {
     enable = true;
-    extraPackages = with pkgs; [
-      nvidia-vaapi-driver  # NVENC via VA-API for OBS/FFmpeg
-    ];
+    # extraPackages = with pkgs; [
+    #   nvidia-vaapi-driver  # NVENC via VA-API for OBS/FFmpeg
+    # ];
   };
 
   # NVIDIA Configuration
@@ -318,7 +327,8 @@
     powerManagement.finegrained = false;
     open = true;
     nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    # package = config.boot.kernelPackages.nvidiaPackages.stable;
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
   };
 
   hardware.nvidia.prime = {
@@ -340,6 +350,13 @@
     AllowHybridSleep = false;
   };
   boot.kernelParams = [ "nohibernate" ];
+
+  # Lid close: do not suspend (keeps host + QEMU alive during long macOS installs)
+  services.logind.settings.Login = {
+    # HandleLidSwitch = "ignore";
+    # HandleLidSwitchExternalPower = "ignore";
+    # HandleLidSwitchDocked = "ignore";
+  };
 
   # Clipboard manager for rofi (user systemd unit + systemPackages); see nixpkgs modules/services/misc/greenclip.nix
   #services.greenclip.enable = true;

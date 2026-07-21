@@ -18,6 +18,7 @@
     nix-index = {
       url = "github:nix-community/nix-index";
     };
+   
     flameshot.url = "github:flameshot-org/flameshot";
 
     nix-flatpak.url = "github:gmodena/nix-flatpak/?ref=latest";
@@ -27,9 +28,23 @@
     # CachyOS-patched kernel (do not override nixpkgs on this input)
     nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 
+    # renatus777rr/OSX-KVM-updated — scripts + OpenCore + OVMF (devShell flake ignored via flake = false)
+    osx-kvm = {
+      url = "github:renatus777rr/OSX-KVM-updated?submodules=1";
+      flake = false;
+    };
+
+    helium = {
+      url = "github:Nytelife26/nixpkgs/helium/init";
+    };
+
+    rockpload = {
+      url = "github:LEX0RE/rockpload";
+    };
+
   };
 
-  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, rofi-tools, nix-cachyos-kernel, flameshot, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, rofi-themes, nix-index, nix-flatpak, rofi-tools, nix-cachyos-kernel, flameshot, helium, rockpload, ... }@inputs:
   let
     system = "x86_64-linux";
     
@@ -56,8 +71,12 @@
       singularcard = final.callPackage ./pkgs/singularcard { };
       cider = final.callPackage ./pkgs/cider { };
       twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
+      
       # nix-index from flake (replaces nixpkgs version)
       nix-index = nix-index.packages.${system}.default;
+
+      # Interim until nixpkgs PR merges — github:Nytelife26/nixpkgs/helium/init
+      helium = helium.legacyPackages.${system}.helium;
 
       # nixpkgs#426717 — koffydrop: doCheck off only for i686, keeps x86_64 openldap cached
       openldap = prev.openldap.overrideAttrs (_: {
@@ -74,6 +93,10 @@
         ./hosts/nixos/configuration.nix
         ./modules/damx  # DAMX - Acer laptop control
         nix-flatpak.nixosModules.nix-flatpak
+        rockpload.nixosModules.default
+        {
+          services.rockpload.enable = true;
+        }
         
         # Our overlay + CachyOS kernel packages (pkgs.cachyosKernels.*)
         { nixpkgs.overlays = [ self.overlays.default nix-cachyos-kernel.overlays.default ]; }
