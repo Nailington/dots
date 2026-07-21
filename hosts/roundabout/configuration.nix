@@ -50,7 +50,7 @@
   '';
 
   # Networking
-  networking.hostName = "nixos";
+  networking.hostName = "roundabout";
   networking.networkmanager.enable = true;
   # netcat listen/connect on 45454 (e.g. nc -l 45454)
   networking.firewall.allowedTCPPorts = [ 45454 ];
