@@ -1,3 +1,4 @@
+# NixOS/Linux KVM guest tooling to run macOS VMs via QEMU — NOT nix-darwin.
 { config, lib, pkgs, inputs, ... }:
 
 let
