@@ -1,7 +1,7 @@
 {
   description = "Potter's NixOS Configuration";
 
-  inputs = {
+  inputs = {   
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     home-manager = {
@@ -41,6 +41,21 @@
     rockpload = {
       url = "github:LEX0RE/rockpload";
     };
+
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    nixos-anywhere = {
+      url = "github:nix-community/nixos-anywhere";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
@@ -56,6 +71,7 @@
       flameshot,
       helium,
       rockpload,
+      disko,
       ...
     }@inputs:
     let
@@ -68,14 +84,59 @@
 
       pkgs = import nixpkgs {
         inherit system;
-        config.allowUnfree = true;
+        config = {
+          allowUnfree = true;
+          permittedInsecurePackages = [
+            "pnpm-9.15.9"
+          ];
+        };
         overlays = [ self.overlays.default ];
       };
     in
     {
-      packages.${system} = {
-        twitch-drops-miner = pkgs.twitch-drops-miner;
-      };
+      packages.${system} =
+        let
+          sync-age-recipients = pkgs.writeShellApplication {
+            name = "sync-age-recipients";
+            runtimeInputs = with pkgs; [
+              age
+              curl
+              git
+              nix
+              python3
+              findutils
+              coreutils
+            ];
+            text = builtins.readFile ./scripts/sync-age-recipients.sh;
+          };
+          nixos-anywhere-unwrapped =
+            inputs.nixos-anywhere.packages.${system}.nixos-anywhere
+              or inputs.nixos-anywhere.packages.${system}.default;
+        in
+        {
+          inherit sync-age-recipients;
+          twitch-drops-miner = pkgs.twitch-drops-miner;
+          auto-rob = pkgs.auto-rob;
+          nixos-remote-install = pkgs.writeShellApplication {
+            name = "nixos-remote-install";
+            runtimeInputs = (with pkgs; [
+              age
+              openssh
+              curl
+              jq
+              git
+              nix
+              coreutils
+            ]) ++ [
+              sync-age-recipients
+              nixos-anywhere-unwrapped
+            ];
+            text = ''
+              export NIXOS_ANYWHERE_REAL="${nixos-anywhere-unwrapped}/bin/nixos-anywhere"
+              ${builtins.readFile ./scripts/nixos-remote-install.sh}
+            '';
+          };
+        };
 
       overlays.default = final: prev: {
         rofi-themes-collection = final.callPackage ./pkgs/rofi-themes {
@@ -88,6 +149,7 @@
         singularcard = final.callPackage ./pkgs/singularcard { };
         cider = final.callPackage ./pkgs/cider { };
         twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
+        auto-rob = final.callPackage ./pkgs/auto-rob { };
 
         nix-index = nix-index.packages.${system}.default;
 
@@ -112,6 +174,19 @@
           ./hosts/roundabout/home.nix
         ];
         extraOverlays = [ nix-cachyos-kernel.overlays.default ];
+      };
+
+      # Headless server — nixos-remote-install --flake .#abacab (see hosts/abacab/disk.nix).
+      nixosConfigurations.abacab = mkNixosHost {
+        inherit system;
+        modules = [
+          ./hosts/abacab
+          disko.nixosModules.disko
+        ];
+        homeModules = [
+          ./home/potter
+          ./hosts/abacab/home.nix
+        ];
       };
 
       # Scaffold for non-NixOS / HM-only machines. roundabout itself still uses

@@ -31,10 +31,10 @@
         identityFile = "~/.ssh/oracle.key";
         user = "ubuntu";
       };
-      "24fire" = {
-        hostname = "24fire";
-        identityFile = "~/.ssh/24fire.key";
-        user = "root";
+      "abacab" = {
+        hostname = "abacab";
+        identityFile = "~/.ssh/id_ed25519";
+        user = "potter";
       };
       "osx-kvm" = {
         hostname = "nixos";

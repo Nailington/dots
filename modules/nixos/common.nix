@@ -1,7 +1,14 @@
 { pkgs, ... }:
 
 {
-  nixpkgs.config.allowUnfree = true;
+  imports = [ ./ssh-github.nix ];
+
+  nixpkgs.config = {
+    allowUnfree = true;
+    permittedInsecurePackages = [
+      "pnpm-9.15.9"
+    ];
+  };
 
   time.timeZone = "America/New_York";
   i18n.defaultLocale = "en_US.UTF-8";

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 let
   # hwdb sends BTN_FORWARD/BTN_BACK on the keyboard BT HID node; clone onto a virtual pointer.
@@ -23,6 +23,8 @@ in
     ../../modules/home/common.nix
     ../../modules/home/desktop.nix
     ../../modules/home/hyprland
+    ../../modules/home/kwallet.nix # PAM unlock via systemd (before Hyprland apps)
+    ../../modules/home/kde-apps.nix # without Plasma DE; skip if using modules/nixos/plasma.nix
     ../../modules/home/gaming.nix
     ../../modules/home/creative.nix
     ../../modules/home/dev.nix
@@ -33,6 +35,16 @@ in
     enable = true;
     resolution = "1920x1080";
   };
+
+  # Re-encrypt secrets to current GitHub .keys before building a new generation.
+  programs.zsh.initContent = lib.mkAfter ''
+    nh() {
+      if [[ "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
+        sync-age-recipients || return $?
+      fi
+      command nh "$@"
+    }
+  '';
 
   home.packages = [
     pkgs.evsieve

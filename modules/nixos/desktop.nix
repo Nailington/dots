@@ -1,17 +1,18 @@
 { pkgs, ... }:
 
 {
+  # Compositor-agnostic desktop base. Import hyprland.nix / plasma.nix / (later) niri.nix
+  # separately for the session you want.
+
   services.xserver.enable = true;
   services.displayManager.sddm.enable = true;
   services.displayManager.sddm.settings.General.Numlock = "on";
-  services.desktopManager.plasma6.enable = true;
 
   services.xserver.xkb = {
     layout = "us";
     variant = "";
   };
 
-  programs.hyprland.enable = true;
   programs.firefox.enable = true;
 
   services.printing.enable = true;
@@ -36,8 +37,12 @@
     };
   };
 
-  # KWallet PAM auto-unlock (KDE and Hyprland via SDDM)
+  # Removable/internal volumes for file managers (Dolphin Solid backend, etc.)
+  services.udisks2.enable = true;
+
+  # KWallet PAM: SDDM stores creds in a socket; modules/home/kwallet.nix unlocks via systemd
   security.pam.services.sddm.kwallet.enable = true;
+  security.pam.services.login.kwallet.enable = true;
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";

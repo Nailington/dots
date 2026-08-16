@@ -2,8 +2,12 @@
 #
 # Add a NixOS host:
 #   1. Create hosts/<name>/{default.nix, hardware-configuration.nix, home.nix}
-#   2. Import the nixos/home profiles you need (common only for headless).
-#   3. Register in flake.nix:
+#      Headless + nixos-anywhere: also add disk.nix (disko) and register disko.nixosModules.disko.
+#   2. Import the nixos/home profiles you need (common + tailscale for headless; no desktop).
+#   3. SSH: GitHub .keys via modules/nixos/ssh-github.nix (agenix for private keys).
+#      Installer (roundabout): nixos-remote-install --flake .#<name> root@<iso>
+#      (keygen, GitHub POST, agenix, git push, then nixos-anywhere).
+#   4. Register in flake.nix:
 #        nixosConfigurations.<name> = mkNixosHost {
 #          system = "x86_64-linux";
 #          modules = [ ./hosts/<name> ];  # plus flake-input nixos modules as needed
@@ -37,12 +41,15 @@ in
       homeModules,
       homeUser ? "potter",
       extraOverlays ? [ ],
-      specialArgs ? { inherit inputs; },
+      specialArgs ? {
+        inherit self inputs;
+      },
     }:
     nixpkgs.lib.nixosSystem {
       inherit system specialArgs;
       modules = modules ++ [
         { nixpkgs.overlays = [ self.overlays.default ] ++ extraOverlays; }
+        inputs.agenix.nixosModules.default
         home-manager.nixosModules.home-manager
         {
           home-manager.useGlobalPkgs = true;
@@ -66,7 +73,12 @@ in
     home-manager.lib.homeManagerConfiguration {
       pkgs = import nixpkgs {
         inherit system;
-        config.allowUnfree = true;
+        config = {
+          allowUnfree = true;
+          permittedInsecurePackages = [
+            "pnpm-9.15.9"
+          ];
+        };
         overlays = [ self.overlays.default ] ++ extraOverlays;
       };
       extraSpecialArgs = { inherit inputs; };

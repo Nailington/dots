@@ -17,8 +17,12 @@ let
       keyword bindm ALT, mouse:272, movewindow ; \
       keyword bindm ALT, mouse:273, resizewindow"
   '';
+
+  polkitAgent = "${pkgs.kdePackages.polkit-kde-agent-1}/libexec/polkit-kde-authentication-agent-1";
 in
 {
+  # Hyprland-only session. Later niri/DMS should use their own module — do not import this.
+  # KWallet PAM unlock: modules/home/kwallet.nix (systemd graphical-session-pre), not exec-once.
   home.packages = with pkgs; [
     hyprpicker
     waybar
@@ -43,13 +47,21 @@ in
     plan-c-on
     plan-c-off
     rofi-themes-collection
+    kdePackages.polkit-kde-agent-1
   ];
 
   wayland.windowManager.hyprland = {
     enable = true;
     package = null; # Use the NixOS system package
     portalPackage = null;
-    extraConfig = builtins.readFile ./hyprland.conf;
+    # Needed so graphical-session-pre (kwallet unlock) runs before session apps
+    systemd.enable = true;
+    extraConfig = ''
+      # Polkit agent (Hyprland-specific). KWallet unlock is systemd — see modules/home/kwallet.nix
+      exec-once = ${polkitAgent}
+
+      ${builtins.readFile ./hyprland.conf}
+    '';
   };
 
   programs.waybar.enable = true;

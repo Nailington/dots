@@ -8,11 +8,12 @@
 
   home.packages = with pkgs; [
     code-cursor
+    cursor-cli
     github-desktop
     gh
     nodejs
     bun
-    pnpm
+    pnpm_9
     nil
     nixd
     quickemu

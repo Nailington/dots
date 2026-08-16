@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, self, ... }:
 
 {
   imports = [
@@ -6,6 +6,8 @@
 
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop.nix
+    ../../modules/nixos/hyprland.nix
+    # ../../modules/nixos/plasma.nix  # full Plasma DE — enable later / other hosts
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/networking-tailscale.nix
     ../../modules/nixos/virtualisation.nix
@@ -124,20 +126,7 @@
       "kvm"
       "libvirtd"
     ];
-    packages = with pkgs; [
-      kdePackages.kate
-      kdePackages.kwallet
-      kdePackages.kwallet-pam
-      kdePackages.kmines
-      kdePackages.kpat
-      kdePackages.ksudoku
-      kdePackages.knetwalk
-      kdePackages.kapman
-      kdePackages.kblocks
-      kdePackages.kbounce
-      kdePackages.kollision
-      kdePackages.kolf
-    ];
+    # KDE apps (Dolphin, Ark, games, kwallet, …) → modules/home/kde-apps.nix
   };
 
   programs.coolercontrol.enable = true;
@@ -160,6 +149,8 @@
     acpi
     lm_sensors
     nbfc-linux
+    self.packages.${pkgs.system}.nixos-remote-install
+    self.packages.${pkgs.system}.sync-age-recipients
   ];
 
   swapDevices = [

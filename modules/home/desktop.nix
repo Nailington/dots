@@ -10,9 +10,14 @@
     equibop
     zoom-us
     slack
-    google-chrome
+    # Hyprland is not detected as KDE; without this Chrome falls back to basic store
+    # when the wallet is locked at first launch and never prompts.
+    (google-chrome.override {
+      commandLineArgs = "--password-store=kwallet6";
+    })
     bluebubbles
     cider
+    auto-rob
     mpv
     qbittorrent
     kitty
