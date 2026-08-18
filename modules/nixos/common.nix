@@ -47,6 +47,7 @@
     git-lfs
     wget
     curl
+    age
     nh
     fuse3
     e2fsprogs
