@@ -5,9 +5,6 @@
 
   nixpkgs.config = {
     allowUnfree = true;
-    permittedInsecurePackages = [
-      "pnpm-9.15.9"
-    ];
   };
 
   time.timeZone = "America/New_York";

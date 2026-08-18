@@ -75,9 +75,6 @@ in
         inherit system;
         config = {
           allowUnfree = true;
-          permittedInsecurePackages = [
-            "pnpm-9.15.9"
-          ];
         };
         overlays = [ self.overlays.default ] ++ extraOverlays;
       };

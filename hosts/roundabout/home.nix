@@ -27,6 +27,7 @@ in
     ../../modules/home/kde-apps.nix # without Plasma DE; skip if using modules/nixos/plasma.nix
     ../../modules/home/gaming.nix
     ../../modules/home/creative.nix
+    ../../modules/home/spicetify.nix
     ../../modules/home/dev.nix
     ../../modules/home/osx-kvm # macOS guest on NixOS via KVM — not nix-darwin
   ];

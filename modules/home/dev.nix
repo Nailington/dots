@@ -13,7 +13,7 @@
     gh
     nodejs
     bun
-    pnpm_9
+    pnpm
     nil
     nixd
     quickemu

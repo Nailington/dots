@@ -56,6 +56,10 @@
       url = "github:nix-community/nixos-anywhere";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Don't follow nixpkgs — Spicetify must track a Spotify version it can patch.
+    # https://gerg-l.github.io/spicetify-nix/usage.html
+    spicetify-nix.url = "github:Gerg-L/spicetify-nix";
   };
 
   outputs =
@@ -86,9 +90,6 @@
         inherit system;
         config = {
           allowUnfree = true;
-          permittedInsecurePackages = [
-            "pnpm-9.15.9"
-          ];
         };
         overlays = [ self.overlays.default ];
       };
@@ -159,6 +160,25 @@
         # nixpkgs#426717 — koffydrop: doCheck off only for i686, keeps x86_64 openldap cached
         openldap = prev.openldap.overrideAttrs (_: {
           doCheck = !prev.stdenv.hostPlatform.isi686;
+        });
+
+        # azahar 2125.1.3: glibc 2.42 no longer transitively provides cstring
+        # https://github.com/azahar-emu/azahar/pull/2232
+        azahar = prev.azahar.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            sed -i '1i#include <cstring>' src/audio_core/cubeb_sink.cpp src/audio_core/cubeb_input.cpp
+          '';
+        });
+
+        # aseprite 1.3.18 + fmt 12: fmt::format moved out of fmt/core.h
+        # (quoted include in strings.h; nixpkgs added this in a later bump)
+        aseprite = prev.aseprite.overrideAttrs (old: {
+          postPatch = (old.postPatch or "") + ''
+            if grep -q '"fmt/core.h"' src/app/i18n/strings.h; then
+              substituteInPlace src/app/i18n/strings.h \
+                --replace-fail '"fmt/core.h"' '"fmt/format.h"'
+            fi
+          '';
         });
       };
 
