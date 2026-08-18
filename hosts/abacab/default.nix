@@ -24,8 +24,15 @@
     };
   };
 
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
+  # This host kexec'd in BIOS (not EFI). systemd-boot cannot boot that.
+  boot.loader.systemd-boot.enable = false;
+  boot.loader.efi.canTouchEfiVariables = false;
+  boot.loader.grub = {
+    enable = true;
+    device = "/dev/sda";
+    efiSupport = true;
+    efiInstallAsRemovable = true;
+  };
 
   services.openssh = {
     enable = true;

@@ -1,16 +1,18 @@
-# Single-disk wipe: EFI + ext4 root. Used by nixos-anywhere via disko.
-#
-# BEFORE install: set `device` to the target disk (prefer stable by-id):
-#   ls -l /dev/disk/by-id/
-# Example: "/dev/disk/by-id/nvme-Samsung_..."
+# Cloud/QEMU guest: GPT + BIOS GRUB (EF02) + EFI fallback + ext4 root.
+# The first install used systemd-boot only; kexec was not EFI, so the machine
+# could not boot. GRUB is installed to the disk MBR and also as removable EFI.
 {
   disko.devices = {
     disk.main = {
       type = "disk";
-      device = "/dev/sda"; # CHANGE ME before nixos-anywhere
+      device = "/dev/sda";
       content = {
         type = "gpt";
         partitions = {
+          bios = {
+            size = "1M";
+            type = "EF02"; # BIOS boot (grub core.img on GPT)
+          };
           ESP = {
             size = "512M";
             type = "EF00";
