@@ -150,7 +150,6 @@
     lm_sensors
     nbfc-linux
     self.packages.${pkgs.system}.nixos-remote-install
-    self.packages.${pkgs.system}.sync-age-recipients
   ];
 
   swapDevices = [

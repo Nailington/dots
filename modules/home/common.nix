@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   home.sessionVariables = {
@@ -14,9 +14,19 @@
       plugins = [ "git" ];
       theme = "essembeh";
     };
-    initContent = ''
-      # Rofi themes scripts are already in PATH via the package
-    '';
+    initContent = lib.mkMerge [
+      ''
+        # Rofi themes scripts are already in PATH via the package
+      ''
+      (lib.mkAfter ''
+        nh() {
+          if [[ "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
+            sync-age-recipients || return $?
+          fi
+          command nh "$@"
+        }
+      '')
+    ];
   };
 
   programs.ssh = {

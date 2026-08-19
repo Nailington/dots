@@ -7,9 +7,7 @@
   };
 
   home.packages = with pkgs; [
-    code-cursor
     cursor-cli
-    github-desktop
     gh
     nodejs
     bun
@@ -17,7 +15,6 @@
     nil
     nixd
     quickemu
-    quickgui
     ffmpeg-full
     imagemagickBig
   ];

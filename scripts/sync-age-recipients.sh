@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Fetch GitHub SSH pubs + known host pubs, re-encrypt every secrets/**/*.age to that set.
-# Run from nixos-remote-install or as `sync-age-recipients` on PATH (roundabout).
+# Run from nixos-remote-install or as `sync-age-recipients` on PATH (nh os switch).
+# Commits + pushes secret changes so other hosts pick them up.
 set -euo pipefail
 
 FLAKE_ROOT="${FLAKE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
@@ -85,9 +86,39 @@ PY
 
 shopt -s globstar nullglob
 AGE_FILES=(secrets/**/*.age)
+commit_and_push_secrets() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo "==> not a git checkout; skip commit/push" >&2
+    return 0
+  fi
+  if git diff --cached --quiet; then
+    echo "==> no secret changes to commit"
+    return 0
+  fi
+
+  echo "==> commit age recipients"
+  git commit -m "Sync age recipients"
+
+  local origin ssh_origin
+  origin="$(git remote get-url origin 2>/dev/null || true)"
+  if [[ -z "$origin" ]]; then
+    echo "==> no git remote 'origin'; skip push" >&2
+    return 0
+  fi
+  ssh_origin="$origin"
+  if [[ "$origin" == https://github.com/* ]]; then
+    ssh_origin="git@github.com:${origin#https://github.com/}"
+    ssh_origin="${ssh_origin%.git}.git"
+  fi
+  echo "==> push ${ssh_origin}"
+  export GIT_SSH_COMMAND="ssh -i ${AGE_IDENTITY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+  git push "$ssh_origin" HEAD
+}
+
 if [[ ${#AGE_FILES[@]} -eq 0 ]]; then
   echo "==> no .age files yet; wrote secrets/recipients.nix only"
   git add -- secrets/recipients.nix 2>/dev/null || true
+  commit_and_push_secrets
   exit 0
 fi
 
@@ -101,4 +132,4 @@ for f in "${AGE_FILES[@]}"; do
 done
 
 git add -- secrets/recipients.nix "${AGE_FILES[@]}"
-echo "==> synced age recipients (git added, not committed)"
+commit_and_push_secrets

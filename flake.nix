@@ -103,6 +103,7 @@
               age
               curl
               git
+              openssh
               nix
               python3
               findutils

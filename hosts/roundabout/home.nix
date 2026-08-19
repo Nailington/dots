@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ pkgs, ... }:
 
 let
   # hwdb sends BTN_FORWARD/BTN_BACK on the keyboard BT HID node; clone onto a virtual pointer.
@@ -28,7 +28,8 @@ in
     ../../modules/home/gaming.nix
     ../../modules/home/creative.nix
     ../../modules/home/spicetify.nix
-    ../../modules/home/dev.nix
+    ../../modules/home/dev-tui.nix
+    ../../modules/home/dev-gui.nix
     ../../modules/home/osx-kvm # macOS guest on NixOS via KVM — not nix-darwin
   ];
 
@@ -36,16 +37,6 @@ in
     enable = true;
     resolution = "1920x1080";
   };
-
-  # Re-encrypt secrets to current GitHub .keys before building a new generation.
-  programs.zsh.initContent = lib.mkAfter ''
-    nh() {
-      if [[ "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
-        sync-age-recipients || return $?
-      fi
-      command nh "$@"
-    }
-  '';
 
   home.packages = [
     pkgs.evsieve

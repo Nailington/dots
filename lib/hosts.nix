@@ -26,7 +26,7 @@
 #   1. Add input: darwin.url = "github:LnL7/nix-darwin"; darwin.inputs.nixpkgs.follows = "nixpkgs";
 #   2. Create modules/darwin/common.nix and hosts/<mac>/default.nix
 #   3. Mirror mkNixosHost as mkDarwinHost (darwin.lib.darwinSystem + HM darwin module).
-#   4. Import only portable modules/home/* (common, dev, …) — not hyprland, not osx-kvm.
+#   4. Import only portable modules/home/* (common, dev-tui, …) — not hyprland, not osx-kvm.
 #      osx-kvm is KVM guest tooling on Linux NixOS, not for Mac hosts.
 { self, inputs }:
 

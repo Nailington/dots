@@ -1,5 +1,5 @@
 # agenix secrets. Recipients = GitHub .keys (+ host pubs) from secrets/recipients.nix,
-# refreshed by sync-age-recipients (nixos-remote-install and nh os switch on roundabout).
+# refreshed by sync-age-recipients (nixos-remote-install and nh os switch; commits + pushes).
 let
   inherit (import ./lib/ssh-keys.nix) roundaboutPub;
 

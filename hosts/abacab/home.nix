@@ -2,6 +2,6 @@
 {
   imports = [
     ../../modules/home/common.nix
-    ../../modules/home/dev.nix
+    ../../modules/home/dev-tui.nix
   ];
 }
