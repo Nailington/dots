@@ -72,11 +72,11 @@
     extraGroups = [
       "wheel"
     ];
+    hashedPassword = "$6$.Md2vHMcUm4HZqz5$RcB0ZyyJ3yxk4uMuQZhQB.KHkngfOB9Wxg05aKy477DB4ZN3gpG/Ckdoo29aMsZktMvukCsMCNbbOhWNehDQ1.";
   };
 
   # SSH keys: GitHub .keys + optional lib/ssh-keys.nix (modules/nixos/ssh-github.nix)
 
-  # No initial password — key-only. Use `passwd` once if you ever need a local console password.
   security.sudo.wheelNeedsPassword = true;
 
   environment.systemPackages = with pkgs; [
