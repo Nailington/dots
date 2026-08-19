@@ -48,7 +48,7 @@
     wget
     curl
     age
-    nh
+    self.packages.${pkgs.system}.nh
     self.packages.${pkgs.system}.sync-age-recipients
     fuse3
     e2fsprogs

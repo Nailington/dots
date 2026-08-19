@@ -111,12 +111,22 @@
             ];
             text = builtins.readFile ./scripts/sync-age-recipients.sh;
           };
+          nh = pkgs.writeShellApplication {
+            name = "nh";
+            runtimeInputs = [ sync-age-recipients ];
+            text = ''
+              if [[ "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
+                sync-age-recipients || exit $?
+              fi
+              exec ${pkgs.lib.getExe pkgs.nh} "$@"
+            '';
+          };
           nixos-anywhere-unwrapped =
             inputs.nixos-anywhere.packages.${system}.nixos-anywhere
               or inputs.nixos-anywhere.packages.${system}.default;
         in
         {
-          inherit sync-age-recipients;
+          inherit sync-age-recipients nh;
           twitch-drops-miner = pkgs.twitch-drops-miner;
           auto-rob = pkgs.auto-rob;
           nixos-remote-install = pkgs.writeShellApplication {
