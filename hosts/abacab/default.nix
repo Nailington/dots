@@ -66,6 +66,8 @@
     };
   };
 
+  # hashedPassword is only applied on first user creation unless this is false.
+  users.mutableUsers = false;
   users.users.potter = {
     isNormalUser = true;
     description = "Potter";
