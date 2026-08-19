@@ -10,18 +10,21 @@ let
 
   # Public list — same keys as GET /users/{user}/keys, no token needed at login.
   # https://docs.github.com/en/rest/users/keys
+  sshKeys = import ../../lib/ssh-keys.nix;
+
   githubKeys = pkgs.writeShellScript "github-authorized-keys" ''
-    set -euo pipefail
+    set -u
     user="''${1:-}"
     case "$user" in
       potter|root) ;;
       *) exit 0 ;;
     esac
+    # Best-effort: never fail closed if GitHub/DNS is unreachable (static keys still apply).
     for gh_user in ${lib.escapeShellArgs cfg.githubUsers}; do
       ${pkgs.curl}/bin/curl -fsSL --max-time 10 \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2026-03-10" \
-        "https://github.com/''${gh_user}.keys"
+        "https://github.com/''${gh_user}.keys" || true
     done
   '';
 
@@ -51,6 +54,10 @@ in
       AuthorizedKeysCommand = "${githubKeys} %u";
       AuthorizedKeysCommandUser = "nobody";
     };
+
+    # Fallback when GitHub .keys fetch fails (common if DNS isn't up yet on a VPS).
+    users.users.potter.openssh.authorizedKeys.keys = sshKeys.loginKeys;
+    users.users.root.openssh.authorizedKeys.keys = sshKeys.loginKeys;
 
     systemd.tmpfiles.rules = [
       "d /home/potter/.ssh 0700 potter users -"

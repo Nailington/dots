@@ -20,6 +20,7 @@
     "1.1.1.1"
     "1.0.0.1"
   ];
+  services.resolved.enable = true;
   systemd.network.enable = true;
   systemd.network.networks."10-uplink" = {
     matchConfig.Name = "en* eth*";
