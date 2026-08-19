@@ -6,6 +6,7 @@
       withOpenASAR = true;
       withEquicord = true;
     })
+    virt-manager
     discover-overlay
     equibop
     zoom-us

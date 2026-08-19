@@ -18,6 +18,7 @@
     nixd
     quickemu
     quickgui
-    virt-manager
+    ffmpeg-full
+    imagemagickBig
   ];
 }

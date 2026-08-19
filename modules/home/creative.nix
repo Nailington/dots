@@ -8,8 +8,6 @@
     aseprite
     gpu-screen-recorder
     gpu-screen-recorder-gtk
-    ffmpeg-full
-    imagemagickBig
     unityhub
     godot
   ];
