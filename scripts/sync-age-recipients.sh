@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Fetch GitHub SSH pubs + known host pubs, re-encrypt every secrets/**/*.age to that set.
+# Fetch GitHub SSH pubs + known host pubs. Re-encrypt + commit only when a new key appears.
 # Run from nixos-remote-install or as `sync-age-recipients` on PATH (nh os switch).
-# Commits + pushes secret changes so other hosts pick them up.
 set -euo pipefail
 
 FLAKE_ROOT="${FLAKE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
@@ -54,38 +53,84 @@ if [[ -f lib/ssh-keys.nix ]]; then
   echo >>"$STAGING/github.keys"
 fi
 
-python3 - "$STAGING/github.keys" "$RECIPIENTS_FILE" secrets/recipients.nix <<'PY'
+py_rc=0
+python3 - "$STAGING/github.keys" "$RECIPIENTS_FILE" secrets/recipients.nix <<'PY' || py_rc=$?
 from pathlib import Path
+import re
 import sys
 
 raw, rec_path, nix_path = sys.argv[1:]
-seen = set()
-keys = []
-for line in Path(raw).read_text().splitlines():
-    line = line.strip()
-    if not line or line.startswith("#"):
-        continue
+
+
+def ident(line):
     parts = line.split()
     if len(parts) < 2:
-        continue
-    ident = parts[0] + " " + parts[1]
-    if ident in seen:
-        continue
-    seen.add(ident)
-    keys.append(line)
+        return None
+    return parts[0] + " " + parts[1]
 
-if not keys:
+
+def keys_from_raw(text):
+    keys = []
+    seen = set()
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        i = ident(line)
+        if i is None or i in seen:
+            continue
+        seen.add(i)
+        keys.append(line)
+    return keys
+
+
+nix_file = Path(nix_path)
+old_keys = []
+old_seen = set()
+if nix_file.exists():
+    for quoted in re.findall(r'"([^"]+)"', nix_file.read_text()):
+        i = ident(quoted)
+        if i is None or i in old_seen:
+            continue
+        old_seen.add(i)
+        old_keys.append(quoted)
+
+fetched = keys_from_raw(Path(raw).read_text())
+if not fetched and not old_keys:
     raise SystemExit("no recipient keys found")
 
-Path(rec_path).write_text("".join(k + "\n" for k in keys))
-nix = "[\n" + "".join(f'  "{k}"\n' for k in keys) + "]\n"
-Path(nix_path).parent.mkdir(parents=True, exist_ok=True)
-Path(nix_path).write_text(nix)
-print(f"    {len(keys)} unique recipients -> secrets/recipients.nix")
+new_keys = [k for k in fetched if ident(k) not in old_seen]
+if not new_keys:
+    print("    no new keys")
+    raise SystemExit(2)
+
+print(f"    {len(new_keys)} new key(s):")
+for k in new_keys:
+    print(f"      {k}")
+
+all_keys = old_keys + new_keys
+Path(rec_path).write_text("".join(k + "\n" for k in all_keys))
+nix_file.parent.mkdir(parents=True, exist_ok=True)
+if nix_file.exists():
+    stripped = nix_file.read_text().rstrip()
+    if stripped.endswith("]"):
+        body = stripped[:-1].rstrip() + "\n"
+        extra = "".join(f'  "{k}"\n' for k in new_keys)
+        nix_file.write_text(body + extra + "]\n")
+    else:
+        nix_file.write_text("[\n" + "".join(f'  "{k}"\n' for k in all_keys) + "]\n")
+else:
+    nix_file.write_text("[\n" + "".join(f'  "{k}"\n' for k in all_keys) + "]\n")
 PY
 
-shopt -s globstar nullglob
-AGE_FILES=(secrets/**/*.age)
+if [[ "$py_rc" -eq 2 ]]; then
+  echo "==> no new keys; skip re-encrypt/commit"
+  exit 0
+fi
+if [[ "$py_rc" -ne 0 ]]; then
+  exit "$py_rc"
+fi
+
 commit_and_push_secrets() {
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "==> not a git checkout; skip commit/push" >&2
@@ -124,6 +169,8 @@ commit_and_push_secrets() {
   git push "$ssh_origin" HEAD
 }
 
+shopt -s globstar nullglob
+AGE_FILES=(secrets/**/*.age)
 if [[ ${#AGE_FILES[@]} -eq 0 ]]; then
   echo "==> no .age files yet; wrote secrets/recipients.nix only"
   git add -- secrets/recipients.nix 2>/dev/null || true
