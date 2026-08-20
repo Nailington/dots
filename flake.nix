@@ -115,7 +115,8 @@
             name = "nh";
             runtimeInputs = [ sync-age-recipients ];
             text = ''
-              if [[ "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
+              if [[ -z "''${SYNC_AGE_DONE:-}" && "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
+                export SYNC_AGE_DONE=1
                 sync-age-recipients || exit $?
               fi
               exec ${pkgs.lib.getExe pkgs.nh} "$@"
