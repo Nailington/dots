@@ -21,7 +21,6 @@
     auto-rob
     mpv
     qbittorrent
-    kitty
     singularcard
     libimobiledevice
     usbmuxd

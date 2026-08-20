@@ -17,5 +17,6 @@
     quickemu
     ffmpeg-full
     imagemagickBig
+    kitty
   ];
 }

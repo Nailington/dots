@@ -97,7 +97,16 @@ commit_and_push_secrets() {
   fi
 
   echo "==> commit age recipients"
-  git commit -m "Sync age recipients"
+  local msg=""
+  if [[ -r /dev/tty ]]; then
+    printf 'Commit message [Sync age recipients] (30s): ' >/dev/tty
+    if ! IFS= read -r -t 30 msg </dev/tty; then
+      printf '\n' >/dev/tty
+      msg=""
+    fi
+  fi
+  msg="${msg:-Sync age recipients}"
+  git commit -m "$msg"
 
   local origin ssh_origin
   origin="$(git remote get-url origin 2>/dev/null || true)"
