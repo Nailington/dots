@@ -43,6 +43,9 @@ for gh_user in "${GH_USERS[@]}"; do
   echo >>"$STAGING/github.keys"
 done
 
+# GitHub-only snapshot for sshd authorized_keys (host pubs must not go there).
+cp "$STAGING/github.keys" "$STAGING/github-login.keys"
+
 # Also keep host keys so servers can decrypt at activation via ssh_host_ed25519_key.
 if [[ -d secrets/ssh ]]; then
   find secrets/ssh -name 'ssh_host_ed25519_key.pub' -print0 2>/dev/null \
@@ -54,12 +57,12 @@ if [[ -f lib/ssh-keys.nix ]]; then
 fi
 
 py_rc=0
-python3 - "$STAGING/github.keys" "$RECIPIENTS_FILE" secrets/recipients.nix <<'PY' || py_rc=$?
+python3 - "$STAGING/github-login.keys" "$STAGING/github.keys" "$RECIPIENTS_FILE" secrets/recipients.nix secrets/github-login-keys.nix <<'PY' || py_rc=$?
 from pathlib import Path
 import re
 import sys
 
-raw, rec_path, nix_path = sys.argv[1:]
+login_raw, all_raw, rec_path, rec_nix, login_nix = sys.argv[1:]
 
 
 def ident(line):
@@ -84,50 +87,70 @@ def keys_from_raw(text):
     return keys
 
 
-nix_file = Path(nix_path)
-old_keys = []
-old_seen = set()
-if nix_file.exists():
-    for quoted in re.findall(r'"([^"]+)"', nix_file.read_text()):
+def idents_from_nix(path):
+    p = Path(path)
+    seen = set()
+    keys = []
+    if not p.exists():
+        return seen, keys
+    for quoted in re.findall(r'"([^"]+)"', p.read_text()):
         i = ident(quoted)
-        if i is None or i in old_seen:
+        if i is None or i in seen:
             continue
-        old_seen.add(i)
-        old_keys.append(quoted)
+        seen.add(i)
+        keys.append(quoted)
+    return seen, keys
 
-fetched = keys_from_raw(Path(raw).read_text())
+
+def write_nix_list(path, keys):
+    Path(path).parent.mkdir(parents=True, exist_ok=True)
+    Path(path).write_text("[\n" + "".join(f'  "{k}"\n' for k in keys) + "]\n")
+
+
+login_keys = keys_from_raw(Path(login_raw).read_text())
+old_login_seen, _ = idents_from_nix(login_nix)
+login_changed = {ident(k) for k in login_keys} != old_login_seen
+if login_changed:
+    write_nix_list(login_nix, login_keys)
+    print(f"    {len(login_keys)} GitHub login key(s) -> {login_nix}")
+else:
+    print("    GitHub login keys unchanged")
+
+old_seen, old_keys = idents_from_nix(rec_nix)
+fetched = keys_from_raw(Path(all_raw).read_text())
 if not fetched and not old_keys:
     raise SystemExit("no recipient keys found")
 
 new_keys = [k for k in fetched if ident(k) not in old_seen]
-if not new_keys:
-    print("    no new keys")
-    raise SystemExit(2)
-
-print(f"    {len(new_keys)} new key(s):")
-for k in new_keys:
-    print(f"      {k}")
-
-all_keys = old_keys + new_keys
-Path(rec_path).write_text("".join(k + "\n" for k in all_keys))
-nix_file.parent.mkdir(parents=True, exist_ok=True)
-if nix_file.exists():
-    stripped = nix_file.read_text().rstrip()
-    if stripped.endswith("]"):
-        body = stripped[:-1].rstrip() + "\n"
-        extra = "".join(f'  "{k}"\n' for k in new_keys)
-        nix_file.write_text(body + extra + "]\n")
+if new_keys:
+    print(f"    {len(new_keys)} new age recipient(s):")
+    for k in new_keys:
+        print(f"      {k}")
+    all_keys = old_keys + new_keys
+    Path(rec_path).write_text("".join(k + "\n" for k in all_keys))
+    rec_file = Path(rec_nix)
+    rec_file.parent.mkdir(parents=True, exist_ok=True)
+    if rec_file.exists():
+        stripped = rec_file.read_text().rstrip()
+        if stripped.endswith("]"):
+            body = stripped[:-1].rstrip() + "\n"
+            extra = "".join(f'  "{k}"\n' for k in new_keys)
+            rec_file.write_text(body + extra + "]\n")
+        else:
+            write_nix_list(rec_nix, all_keys)
     else:
-        nix_file.write_text("[\n" + "".join(f'  "{k}"\n' for k in all_keys) + "]\n")
-else:
-    nix_file.write_text("[\n" + "".join(f'  "{k}"\n' for k in all_keys) + "]\n")
+        write_nix_list(rec_nix, all_keys)
+    raise SystemExit(0)
+
+print("    no new age recipients")
+raise SystemExit(3 if login_changed else 2)
 PY
 
 if [[ "$py_rc" -eq 2 ]]; then
   echo "==> no new keys; skip re-encrypt/commit"
   exit 0
 fi
-if [[ "$py_rc" -ne 0 ]]; then
+if [[ "$py_rc" -ne 0 && "$py_rc" -ne 3 ]]; then
   exit "$py_rc"
 fi
 
@@ -169,11 +192,18 @@ commit_and_push_secrets() {
   git push "$ssh_origin" HEAD
 }
 
+if [[ "$py_rc" -eq 3 ]]; then
+  echo "==> GitHub login keys updated; skip age re-encrypt"
+  git add -- secrets/github-login-keys.nix 2>/dev/null || true
+  commit_and_push_secrets
+  exit 0
+fi
+
 shopt -s globstar nullglob
 AGE_FILES=(secrets/**/*.age)
 if [[ ${#AGE_FILES[@]} -eq 0 ]]; then
   echo "==> no .age files yet; wrote secrets/recipients.nix only"
-  git add -- secrets/recipients.nix 2>/dev/null || true
+  git add -- secrets/recipients.nix secrets/github-login-keys.nix 2>/dev/null || true
   commit_and_push_secrets
   exit 0
 fi
@@ -187,5 +217,5 @@ for f in "${AGE_FILES[@]}"; do
   rm -f "$STAGING/plain"
 done
 
-git add -- secrets/recipients.nix "${AGE_FILES[@]}"
+git add -- secrets/recipients.nix secrets/github-login-keys.nix "${AGE_FILES[@]}"
 commit_and_push_secrets

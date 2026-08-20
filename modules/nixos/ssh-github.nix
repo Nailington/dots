@@ -11,6 +11,12 @@ let
   # Public list — same keys as GET /users/{user}/keys, no token needed at login.
   # https://docs.github.com/en/rest/users/keys
   sshKeys = import ../../lib/ssh-keys.nix;
+  githubLoginKeys =
+    if builtins.pathExists ../../secrets/github-login-keys.nix then
+      import ../../secrets/github-login-keys.nix
+    else
+      [ ];
+  loginKeys = lib.unique (sshKeys.loginKeys ++ githubLoginKeys);
 
   githubKeys = pkgs.writeShellScript "github-authorized-keys" ''
     set -u
@@ -55,9 +61,10 @@ in
       AuthorizedKeysCommandUser = "nobody";
     };
 
-    # Fallback when GitHub .keys fetch fails (common if DNS isn't up yet on a VPS).
-    users.users.potter.openssh.authorizedKeys.keys = sshKeys.loginKeys;
-    users.users.root.openssh.authorizedKeys.keys = sshKeys.loginKeys;
+    # Static keys from the flake (GitHub snapshot + known user pubs). Live GitHub
+    # fetch still runs at login for keys added since the last switch.
+    users.users.potter.openssh.authorizedKeys.keys = loginKeys;
+    users.users.root.openssh.authorizedKeys.keys = loginKeys;
 
     systemd.tmpfiles.rules = [
       "d /home/potter/.ssh 0700 potter users -"
