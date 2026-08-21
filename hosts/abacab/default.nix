@@ -8,6 +8,7 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/tailscale.nix
     ./nginx.nix
+    ./cron.nix
     # no mullvad / desktop / gaming on this host
   ];
 
