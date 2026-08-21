@@ -1,5 +1,5 @@
-# From crontab.txt (PATH omitted — NixOS /etc/crontab already uses system-path).
-# Commented lines ignored. auto-rob lives on the data disk.
+# From crontab.txt. Jobs source /etc/profile so PATH matches a login shell
+# (cron's default PATH is only system-path bin/sbin, not HM/user profiles).
 { pkgs, ... }:
 
 {
@@ -7,8 +7,9 @@
     enable = true;
     systemCronJobs = [
       "TZ=America/New_York"
-      "0 9-16 * * 1-5 potter cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
-      "30 9-16 * * 1-5 potter cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
+      # "53 9 * * * potter . /etc/profile; echo \"$PATH\" > /home/potter/test.txt"
+      "0 9-16 * * 1-5 potter . /etc/profile; cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
+      "30 9-16 * * 1-5 potter . /etc/profile; cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
     ];
   };
 
