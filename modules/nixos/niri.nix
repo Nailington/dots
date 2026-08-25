@@ -23,7 +23,7 @@
   # X11 apps (Steam, some games). niri starts it from PATH when present.
   environment.systemPackages = [ pkgs.xwayland-satellite ];
 
-  xdg.portal.extraPortals = [ pkgs.xdg-desktop-portal-kde ];
+  xdg.portal.extraPortals = [ pkgs.kdePackages.xdg-desktop-portal-kde ];
   xdg.portal.config.niri = {
     "org.freedesktop.impl.portal.FileChooser" = [ "kde" ];
     "org.freedesktop.impl.portal.Secret" = [ "kwallet" ];
