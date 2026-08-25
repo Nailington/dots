@@ -60,6 +60,17 @@
     # Don't follow nixpkgs — Spicetify must track a Spotify version it can patch.
     # https://gerg-l.github.io/spicetify-nix/usage.html
     spicetify-nix.url = "github:Gerg-L/spicetify-nix";
+
+    dms = {
+      url = "github:AvengeMedia/DankMaterialShell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Needed for DMS niri.includes (rewrites config.kdl). Package still comes from nixpkgs.
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =

@@ -6,7 +6,8 @@
 
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop.nix
-    ../../modules/nixos/hyprland.nix
+    ../../modules/nixos/niri.nix
+    # ../../modules/nixos/hyprland.nix  # Hyprland session — enable later / other hosts
     # ../../modules/nixos/plasma.nix  # full Plasma DE — enable later / other hosts
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/networking-tailscale.nix

@@ -1,7 +1,7 @@
 { pkgs, ... }:
 
 {
-  # Compositor-agnostic desktop base. Import hyprland.nix / plasma.nix / (later) niri.nix
+  # Compositor-agnostic desktop base. Import hyprland.nix / plasma.nix / niri.nix
   # separately for the session you want.
 
   services.xserver.enable = true;

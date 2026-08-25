@@ -21,7 +21,7 @@ let
   polkitAgent = "${pkgs.kdePackages.polkit-kde-agent-1}/libexec/polkit-kde-authentication-agent-1";
 in
 {
-  # Hyprland-only session. Later niri/DMS should use their own module — do not import this.
+  # Hyprland-only session. niri/DMS uses modules/home/niri — do not import this.
   # KWallet PAM unlock: modules/home/kwallet.nix (systemd graphical-session-pre), not exec-once.
   home.packages = with pkgs; [
     hyprpicker
