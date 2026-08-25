@@ -12,6 +12,16 @@ stdenv.mkDerivation rec {
 
   nativeBuildInputs = kernel.moduleBuildDependencies;
 
+  # linux 7.2 dropped the strncpy prototype; same change as
+  # https://github.com/0x7375646F/Linuwu-Sense/pull/128
+  postPatch = ''
+    substituteInPlace Linuwu-Sense/src/linuwu_sense.c \
+      --replace-fail '#include <linux/delay.h>' $'#include <linux/delay.h>\n#include <linux/device.h>' \
+      --replace-fail 'strncpy(input, buf, len);' 'strscpy(input, buf, sizeof(input));' \
+      --replace-fail 'strncpy(input_buf, buf, len);' 'strscpy(input_buf, buf, sizeof(input_buf));' \
+      --replace-fail 'strncpy(str_buf, buf, len);' 'strscpy(str_buf, buf, sizeof(str_buf));'
+  '';
+
   makeFlags = [
     "KVER=${kernel.modDirVersion}"
     "KDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
