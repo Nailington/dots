@@ -14,8 +14,8 @@
     kdePackages.kio-admin # elevated ops (sudo/admin://) — not required for drive listing
     kdePackages.qtsvg # SVG icons in Dolphin
     kdePackages.ark
+    kdePackages.kwallet
     kdePackages.kwalletmanager
-    # kwallet + kwallet-pam: modules/home/kwallet.nix (PAM unlock service)
 
     # KDE games
     kdePackages.kmines

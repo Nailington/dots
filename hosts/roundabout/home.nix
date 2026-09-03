@@ -22,8 +22,8 @@ in
   imports = [
     ../../modules/home/common.nix
     ../../modules/home/desktop.nix
-    ../../modules/home/hyprland
-    ../../modules/home/kwallet.nix # PAM unlock via systemd (before Hyprland apps)
+    ../../modules/home/niri
+    # ../../modules/home/hyprland  # Hyprland session — enable later / other hosts
     ../../modules/home/kde-apps.nix # without Plasma DE; skip if using modules/nixos/plasma.nix
     ../../modules/home/gaming.nix
     ../../modules/home/creative.nix

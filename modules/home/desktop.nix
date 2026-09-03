@@ -11,8 +11,6 @@
     equibop
     zoom-us
     slack
-    # Hyprland is not detected as KDE; without this Chrome falls back to basic store
-    # when the wallet is locked at first launch and never prompts.
     (google-chrome.override {
       commandLineArgs = "--password-store=kwallet6";
     })
@@ -26,9 +24,10 @@
     usbmuxd
     geekbench
     furmark
-    mprime
+    # mprime
     mesa-demos
     inxi
+    wlr-randr
     # Theme testing tools
     nwg-look
     lxappearance
@@ -44,23 +43,22 @@
     hojas-de-plata
   ];
 
-  programs.kitty = {
-    enable = true;
-    settings = {
-      font_family = "RobotoMono Nerd Font";
-      font_size = 12;
-      background_opacity = "0.95";
-      confirm_os_window_close = 0;
-    };
-  };
+  # programs.kitty = {
+  #   enable = true;
+  #   # settings = {
+  #   #   font_family = "RobotoMono Nerd Font";
+  #   #   font_size = 12;
+  #   #   background_opacity = "0.95";
+  #   #   confirm_os_window_close = 0;
+  #   # };
+  # };
 
   home.pointerCursor = {
-    name = "theme_Posys-Cursor-Scalable-Black";
-    package = pkgs.posys-cursor-scalable;
+    name = "Posy_Cursor_Black";
+    package = pkgs.posy-cursors;
     size = 24;
     gtk.enable = true;
     x11.enable = true;
-    hyprcursor.enable = true;
   };
 
   gtk = {

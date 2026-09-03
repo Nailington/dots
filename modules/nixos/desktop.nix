@@ -1,12 +1,13 @@
 { pkgs, ... }:
 
 {
-  # Compositor-agnostic desktop base. Import hyprland.nix / plasma.nix / (later) niri.nix
-  # separately for the session you want.
+  # Compositor-agnostic desktop base. Import one session stack:
+  #   niri.nix     → greetd + dms-greeter
+  #   hyprland.nix → SDDM
+  #   plasma.nix   → SDDM
+  # Do not import niri.nix together with hyprland.nix or plasma.nix.
 
   services.xserver.enable = true;
-  services.displayManager.sddm.enable = true;
-  services.displayManager.sddm.settings.General.Numlock = "on";
 
   services.xserver.xkb = {
     layout = "us";
@@ -40,9 +41,20 @@
   # Removable/internal volumes for file managers (Dolphin Solid backend, etc.)
   services.udisks2.enable = true;
 
-  # KWallet PAM: SDDM stores creds in a socket; modules/home/kwallet.nix unlocks via systemd
-  security.pam.services.sddm.kwallet.enable = true;
-  security.pam.services.login.kwallet.enable = true;
+  security.pam.services = {
+    login.kwallet = {
+      enable = true;
+      package = pkgs.kdePackages.kwallet-pam;
+    };
+    greetd.kwallet = {
+      enable = true;
+      package = pkgs.kdePackages.kwallet-pam;
+    };
+    sddm.kwallet = {
+      enable = true;
+      package = pkgs.kdePackages.kwallet-pam;
+    };
+  };
 
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
