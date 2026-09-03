@@ -7,13 +7,15 @@
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/niri.nix
-    # ../../modules/nixos/hyprland.nix  # Hyprland session — enable later / other hosts
-    # ../../modules/nixos/plasma.nix  # full Plasma DE — enable later / other hosts
+    # ../../modules/nixos/hyprland.nix  # Hyprland + SDDM — enable later / other hosts
+    # ../../modules/nixos/plasma.nix  # Plasma + SDDM — enable later / other hosts
     ../../modules/nixos/gaming.nix
     ../../modules/nixos/networking-tailscale.nix
     ../../modules/nixos/virtualisation.nix
     ../../modules/nixos/hardware/nvidia-prime.nix
+    ../../modules/nixos/linuwu-sense
     ../../modules/nixos/damx
+    ../../modules/nixos/acer-sense
   ];
 
   # NTFS "Acer" partition - same permission style as Dolphin (uid/gid, dmask/fmask)
@@ -132,10 +134,13 @@
 
   programs.coolercontrol.enable = true;
 
-  programs.damx = {
+  programs.linuwu-sense = {
     enable = true;
-    linuwuSenseForce = "nitrov4";
+    force = "nitrov4";
   };
+
+  programs.damx.enable = true;
+  programs.acer-sense.enable = true;
 
   hardware.nvidia.prime = {
     sync.enable = true;

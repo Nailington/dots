@@ -24,7 +24,6 @@ in
     ../../modules/home/desktop.nix
     ../../modules/home/niri
     # ../../modules/home/hyprland  # Hyprland session — enable later / other hosts
-    ../../modules/home/kwallet.nix # PAM unlock via systemd (before niri/DMS apps)
     ../../modules/home/kde-apps.nix # without Plasma DE; skip if using modules/nixos/plasma.nix
     ../../modules/home/gaming.nix
     ../../modules/home/creative.nix

@@ -22,7 +22,6 @@ let
 in
 {
   # Hyprland-only session. niri/DMS uses modules/home/niri — do not import this.
-  # KWallet PAM unlock: modules/home/kwallet.nix (systemd graphical-session-pre), not exec-once.
   home.packages = with pkgs; [
     hyprpicker
     waybar
@@ -54,11 +53,11 @@ in
     enable = true;
     package = null; # Use the NixOS system package
     portalPackage = null;
-    # Needed so graphical-session-pre (kwallet unlock) runs before session apps
     systemd.enable = true;
     extraConfig = ''
-      # Polkit agent (Hyprland-specific). KWallet unlock is systemd — see modules/home/kwallet.nix
+      # Polkit agent (Hyprland-specific).
       exec-once = ${polkitAgent}
+      exec-once = ${pkgs.kdePackages.kwallet-pam}/libexec/pam_kwallet_init
 
       ${builtins.readFile ./hyprland.conf}
     '';

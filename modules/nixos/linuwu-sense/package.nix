@@ -1,8 +1,9 @@
-{ stdenv, lib, fetchurl, kernel, kmod }:
+{ stdenv, lib, fetchurl, kernel }:
 
 stdenv.mkDerivation rec {
   pname = "linuwu-sense";
   version = "25.701";
+  # Source is still the DAMX release tarball (ships Linuwu-Sense/).
   damxVersion = "0.9.1";
 
   src = fetchurl {
@@ -42,7 +43,7 @@ stdenv.mkDerivation rec {
 
   meta = with lib; {
     description = "Linuwu Sense kernel driver for Acer laptop hardware control";
-    homepage = "https://github.com/PXDiv/Div-Acer-Manager-Max";
+    homepage = "https://github.com/0x7375646F/Linuwu-Sense";
     license = licenses.gpl3;
     platforms = platforms.linux;
   };

@@ -66,6 +66,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    dank-greeter = {
+      url = "github:AvengeMedia/dank-greeter";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Needed for DMS niri.includes (rewrites config.kdl). Package still comes from nixpkgs.
     niri = {
       url = "github:sodiboo/niri-flake";
