@@ -9,6 +9,32 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Intel Mac (x86_64-darwin) is unsupported on nixos-unstable/26.11.
+    # Keep Linux on nixos-unstable; Darwin follows 26.05 until it EOL's end of 2026.
+    nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+
+    darwin = {
+      url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
+
+    home-manager-darwin = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs-darwin";
+    };
+
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+
     # Nailington's rofi themes (fork of adi1090x/rofi)
     rofi-themes = {
       url = "github:Nailington/rofi";
@@ -100,6 +126,7 @@
       inherit (import ./lib/hosts.nix { inherit self inputs; })
         mkNixosHost
         mkHomeConfiguration
+        mkDarwinHost
         ;
 
       pkgs = import nixpkgs {
@@ -235,6 +262,14 @@
           ./home/potter
           ./hosts/abacab/home.nix
         ];
+      };
+
+      # 2017 Intel iMac (OCLP). nix-darwin-26.05 + nixpkgs-26.05-darwin (Intel dropped
+      # in 26.11). Homebrew via nix-homebrew. Home: zsh/OMZ only — not Linux modules.
+      darwinConfigurations.ewbtciast = mkDarwinHost {
+        system = "x86_64-darwin";
+        modules = [ ./hosts/ewbtciast ];
+        homeModules = [ ./hosts/ewbtciast/home.nix ];
       };
 
       # Scaffold for non-NixOS / HM-only machines. roundabout itself still uses

@@ -22,16 +22,22 @@
 #   };
 #   Do NOT import modules/nixos/*.
 #
-# Add nix-darwin later:
-#   1. Add input: darwin.url = "github:LnL7/nix-darwin"; darwin.inputs.nixpkgs.follows = "nixpkgs";
-#   2. Create modules/darwin/common.nix and hosts/<mac>/default.nix
-#   3. Mirror mkNixosHost as mkDarwinHost (darwin.lib.darwinSystem + HM darwin module).
-#   4. Import only portable modules/home/* (common, dev-tui, …) — not hyprland, not osx-kvm.
-#      osx-kvm is KVM guest tooling on Linux NixOS, not for Mac hosts.
+# Add a nix-darwin host (macOS):
+#   1. darwin + nixpkgs-darwin + home-manager-darwin + nix-homebrew inputs (already in flake.nix).
+#      Intel (x86_64-darwin) must stay on nixpkgs-26.05-darwin; 26.11 dropped that platform.
+#   2. hosts/<name>/{default.nix, home.nix} — import modules/darwin/*, not modules/nixos/*.
+#   3. Home: modules/home/zsh.nix only from the Linux home tree (not common.nix / desktop / niri).
+#   4. Register:
+#        darwinConfigurations.<name> = mkDarwinHost {
+#          system = "x86_64-darwin";  # or aarch64-darwin
+#          modules = [ ./hosts/<name> ];
+#          homeModules = [ ./hosts/<name>/home.nix ];
+#        };
+#   Do not apply overlays.default (Linux-only packages / hardcoded x86_64-linux).
 { self, inputs }:
 
 let
-  inherit (inputs) nixpkgs home-manager;
+  inherit (inputs) nixpkgs home-manager darwin home-manager-darwin;
 in
 {
   mkNixosHost =
@@ -82,6 +88,38 @@ in
       inherit modules;
     };
 
-  # Stub for later — do not call until nix-darwin is an input:
-  # mkDarwinHost = { system, modules, homeModules, ... }: ...
+  mkDarwinHost =
+    {
+      system,
+      modules,
+      homeModules,
+      homeUser ? "potter",
+      extraOverlays ? [ ],
+      specialArgs ? {
+        inherit self inputs;
+      },
+    }:
+    darwin.lib.darwinSystem {
+      inherit system specialArgs;
+      modules = modules ++ [
+        {
+          nixpkgs.hostPlatform = system;
+          nixpkgs.config.allowUnfree = true;
+          # 26.05 still builds Intel Macs but warns; silence that on this flake.
+          nixpkgs.config.allowDeprecatedx86_64Darwin = true;
+          nixpkgs.overlays = extraOverlays;
+        }
+        home-manager-darwin.darwinModules.home-manager
+        {
+          home-manager.useGlobalPkgs = true;
+          home-manager.useUserPackages = true;
+          home-manager.backupFileExtension = "backup";
+          home-manager.overwriteBackup = true;
+          home-manager.extraSpecialArgs = { inherit inputs; };
+          home-manager.users.${homeUser} = {
+            imports = homeModules;
+          };
+        }
+      ];
+    };
 }

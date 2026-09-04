@@ -1,23 +1,13 @@
 { pkgs, ... }:
 
 {
+  imports = [ ./zsh.nix ];
+
   home.sessionVariables = {
     EDITOR = "nano";
   };
 
   programs.home-manager.enable = true;
-
-  programs.zsh = {
-    enable = true;
-    oh-my-zsh = {
-      enable = true;
-      plugins = [ "git" ];
-      theme = "essembeh";
-    };
-    initContent = ''
-      # Rofi themes scripts are already in PATH via the package
-    '';
-  };
 
   programs.ssh = {
     enable = true;
