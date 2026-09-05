@@ -10,13 +10,7 @@ let
 
   # Public list — same keys as GET /users/{user}/keys, no token needed at login.
   # https://docs.github.com/en/rest/users/keys
-  sshKeys = import ../../lib/ssh-keys.nix;
-  githubLoginKeys =
-    if builtins.pathExists ../../secrets/github-login-keys.nix then
-      import ../../secrets/github-login-keys.nix
-    else
-      [ ];
-  loginKeys = lib.unique (sshKeys.loginKeys ++ githubLoginKeys);
+  loginKeys = import ../../lib/ssh-login-keys.nix;
 
   githubKeys = pkgs.writeShellScript "github-authorized-keys" ''
     set -u

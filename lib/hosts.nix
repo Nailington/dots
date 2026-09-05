@@ -26,7 +26,9 @@
 #   1. darwin + nixpkgs-darwin + home-manager-darwin + nix-homebrew inputs (already in flake.nix).
 #      Intel (x86_64-darwin) must stay on nixpkgs-26.05-darwin; 26.11 dropped that platform.
 #   2. hosts/<name>/{default.nix, home.nix} — import modules/darwin/*, not modules/nixos/*.
-#   3. Home: modules/home/zsh.nix only from the Linux home tree (not common.nix / desktop / niri).
+#   3. Home: zsh.nix + ssh.nix from modules/home (not common.nix / desktop / niri).
+#      Incoming SSH: modules/darwin/ssh.nix (GitHub snapshot authorized_keys + Remote Login).
+#      User private key: agenix secrets/ssh/<name>/id_ed25519.age when that file exists.
 #   4. Register:
 #        darwinConfigurations.<name> = mkDarwinHost {
 #          system = "x86_64-darwin";  # or aarch64-darwin
@@ -109,6 +111,7 @@ in
           nixpkgs.config.allowDeprecatedx86_64Darwin = true;
           nixpkgs.overlays = extraOverlays;
         }
+        inputs.agenix.darwinModules.default
         home-manager-darwin.darwinModules.home-manager
         {
           home-manager.useGlobalPkgs = true;

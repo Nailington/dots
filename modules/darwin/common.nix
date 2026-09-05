@@ -1,7 +1,10 @@
 { pkgs, inputs, config, ... }:
 
 {
-  imports = [ inputs.nix-homebrew.darwinModules.nix-homebrew ];
+  imports = [
+    inputs.nix-homebrew.darwinModules.nix-homebrew
+    ./ssh.nix
+  ];
 
   nix.settings.experimental-features = [
     "nix-command"
@@ -15,6 +18,7 @@
     git
     wget
     curl
+    age
   ];
 
   nix-homebrew = {

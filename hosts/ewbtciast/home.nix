@@ -1,5 +1,8 @@
 {
-  imports = [ ../../modules/home/zsh.nix ];
+  imports = [
+    ../../modules/home/zsh.nix
+    ../../modules/home/ssh.nix
+  ];
 
   home.username = "potter";
   home.homeDirectory = "/Users/potter";
