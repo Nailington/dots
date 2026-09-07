@@ -18,5 +18,8 @@
     ffmpeg-full
     imagemagickBig
     kitty
+    bind
+    doggo
+    ldns
   ];
 }

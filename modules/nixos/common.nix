@@ -26,6 +26,9 @@
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
+  # Unpatched dynamic binaries (FHS) — ld.so from nix-ld. abacab + any host on common.
+  programs.nix-ld.enable = true;
+
   # Flakes + binary caches (Hydra/Attic; apply before first kernel switch)
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
