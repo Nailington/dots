@@ -57,4 +57,16 @@
     e2fsprogs
     usbutils
   ];
+
+  fonts.packages = with pkgs; [
+    nerd-fonts.roboto-mono
+    google-fonts
+    googlesans-code
+    nerd-fonts.googlesanscode
+    seguiemj
+    hojas-de-plata
+    google-sans
+    google-sans-flex
+  ];
+
 }

@@ -136,8 +136,8 @@ binds {
     Mod+Shift+Ctrl+L     { move-column-to-monitor-right; }
 
     // === Workspace Navigation ===
-    Mod+F1      { focus-workspace-down; }
-    Mod+F2        { focus-workspace-up; }
+    Mod+F1      { focus-workspace-up; }
+    Mod+F2        { focus-workspace-down; }
     // Mod+U              { focus-workspace-down; }
     // Mod+I              { focus-workspace-up; }
     Super+Shift+Down {  move-window-to-workspace-down; }
@@ -221,7 +221,13 @@ binds {
     Alt+XF86Launch1 hotkey-overlay-title="Screenshot: Window" { spawn "dms" "screenshot" "window"; }
     Print hotkey-overlay-title="Screenshot: Region" { spawn "dms" "screenshot"; }
     Ctrl+Print hotkey-overlay-title="Screenshot: Full Screen" { spawn "dms" "screenshot" "full"; }
-    Alt+Print hotkey-overlay-title="Screenshot: Window" { spawn "dms" "screenshot" "window"; }
+    Alt+Print hotkey-overlay-title="Screenshot: Window" { spawn "dms" "screenshot" "window"; } 
+
+    Mod+Shift+X {spawn "flameshot" "gui"; }
+    Super+Shift+X {spawn "flameshot" "gui"; }
+    Mod+Shift+S {spawn "flameshot" "gui"; }
+    Super+Shift+S {spawn "flameshot" "gui"; }
+
     // === Display Profiles ===
     Mod+P hotkey-overlay-title="Cycle Display Profile" {
         spawn "dms" "ipc" "outputs" "cycleProfile";

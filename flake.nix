@@ -201,6 +201,8 @@
         posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
         seguiemj = final.callPackage ./pkgs/seguiemj { };
         hojas-de-plata = final.callPackage ./pkgs/hojas-de-plata { };
+        google-sans = final.callPackage ./pkgs/google-sans { };
+        google-sans-flex = final.callPackage ./pkgs/google-sans-flex { };
         althea = final.callPackage ./pkgs/althea { };
         singularcard = final.callPackage ./pkgs/singularcard { };
         cider = final.callPackage ./pkgs/cider { };

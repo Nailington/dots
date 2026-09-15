@@ -1,6 +1,7 @@
 { pkgs, ... }:
 
 {
+  imports = [ ./flameshot ];
   home.packages = with pkgs; [
     (discord.override {
       withOpenASAR = true;
@@ -33,14 +34,22 @@
     lxappearance
     libsForQt5.qt5ct
     qt6Packages.qt6ct
+    adw-gtk3
     gtk3
     gtk4
-    # Fonts
-    nerd-fonts.roboto-mono
-    google-fonts
-    googlesans-code
-    seguiemj
-    hojas-de-plata
+    kdePackages.breeze
+    kdePackages.breeze-gtk
+    kdePackages.breeze-icons
+
+    # # Fonts
+    # nerd-fonts.roboto-mono
+    # google-fonts
+    # googlesans-code
+    # nerd-fonts.googlesanscode
+    # seguiemj
+    # hojas-de-plata
+
+    flameshot
   ];
 
   # programs.kitty = {
@@ -53,6 +62,7 @@
   #   # };
   # };
 
+
   home.pointerCursor = {
     name = "Posy_Cursor_Black";
     package = pkgs.posy-cursors;
@@ -61,70 +71,71 @@
     x11.enable = true;
   };
 
-  gtk = {
-    enable = true;
-    theme = {
-      name = "Breeze-Dark";
-      package = pkgs.kdePackages.breeze-gtk;
-    };
-    iconTheme = {
-      name = "breeze-dark";
-      package = pkgs.kdePackages.breeze-icons;
-    };
-    font = {
-      name = "Roboto";
-      size = 12;
-    };
-    gtk3.extraConfig = {
-      gtk-application-prefer-dark-theme = true;
-      gtk-font-name = "Roboto 12";
-    };
-    gtk4.extraConfig = {
-      gtk-application-prefer-dark-theme = true;
-      gtk-font-name = "Roboto 12";
-    };
-  };
+#   gtk = {
+#     enable = true;
+#     theme = {
+#       name = "Breeze-Dark";
+#       package = pkgs.kdePackages.breeze-gtk;
+#     };
+#     iconTheme = {
+#       name = "breeze-dark";
+#       package = pkgs.kdePackages.breeze-icons;
+#     };
+#     font = {
+#       name = "Roboto";
+#       size = 12;
+#     };
+#     gtk3.extraConfig = {
+#       gtk-application-prefer-dark-theme = true;
+#       gtk-font-name = "Roboto 12";
+#     };
+#     gtk4.extraConfig = {
+#       gtk-application-prefer-dark-theme = true;
+#       gtk-font-name = "Roboto 12";
+#     };
+#   };
 
-  dconf.settings."org/gnome/desktop/interface" = {
-    color-scheme = "prefer-dark";
-    monospace-font-name = "RobotoMono Nerd Font 12";
-    font-name = "Roboto 12";
-  };
+#   dconf.settings."org/gnome/desktop/interface" = {
+#     color-scheme = "prefer-dark";
+#     monospace-font-name = "RobotoMono Nerd Font 12";
+#     font-name = "Roboto 12";
+#   };
 
-  qt = {
-    enable = true;
-    platformTheme.name = "qtct";
-  };
+#   qt = {
+#     enable = true;
+#     platformTheme.name = "qtct";
+#   };
 
-  xdg.configFile."qt5ct/qt5ct.conf".text = ''
-    [Appearance]
-    color_scheme_path=${pkgs.libsForQt5.qt5ct}/share/qt5ct/colors/darker.conf
-    custom_palette=true
-    icon_theme=breeze-dark
-    standard_dialogs=default
-    style=Breeze
+#   xdg.configFile."qt5ct/qt5ct.conf".text = ''
+#     [Appearance]
+#     color_scheme_path=${pkgs.libsForQt5.qt5ct}/share/qt5ct/colors/darker.conf
+#     custom_palette=true
+#     icon_theme=breeze-dark
+#     standard_dialogs=default
+#     style=Breeze
 
-    [Fonts]
-    fixed="RobotoMono Nerd Font Propo [GOOG],12,-1,5,50,0,0,0,0,0,Regular"
-    general="Roboto,12,-1,5,50,0,0,0,0,0,Regular"
+#     [Fonts]
+#     fixed="RobotoMono Nerd Font Propo [GOOG],12,-1,5,50,0,0,0,0,0,Regular"
+#     general="Roboto,12,-1,5,50,0,0,0,0,0,Regular"
 
-    [Interface]
-    stylesheets=
-  '';
+#     [Interface]
+#     stylesheets=
+#   '';
 
-  xdg.configFile."qt6ct/qt6ct.conf".text = ''
-    [Appearance]
-    color_scheme_path=${pkgs.qt6Packages.qt6ct}/share/qt6ct/colors/darker.conf
-    custom_palette=true
-    icon_theme=breeze-dark
-    standard_dialogs=default
-    style=Breeze
+#   xdg.configFile."qt6ct/qt6ct.conf".text = ''
+#     [Appearance]
+#     color_scheme_path=${pkgs.qt6Packages.qt6ct}/share/qt6ct/colors/darker.conf
+#     custom_palette=true
+#     icon_theme=breeze-dark
+#     standard_dialogs=default
+#     style=Breeze
 
-    [Fonts]
-    fixed="RobotoMono Nerd Font Propo [GOOG],12,-1,5,50,0,0,0,0,0,Regular"
-    general="Roboto,12,-1,5,50,0,0,0,0,0,Regular"
+#     [Fonts]
+#     fixed="RobotoMono Nerd Font Propo [GOOG],12,-1,5,50,0,0,0,0,0,Regular"
+#     general="Roboto,12,-1,5,50,0,0,0,0,0,Regular"
 
-    [Interface]
-    stylesheets=
-  '';
+#     [Interface]
+#     stylesheets=
+#   '';
+
 }

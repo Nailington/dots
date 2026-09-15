@@ -59,5 +59,8 @@
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     FUSERMOUNT_PROG = "${pkgs.fuse3}/bin/fusermount3";
+    QT_QPA_PLATFORMTHEME = "qt6ct";
+    
+    
   };
 }

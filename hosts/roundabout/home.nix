@@ -23,6 +23,7 @@ in
     ../../modules/home/common.nix
     ../../modules/home/desktop.nix
     ../../modules/home/niri
+    ../../modules/home/kitty
     # ../../modules/home/hyprland  # Hyprland session — enable later / other hosts
     ../../modules/home/kde-apps.nix # without Plasma DE; skip if using modules/nixos/plasma.nix
     ../../modules/home/gaming.nix

@@ -26,7 +26,6 @@ in
     hyprpicker
     waybar
     rofi
-    flameshot
     grim
     slurp
     brightnessctl
@@ -132,7 +131,6 @@ in
   xdg.configFile."waybar/style.css".source = ./waybar/style.css;
   xdg.configFile."hypr/hyprlock.conf".source = ./hyprlock.conf;
   xdg.configFile."hypr/hypridle.conf".source = ./hypridle.conf;
-  xdg.configFile."flameshot/flameshot.ini".source = ./flameshot.ini;
 
   programs.rofi = {
     enable = true;
