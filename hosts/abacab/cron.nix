@@ -8,8 +8,8 @@
     systemCronJobs = [
       "TZ=America/New_York"
       # "53 9 * * * potter . /etc/profile; echo \"$PATH\" > /home/potter/test.txt"
-      "0 9-16 * * 1-5 potter . /etc/profile; cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
-      "30 9-16 * * 1-5 potter . /etc/profile; cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
+      "0 9,12,16 * * 1-5 potter . /etc/profile; cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
+      "30 9,16 * * 1-5 potter . /etc/profile; cd /mnt/storage/auto-rob && npm start >> /var/log/auto-rob.log 2>&1"
     ];
   };
 
