@@ -139,6 +139,88 @@ print("Patched", count, "Resolution key(s) ->", res)
     echo "Ready in ''${DATA_DIR} (resolution ''${RES}, OVMF ''${OVMF_FILE})"
   '';
 
+  usbDeviceArgs = lib.concatMapStringsSep "\n" (d: ''
+    osx_attach_vid_pid "${d.vendor}" "${d.product}"
+  '') cfg.usbDevices;
+
+  usbHelpers = ''
+    osx_unmount_block() {
+      local dev="$1" part
+      for part in "$dev"*; do
+        [ -b "$part" ] || continue
+        ${pkgs.udisks2}/bin/udisksctl unmount -b "$part" >/dev/null 2>&1 \
+          || ${pkgs.util-linux}/bin/umount "$part" >/dev/null 2>&1 \
+          || true
+      done
+    }
+
+    osx_find_usb_disk() {
+      local vid="$1" pid="$2" dev props v p
+      vid=$(printf '%04x' "$((16#$vid))")
+      pid=$(printf '%04x' "$((16#$pid))")
+      for dev in /dev/disk/by-id/usb-*; do
+        [ -e "$dev" ] || continue
+        case "$dev" in
+          *-part*) continue ;;
+        esac
+        props="$(${pkgs.systemd}/bin/udevadm info -q property -n "$dev" 2>/dev/null || true)"
+        v=$(printf '%s\n' "$props" | ${pkgs.gnused}/bin/sed -n 's/^ID_VENDOR_ID=//p' | ${pkgs.coreutils}/bin/head -n1)
+        p=$(printf '%s\n' "$props" | ${pkgs.gnused}/bin/sed -n 's/^ID_MODEL_ID=//p' | ${pkgs.coreutils}/bin/head -n1)
+        if [ "$v" = "$vid" ] && [ "$p" = "$pid" ]; then
+          echo "$dev"
+          return 0
+        fi
+      done
+      return 1
+    }
+
+    osx_attach_usb_disk() {
+      local path="$1"
+      if [ ! -e "$path" ]; then
+        echo "OSX_KVM_USB_DISK: not found: $path" >&2
+        exit 1
+      fi
+      osx_unmount_block "$path"
+      if [ ! -r "$path" ]; then
+        echo "OSX_KVM_USB_DISK: cannot read $path (unmount it, replug after udev, or nh os switch)" >&2
+        exit 1
+      fi
+      usb_args+=(-drive "if=none,id=usbdisk''${usb_disk_i},format=raw,file=''${path},cache=none,aio=threads")
+      usb_args+=(-device "usb-storage,drive=usbdisk''${usb_disk_i},bus=xhci.0,removable=true")
+      echo "USB disk -> guest as usb-storage: $path" >&2
+      usb_disk_i=$((usb_disk_i + 1))
+    }
+
+    osx_attach_vid_pid() {
+      local vid="$1" pid="$2" disk
+      if disk=$(osx_find_usb_disk "$vid" "$pid"); then
+        osx_attach_usb_disk "$disk"
+      else
+        echo "No /dev/disk/by-id for $vid:$pid — usb-host on EHCI (unmount the drive on the host first)" >&2
+        usb_args+=(-device "usb-host,vendorid=0x''${vid},productid=0x''${pid},bus=ehci.0")
+      fi
+    }
+  '';
+
+  osx-kvm-usb = pkgs.writeShellScriptBin "osx-kvm-usb" ''
+    ${commonEnv}
+    echo "Host USB devices:"
+    ${pkgs.usbutils}/bin/lsusb || true
+    echo
+    echo "USB disks (prefer these for macOS — whole disk, not -part*):"
+    shopt -s nullglob
+    for dev in /dev/disk/by-id/usb-*; do
+      case "$dev" in
+        *-part*) continue ;;
+      esac
+      echo "  $dev"
+    done
+    echo
+    echo "Stick / HDD (unmount on the host first):"
+    echo "  OSX_KVM_USB=0480:0202 osx-kvm-boot"
+    echo "  OSX_KVM_USB_DISK=/dev/disk/by-id/usb-... osx-kvm-boot"
+  '';
+
   osx-kvm-boot = pkgs.writeShellScriptBin "osx-kvm-boot" ''
     ${commonEnv}
     OVMF_FILE="${ovmfFile}"
@@ -163,14 +245,53 @@ print("Patched", count, "Resolution key(s) ->", res)
     CPU_CORES="''${OSX_KVM_CORES:-4}"
     CPU_THREADS="''${OSX_KVM_THREADS:-8}"
 
+    usb_args=()
+    usb_disk_i=0
+    ${usbHelpers}
+    ${usbDeviceArgs}
+    if [ -n "''${OSX_KVM_USB:-}" ]; then
+      _osx_usb="''${OSX_KVM_USB//[\[\]]/}"
+      IFS=',' read -ra _osx_usb_specs <<< "''${_osx_usb}"
+      for spec in "''${_osx_usb_specs[@]}"; do
+        spec="''${spec#"''${spec%%[![:space:]]*}"}"
+        spec="''${spec%"''${spec##*[![:space:]]}"}"
+        [ -n "$spec" ] || continue
+        vid="''${spec%%:*}"
+        pid="''${spec#*:}"
+        vid="''${vid#0x}"
+        pid="''${pid#0x}"
+        if [ -z "$vid" ] || [ -z "$pid" ] || [ "$vid" = "$spec" ]; then
+          echo "OSX_KVM_USB: expected vendor:product, got '$spec'" >&2
+          exit 1
+        fi
+        if ! [[ "$vid" =~ ^[0-9A-Fa-f]+$ && "$pid" =~ ^[0-9A-Fa-f]+$ ]]; then
+          echo "OSX_KVM_USB: vendor and product must be hex (got vendor='$vid' product='$pid')" >&2
+          exit 1
+        fi
+        osx_attach_vid_pid "$vid" "$pid"
+      done
+    fi
+    if [ -n "''${OSX_KVM_USB_DISK:-}" ]; then
+      IFS=',' read -ra _osx_usb_disks <<< "''${OSX_KVM_USB_DISK}"
+      for disk in "''${_osx_usb_disks[@]}"; do
+        disk="''${disk#"''${disk%%[![:space:]]*}"}"
+        disk="''${disk%"''${disk##*[![:space:]]}"}"
+        [ -n "$disk" ] || continue
+        osx_attach_usb_disk "$disk"
+      done
+    fi
+
     cd "''${DATA_DIR}"
     exec ${pkgs.qemu_kvm}/bin/qemu-system-x86_64 \
       -enable-kvm -m "''${ALLOCATED_RAM}" \
       -cpu Skylake-Client,-hle,-rtm,kvm=on,vendor=GenuineIntel,+invtsc,vmware-cpuid-freq=on,+ssse3,+sse4.2,+popcnt,+avx,+aes,+xsave,+xsaveopt,check \
       -machine q35 \
-      -device qemu-xhci,id=xhci -device usb-kbd,bus=xhci.0 -device usb-tablet,bus=xhci.0 \
-      -smp "''${CPU_THREADS}",cores="''${CPU_CORES}",sockets=1 \
+      -device qemu-xhci,id=xhci,p2=8,p3=8 \
       -device usb-ehci,id=ehci \
+      -device usb-kbd,bus=xhci.0 \
+      -device usb-tablet,bus=xhci.0 \
+      "''${usb_args[@]}" \
+      -smp "''${CPU_THREADS}",cores="''${CPU_CORES}",sockets=1 \
       -device isa-applesmc,osk="ourhardworkbythesewordsguardedpleasedontsteal(c)AppleComputerInc" \
       -drive if=pflash,format=raw,readonly=on,file="''${DATA_DIR}/OVMF_CODE_4M.fd" \
       -drive if=pflash,format=raw,file="''${DATA_DIR}/''${OVMF_FILE}" \
@@ -210,6 +331,37 @@ in
         Change this and re-run home-manager switch + osx-kvm-prepare to rebuild.
       '';
     };
+
+    usbDevices = lib.mkOption {
+      type = lib.types.listOf (
+        lib.types.submodule {
+          options = {
+            vendor = lib.mkOption {
+              type = lib.types.str;
+              example = "05ac";
+              description = "USB vendor id (hex, no 0x prefix).";
+            };
+            product = lib.mkOption {
+              type = lib.types.str;
+              example = "12a8";
+              description = "USB product id (hex, no 0x prefix).";
+            };
+          };
+        }
+      );
+      default = [ ];
+      example = [
+        {
+          vendor = "0781";
+          product = "5583";
+        }
+      ];
+      description = ''
+        Host USB devices. Mass-storage ids are attached as usb-storage (what macOS
+        actually sees). Other devices fall back to usb-host on EHCI.
+        Ad-hoc: OSX_KVM_USB=vvvv:pppp or OSX_KVM_USB_DISK=/dev/disk/by-id/usb-...
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -224,10 +376,12 @@ in
       tesseract
       tesseract5
       cdrtools
+      usbutils
       osx-kvm-fetch
       osx-kvm-prepare
       osx-kvm-boot
       osx-kvm
+      osx-kvm-usb
     ];
   };
 }

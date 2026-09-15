@@ -88,6 +88,10 @@
     # BT5.1 mouse: stable symlinks under /dev/
     SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="BT5.1 Mouse", SYMLINK+="bt51-mouse"
     SUBSYSTEM=="input", KERNEL=="event*", ATTRS{name}=="BT5.1 Mouse Keyboard", SYMLINK+="bt51-mouse-kbd"
+
+    # QEMU usb-host + raw USB disks for osx-kvm (potter is in kvm)
+    SUBSYSTEM=="usb", MODE="0664", GROUP="kvm"
+    SUBSYSTEM=="block", SUBSYSTEMS=="usb", GROUP="kvm", MODE="0660"
   '';
 
   environment.etc."libinput/local-overrides.quirks".text = ''
