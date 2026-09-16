@@ -11,16 +11,18 @@
 
     # Intel Mac (x86_64-darwin) is unsupported on nixos-unstable/26.11.
     # Keep Linux on nixos-unstable; Darwin follows 26.05 until it EOL's end of 2026.
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
+
 
     darwin = {
       url = "github:nix-darwin/nix-darwin/nix-darwin-26.05";
-      inputs.nixpkgs.follows = "nixpkgs-darwin";
+      # inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
     home-manager-darwin = {
       url = "github:nix-community/home-manager/release-26.05";
-      inputs.nixpkgs.follows = "nixpkgs-darwin";
+      # inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";

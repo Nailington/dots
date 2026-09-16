@@ -23,8 +23,9 @@
 #   Do NOT import modules/nixos/*.
 #
 # Add a nix-darwin host (macOS):
-#   1. darwin + nixpkgs-darwin + home-manager-darwin + nix-homebrew inputs (already in flake.nix).
-#      Intel (x86_64-darwin) must stay on nixpkgs-26.05-darwin; 26.11 dropped that platform.
+#   1. darwin + nixpkgs-darwin + nixpkgs-unstable + home-manager-darwin + nix-homebrew
+#      (already in flake.nix). mkDarwinHost: x86_64-darwin -> nixpkgs-26.05-darwin;
+#      other Darwin -> nixpkgs-unstable. NixOS always uses nixos-unstable.
 #   2. hosts/<name>/{default.nix, home.nix} — import modules/darwin/*, not modules/nixos/*.
 #   3. Home: zsh.nix + ssh.nix from modules/home (not common.nix / desktop / niri).
 #      Incoming SSH: modules/darwin/ssh.nix (GitHub snapshot authorized_keys + Remote Login).
@@ -40,6 +41,20 @@
 
 let
   inherit (inputs) nixpkgs home-manager darwin home-manager-darwin;
+  inherit (nixpkgs.lib) hasPrefix hasSuffix;
+
+  # NixOS / Linux HM: always github:NixOS/nixpkgs/nixos-unstable — not nixpkgs-unstable.
+  nixosNixpkgs = inputs.nixpkgs;
+
+  # Darwin pkgs: Intel is gone from unstable, so x86_64 stays on 26.05.
+  darwinNixpkgsFor =
+    system:
+    if !hasSuffix "-darwin" system then
+      throw "mkDarwinHost: '${system}' is not a darwin system"
+    else if hasPrefix "x86_64" system then
+      inputs.nixpkgs-darwin
+    else
+      inputs.nixpkgs-unstable;
 in
 {
   mkNixosHost =
@@ -53,7 +68,7 @@ in
         inherit self inputs;
       },
     }:
-    nixpkgs.lib.nixosSystem {
+    nixosNixpkgs.lib.nixosSystem {
       inherit system specialArgs;
       modules = modules ++ [
         { nixpkgs.overlays = [ self.overlays.default ] ++ extraOverlays; }
@@ -79,7 +94,7 @@ in
       extraOverlays ? [ ],
     }:
     home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixpkgs {
+      pkgs = import nixosNixpkgs {
         inherit system;
         config = {
           allowUnfree = true;
@@ -103,14 +118,16 @@ in
     }:
     darwin.lib.darwinSystem {
       inherit system specialArgs;
-      modules = modules ++ [
-        {
-          nixpkgs.hostPlatform = system;
-          nixpkgs.config.allowUnfree = true;
+      pkgs = import (darwinNixpkgsFor system) {
+        inherit system;
+        config = {
+          allowUnfree = true;
           # 26.05 still builds Intel Macs but warns; silence that on this flake.
-          nixpkgs.config.allowDeprecatedx86_64Darwin = true;
-          nixpkgs.overlays = extraOverlays;
-        }
+          allowDeprecatedx86_64Darwin = hasPrefix "x86_64" system;
+        };
+        overlays = extraOverlays;
+      };
+      modules = modules ++ [
         inputs.agenix.darwinModules.default
         home-manager-darwin.darwinModules.home-manager
         {
