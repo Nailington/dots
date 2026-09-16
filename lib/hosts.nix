@@ -24,8 +24,9 @@
 #
 # Add a nix-darwin host (macOS):
 #   1. darwin + nixpkgs-darwin + nixpkgs-unstable + home-manager-darwin + nix-homebrew
-#      (already in flake.nix). mkDarwinHost: x86_64-darwin -> nixpkgs-26.05-darwin;
-#      other Darwin -> nixpkgs-unstable. NixOS always uses nixos-unstable.
+#      + determinate (already in flake.nix). mkDarwinHost: x86_64-darwin ->
+#      nixpkgs-26.05-darwin; other Darwin -> nixpkgs-unstable. NixOS always uses
+#      nixos-unstable. Determinate owns Nix on Darwin (nix.enable = false).
 #   2. hosts/<name>/{default.nix, home.nix} — import modules/darwin/*, not modules/nixos/*.
 #   3. Home: zsh.nix + ssh.nix from modules/home (not common.nix / desktop / niri).
 #      Incoming SSH: modules/darwin/ssh.nix (GitHub snapshot authorized_keys + Remote Login).
@@ -128,6 +129,11 @@ in
         overlays = extraOverlays;
       };
       modules = modules ++ [
+        inputs.determinate.darwinModules.default
+        {
+          # Determinate owns /etc/nix/nix.conf; do not let nix-darwin replace it.
+          determinateNix.enable = true;
+        }
         inputs.agenix.darwinModules.default
         home-manager-darwin.darwinModules.home-manager
         {

@@ -25,6 +25,9 @@
       # inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
+    # Darwin-only. Do not import determinate.nixosModules on Linux hosts.
+    determinate.url = "https://flakehub.com/f/DeterminateSystems/determinate/3";
+
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
     homebrew-core = {
