@@ -145,31 +145,14 @@
     {
       packages.${system} =
         let
-          sync-age-recipients = pkgs.writeShellApplication {
-            name = "sync-age-recipients";
-            runtimeInputs = with pkgs; [
-              age
-              curl
-              git
-              openssh
-              nix
-              python3
-              findutils
-              coreutils
-            ];
-            text = builtins.readFile ./scripts/sync-age-recipients.sh;
-          };
-          nh = pkgs.writeShellApplication {
-            name = "nh";
-            runtimeInputs = [ sync-age-recipients ];
-            text = ''
-              if [[ -z "''${SYNC_AGE_DONE:-}" && "''${1:-}" == os && ( "''${2:-}" == switch || "''${2:-}" == boot || "''${2:-}" == test ) ]]; then
-                export SYNC_AGE_DONE=1
-                sync-age-recipients || exit $?
-              fi
-              exec ${pkgs.lib.getExe pkgs.nh} "$@"
-            '';
-          };
+          inherit
+            (import ./pkgs/nh-wrapped.nix {
+              inherit pkgs;
+              syncAgeRecipientsText = builtins.readFile ./scripts/sync-age-recipients.sh;
+            })
+            sync-age-recipients
+            nh
+            ;
           nixos-anywhere-unwrapped =
             inputs.nixos-anywhere.packages.${system}.nixos-anywhere
               or inputs.nixos-anywhere.packages.${system}.default;

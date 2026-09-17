@@ -1,5 +1,15 @@
 { pkgs, inputs, config, ... }:
 
+let
+  inherit
+    (import ../../pkgs/nh-wrapped.nix {
+      inherit pkgs;
+      syncAgeRecipientsText = builtins.readFile ../../scripts/sync-age-recipients.sh;
+    })
+    nh
+    sync-age-recipients
+    ;
+in
 {
   imports = [
     inputs.nix-homebrew.darwinModules.nix-homebrew
@@ -8,12 +18,14 @@
 
   programs.zsh.enable = true;
 
-  environment.systemPackages = with pkgs; [
-    vim
-    git
-    wget
-    curl
-    age
+  environment.systemPackages = [
+    pkgs.vim
+    pkgs.git
+    pkgs.wget
+    pkgs.curl
+    pkgs.age
+    nh
+    sync-age-recipients
   ];
 
   nix-homebrew = {
