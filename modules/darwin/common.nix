@@ -50,6 +50,6 @@ in
       upgrade = false;
     };
     brews = [ ];
-    casks = [ ];
+    casks = [ "bluebubbles" ];
   };
 }
