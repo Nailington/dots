@@ -12,6 +12,7 @@ let
       python3
       findutils
       coreutils
+      diffutils
     ];
     text = syncAgeRecipientsText;
   };

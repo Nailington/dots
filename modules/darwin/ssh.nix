@@ -17,11 +17,9 @@ in
   # the same snapshot as secrets/github-login-keys.nix (refresh via
   # sync-age-recipients, then rebuild).
   #
-  # Outgoing identity: agenix → ~/.ssh/id_ed25519 when secrets/ssh/<host>/ exists.
-  # First switch can omit that file. Then:
-  #   1. Copy /etc/ssh/ssh_host_ed25519_key.pub into secrets/ssh/<host>/
-  #   2. Run sync-age-recipients on roundabout (host pub becomes an age recipient)
-  #   3. Generate the user key, agenix-encrypt it, rebuild — decrypt uses the host key
+  # Outgoing identity: agenix → ~/.ssh/id_ed25519 when secrets/ssh/<host>/id_ed25519.age exists.
+  # nh darwin switch snapshots this machine's pubs into secrets/ssh/<host>/ (host + user).
+  # Add the user pub to GitHub, then nh os switch on roundabout to re-encrypt secrets.
 
   services.openssh.enable = true;
   services.openssh.extraConfig = ''

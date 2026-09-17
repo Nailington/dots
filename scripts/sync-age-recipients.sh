@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Fetch GitHub SSH pubs + known host pubs. Re-encrypt + commit only when a new key appears.
-# Run from nixos-remote-install or as `sync-age-recipients` on PATH (nh os switch).
+# Snapshot this machine's SSH pubs, fetch GitHub SSH pubs, refresh age recipients.
+# Re-encrypt + commit only when something new appears.
+# Run from nixos-remote-install or as `sync-age-recipients` on PATH (nh os/darwin switch).
 set -euo pipefail
 
 FLAKE_ROOT="${FLAKE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
@@ -11,12 +12,66 @@ if [[ ! -f flake.nix ]]; then
 fi
 
 AGE_IDENTITY="${AGE_IDENTITY:-$HOME/.ssh/id_ed25519}"
-if [[ ! -f "$AGE_IDENTITY" && -f /etc/ssh/ssh_host_ed25519_key ]]; then
+if [[ ! -r "$AGE_IDENTITY" && -r /etc/ssh/ssh_host_ed25519_key ]]; then
   AGE_IDENTITY=/etc/ssh/ssh_host_ed25519_key
 fi
-if [[ ! -f "$AGE_IDENTITY" ]]; then
-  echo "No age identity (need ~/.ssh/id_ed25519 or /etc/ssh/ssh_host_ed25519_key)" >&2
-  exit 1
+
+this_host_name() {
+  if [[ -n "${SYNC_AGE_HOST:-}" ]]; then
+    printf '%s\n' "$SYNC_AGE_HOST"
+    return
+  fi
+  if [[ -x /usr/sbin/scutil ]]; then
+    /usr/sbin/scutil --get LocalHostName
+  elif [[ -x /bin/hostname ]]; then
+    /bin/hostname -s
+  else
+    hostname -s
+  fi
+}
+
+copy_if_changed() {
+  local src=$1 dest=$2
+  [[ -r "$src" ]] || return 1
+  mkdir -p "$(dirname "$dest")"
+  if [[ -f "$dest" ]] && cmp -s "$src" "$dest"; then
+    return 1
+  fi
+  cp "$src" "$dest"
+  return 0
+}
+
+HOST="$(this_host_name)"
+LOCAL_PUBS_CHANGED=0
+if [[ -n "$HOST" && -d "hosts/${HOST}" ]]; then
+  echo "==> snapshot ${HOST} SSH pubs into secrets/ssh/${HOST}/"
+  SECRET_DIR="secrets/ssh/${HOST}"
+  mkdir -p "$SECRET_DIR"
+  if copy_if_changed /etc/ssh/ssh_host_ed25519_key.pub "${SECRET_DIR}/ssh_host_ed25519_key.pub"; then
+    echo "    host pub -> ${SECRET_DIR}/ssh_host_ed25519_key.pub (age recipient; not for GitHub)"
+    LOCAL_PUBS_CHANGED=1
+  fi
+  USER_PRIV="${HOME}/.ssh/id_ed25519"
+  USER_PUB="${HOME}/.ssh/id_ed25519.pub"
+  STORE_USER_PUB="${SECRET_DIR}/id_ed25519.pub"
+  # Already in the store: do not mint a second key or overwrite the snapshot.
+  if [[ -f "$STORE_USER_PUB" ]]; then
+    echo "    user pub already in store; leave ${STORE_USER_PUB} alone"
+  else
+    if [[ ! -e "$USER_PRIV" && ! -f "$USER_PUB" ]]; then
+      echo "    generating ${USER_PRIV} (potter@${HOST})"
+      mkdir -p "${HOME}/.ssh"
+      chmod 700 "${HOME}/.ssh"
+      ssh-keygen -t ed25519 -N "" -C "potter@${HOST}" -f "$USER_PRIV"
+    fi
+    if copy_if_changed "$USER_PUB" "$STORE_USER_PUB"; then
+      echo "    user pub -> ${STORE_USER_PUB}  (add this to GitHub)"
+      LOCAL_PUBS_CHANGED=1
+    fi
+  fi
+  if [[ -r "$USER_PRIV" && ! -r "$AGE_IDENTITY" ]]; then
+    AGE_IDENTITY="$USER_PRIV"
+  fi
 fi
 
 mapfile -t GH_USERS < <(nix eval --raw --impure --expr '
@@ -146,13 +201,10 @@ print("    no new age recipients")
 raise SystemExit(3 if login_changed else 2)
 PY
 
-if [[ "$py_rc" -eq 2 ]]; then
-  echo "==> no new keys; skip re-encrypt/commit"
-  exit 0
-fi
-if [[ "$py_rc" -ne 0 && "$py_rc" -ne 3 ]]; then
-  exit "$py_rc"
-fi
+stage_secret_pubs() {
+  git add -- secrets/ssh/*/id_ed25519.pub secrets/ssh/*/ssh_host_ed25519_key.pub \
+    2>/dev/null || true
+}
 
 commit_and_push_secrets() {
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -188,13 +240,34 @@ commit_and_push_secrets() {
     ssh_origin="${ssh_origin%.git}.git"
   fi
   echo "==> push ${ssh_origin}"
-  export GIT_SSH_COMMAND="ssh -i ${AGE_IDENTITY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
-  git push "$ssh_origin" HEAD
+  if [[ -r "$AGE_IDENTITY" ]]; then
+    export GIT_SSH_COMMAND="ssh -i ${AGE_IDENTITY} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"
+  fi
+  if ! git push "$ssh_origin" HEAD; then
+    echo "==> push failed (new key not on GitHub yet?). Commit is local." >&2
+    echo "    Add secrets/ssh/${HOST}/id_ed25519.pub to GitHub, then: git push" >&2
+  fi
 }
+
+if [[ "$py_rc" -eq 2 ]]; then
+  if [[ "$LOCAL_PUBS_CHANGED" -eq 1 ]]; then
+    echo "==> local SSH pubs updated; commit (no re-encrypt)"
+    stage_secret_pubs
+    commit_and_push_secrets
+    echo "    Add secrets/ssh/${HOST}/id_ed25519.pub to GitHub, then nh os switch on roundabout to re-encrypt."
+    exit 0
+  fi
+  echo "==> no new keys; skip re-encrypt/commit"
+  exit 0
+fi
+if [[ "$py_rc" -ne 0 && "$py_rc" -ne 3 ]]; then
+  exit "$py_rc"
+fi
 
 if [[ "$py_rc" -eq 3 ]]; then
   echo "==> GitHub login keys updated; skip age re-encrypt"
   git add -- secrets/github-login-keys.nix 2>/dev/null || true
+  stage_secret_pubs
   commit_and_push_secrets
   exit 0
 fi
@@ -204,18 +277,44 @@ AGE_FILES=(secrets/**/*.age)
 if [[ ${#AGE_FILES[@]} -eq 0 ]]; then
   echo "==> no .age files yet; wrote secrets/recipients.nix only"
   git add -- secrets/recipients.nix secrets/github-login-keys.nix 2>/dev/null || true
+  stage_secret_pubs
   commit_and_push_secrets
   exit 0
 fi
 
 echo "==> re-encrypting ${#AGE_FILES[@]} secret(s) to current GitHub + host pubs"
+if [[ ! -r "$AGE_IDENTITY" ]]; then
+  echo "    no readable age identity; skip re-encrypt (run nh os switch on roundabout)" >&2
+  git checkout -- secrets/recipients.nix 2>/dev/null || true
+  if [[ "$LOCAL_PUBS_CHANGED" -eq 1 ]]; then
+    stage_secret_pubs
+    commit_and_push_secrets
+  fi
+  exit 0
+fi
+
+reencrypt_ok=1
 for f in "${AGE_FILES[@]}"; do
   echo "    $f"
-  age -d -i "$AGE_IDENTITY" "$f" >"$STAGING/plain"
+  if ! age -d -i "$AGE_IDENTITY" "$f" >"$STAGING/plain"; then
+    echo "    cannot decrypt with ${AGE_IDENTITY}; skip re-encrypt (run nh os switch on roundabout)" >&2
+    reencrypt_ok=0
+    break
+  fi
   age -e -R "$RECIPIENTS_FILE" -o "$STAGING/out.age" "$STAGING/plain"
   mv "$STAGING/out.age" "$f"
   rm -f "$STAGING/plain"
 done
 
-git add -- secrets/recipients.nix secrets/github-login-keys.nix "${AGE_FILES[@]}"
-commit_and_push_secrets
+if [[ "$reencrypt_ok" -eq 1 ]]; then
+  git add -- secrets/recipients.nix secrets/github-login-keys.nix "${AGE_FILES[@]}"
+  stage_secret_pubs
+  commit_and_push_secrets
+else
+  git checkout -- secrets/recipients.nix "${AGE_FILES[@]}" 2>/dev/null || true
+  if [[ "$LOCAL_PUBS_CHANGED" -eq 1 ]]; then
+    stage_secret_pubs
+    commit_and_push_secrets
+  fi
+  echo "    Add secrets/ssh/${HOST}/id_ed25519.pub to GitHub, then nh os switch on roundabout to re-encrypt."
+fi
