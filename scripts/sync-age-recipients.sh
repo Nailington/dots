@@ -30,12 +30,24 @@ this_host_name() {
   fi
 }
 
+ssh_ident() {
+  local type blob
+  read -r type blob _ <"$1" || return 1
+  printf '%s %s\n' "$type" "$blob"
+}
+
+# Copy only when dest is missing or the key blob differs (comments/whitespace ignored).
 copy_if_changed() {
   local src=$1 dest=$2
   [[ -r "$src" ]] || return 1
   mkdir -p "$(dirname "$dest")"
-  if [[ -f "$dest" ]] && cmp -s "$src" "$dest"; then
-    return 1
+  if [[ -f "$dest" ]]; then
+    local a b
+    a="$(ssh_ident "$src")"
+    b="$(ssh_ident "$dest")"
+    if [[ -n "$a" && "$a" == "$b" ]]; then
+      return 1
+    fi
   fi
   cp "$src" "$dest"
   return 0
@@ -251,8 +263,12 @@ commit_and_push_secrets() {
 
 if [[ "$py_rc" -eq 2 ]]; then
   if [[ "$LOCAL_PUBS_CHANGED" -eq 1 ]]; then
-    echo "==> local SSH pubs updated; commit (no re-encrypt)"
     stage_secret_pubs
+    if git diff --cached --quiet 2>/dev/null; then
+      echo "==> no new keys; skip re-encrypt/commit"
+      exit 0
+    fi
+    echo "==> local SSH pubs updated; commit (no re-encrypt)"
     commit_and_push_secrets
     echo "    Add secrets/ssh/${HOST}/id_ed25519.pub to GitHub, then nh os switch on roundabout to re-encrypt."
     exit 0
