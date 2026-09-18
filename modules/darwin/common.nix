@@ -49,7 +49,7 @@ in
       autoUpdate = false;
       upgrade = false;
     };
-    brews = [ ];
-    casks = [ "bluebubbles" ];
+    brews = [ "btop" ];
+    casks = [ ];
   };
 }
