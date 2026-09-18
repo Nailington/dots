@@ -25,13 +25,17 @@ in
     pkgs.curl
     pkgs.age
     pkgs.btop
+    pkgs.gh
+    pkgs.cursor-cli
+    pkgs.code-cursor
+    pkgs.fastfetch
     nh
     sync-age-recipients
   ];
 
   nix-homebrew = {
     enable = true;
-    # Intel Mac — Rosetta prefix is Apple Silicon only.
+    # Intel Mac ??? Rosetta prefix is Apple Silicon only.
     enableRosetta = false;
     user = "potter";
     taps = {
