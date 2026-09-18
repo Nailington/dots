@@ -24,6 +24,7 @@ in
     pkgs.wget
     pkgs.curl
     pkgs.age
+    pkgs.btop
     nh
     sync-age-recipients
   ];
@@ -49,7 +50,7 @@ in
       autoUpdate = false;
       upgrade = false;
     };
-    brews = [ "btop" ];
+    brews = [ ];
     casks = [ ];
   };
 }
