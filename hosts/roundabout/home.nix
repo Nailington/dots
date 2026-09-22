@@ -31,6 +31,7 @@ in
     ../../modules/home/spicetify.nix
     ../../modules/home/dev-tui.nix
     ../../modules/home/dev-gui.nix
+    ../../modules/home/kde-craft.nix
     ../../modules/home/osx-kvm # macOS guest on NixOS via KVM — not nix-darwin
   ];
 
