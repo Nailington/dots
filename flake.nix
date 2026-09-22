@@ -161,6 +161,7 @@
           inherit sync-age-recipients nh;
           twitch-drops-miner = pkgs.twitch-drops-miner;
           auto-rob = pkgs.auto-rob;
+          kde-craft = pkgs.kde-craft;
           nixos-remote-install = pkgs.writeShellApplication {
             name = "nixos-remote-install";
             runtimeInputs = (with pkgs; [
@@ -196,6 +197,7 @@
         cider = final.callPackage ./pkgs/cider { };
         twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
         auto-rob = final.callPackage ./pkgs/auto-rob { };
+        kde-craft = final.callPackage ./pkgs/kde-craft { };
 
         nix-index = nix-index.packages.${system}.default;
 
@@ -272,5 +274,8 @@
           ./hosts/roundabout/home.nix
         ];
       };
+
+      # FHS sandbox + wrappers. Craft itself lives in ~/CraftRoot (writable).
+      devShells.${system}.craft = pkgs.kde-craft.devShell;
     };
 }
