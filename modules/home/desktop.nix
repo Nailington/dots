@@ -38,6 +38,7 @@
     gtk3
     gtk4
     kdePackages.breeze
+    kdePackages.breeze.qt5
     kdePackages.breeze-gtk
     kdePackages.breeze-icons
 

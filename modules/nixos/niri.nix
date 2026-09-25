@@ -7,6 +7,7 @@
   imports = [
     inputs.niri.nixosModules.niri
     inputs.dank-greeter.nixosModules.default
+    inputs.qtengine.nixosModules.default
   ];
 
   assertions = [
@@ -47,7 +48,32 @@
   security.polkit.enable = true;
 
   # X11 apps (Steam, some games). niri starts it from PATH when present.
-  environment.systemPackages = [ pkgs.xwayland-satellite ];
+  environment.systemPackages = [
+    pkgs.xwayland-satellite
+    # Qt5 Breeze style. Qt6 Breeze is already in the home profile.
+    pkgs.kdePackages.breeze.qt5
+  ];
+
+  # qt5ct and qt6ct stay installed (modules/home/desktop.nix). This session
+  # uses qtengine so KDE apps follow DMS matugen colors with the Breeze style.
+  # DMS rewrites ~/.config/qtengine/config.json on theme changes and keeps
+  # theme.style; this file is the fallback at /etc/xdg/qtengine/config.json.
+  programs.qtengine = {
+    enable = true;
+    config.theme = {
+      colorScheme = "${config.users.users.potter.home}/.local/share/color-schemes/DankMatugen.colors";
+      iconTheme = "breeze-dark";
+      style = "breeze";
+      font = {
+        family = "Google Sans Flex";
+        size = 12;
+      };
+      fontFixed = {
+        family = "GoogleSansCode NF";
+        size = 12;
+      };
+    };
+  };
 
   xdg.portal.extraPortals = [ pkgs.kdePackages.xdg-desktop-portal-kde ];
   xdg.portal.config.niri = {

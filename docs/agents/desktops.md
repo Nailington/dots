@@ -40,7 +40,7 @@ PAM hooks for `login`, `greetd`, and `sddm` are in `modules/nixos/desktop.nix` (
 
 ## Themes, cursor, fonts
 
-- QT/GTK theme blocks in `modules/home/desktop.nix` are commented out on purpose ("shelved"). Leave the comments. The user wants Breeze through DMS eventually; that work is not done.
+- QT/GTK theme blocks in `modules/home/desktop.nix` stay commented. The niri session uses qtengine (`programs.qtengine` in `modules/nixos/niri.nix`): Breeze style, icons `breeze-dark`, colors from DMS `~/.local/share/color-schemes/DankMatugen.colors`. qt5ct and qt6ct stay installed. Do not set `QT_QPA_PLATFORMTHEME` in `modules/nixos/desktop.nix`; that session variable overrides qtengine.
 - Cursor theme package is `posys-cursor-scalable` (hyprcursors). On niri it still needs a real X/hypr cursor theme (`posy-cursors` was installed for that). Check `modules/home/niri/dms/cursor.kdl` and `desktop.nix` before changing it.
 - Fonts are system packages in `modules/nixos/common.nix`: RobotoMono Nerd Font, Google fonts, Google Sans Code, `seguiemj`, `hojas-de-plata`, `google-sans`, `google-sans-flex`. The copies under `home.packages` in `desktop.nix` are commented because the system set already covers them.
 

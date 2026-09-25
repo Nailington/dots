@@ -107,6 +107,20 @@
       url = "github:sodiboo/niri-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    qtengine = {
+      url = "github:kossLAN/qtengine";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # Unofficial ChatGPT Community desktop (codex-desktop). Follow nixpkgs so
+    # the wrapper's runtime libraries match this system's nix-ld.
+    # https://github.com/ilysenko/codex-desktop-linux/blob/main/docs/nix.md
+    codex-desktop-linux = {
+      url = "github:ilysenko/codex-desktop-linux";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =

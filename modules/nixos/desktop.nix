@@ -1,6 +1,10 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
+  imports = [
+    inputs.codex-desktop-linux.nixosModules.default
+  ];
+
   # Compositor-agnostic desktop base. Import one session stack:
   #   niri.nix     → greetd + dms-greeter
   #   hyprland.nix → SDDM
@@ -15,6 +19,20 @@
   };
 
   programs.firefox.enable = true;
+
+  # Community repackage of OpenAI's official Linux desktop. Optional
+  # linuxFeatures stay off. nix-ld (common.nix) gets the workspace libs.
+  programs.codexDesktopLinux = {
+    enable = true;
+    # linuxFeatures = [ "ui-tweaks" "remote-mobile-control" "remote-control-ui" ];
+  };
+  # Their flake nixConfig does not apply to an input; trust the cache here.
+  nix.settings = {
+    extra-substituters = [ "https://codex-desktop-linux.cachix.org" ];
+    extra-trusted-public-keys = [
+      "codex-desktop-linux.cachix.org-1:nX/xy6AdK9hQE24A8ALGjkCKj2ObFmcnemiL5Cid4nk="
+    ];
+  };
 
   services.printing.enable = true;
 
@@ -59,8 +77,7 @@
   environment.sessionVariables = {
     NIXOS_OZONE_WL = "1";
     FUSERMOUNT_PROG = "${pkgs.fuse3}/bin/fusermount3";
-    QT_QPA_PLATFORMTHEME = "qt6ct";
-    
-    
+    # Platform theme is qtengine (modules/nixos/niri.nix). Do not set
+    # QT_QPA_PLATFORMTHEME here; a session variable would override it.
   };
 }
