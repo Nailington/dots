@@ -34,7 +34,7 @@ It kexec'd from a BIOS environment, so systemd-boot could not boot it. Loader is
 
 `/mnt/storage` (`39ed1bbb-0ebf-43fd-a02e-62187377b916`) is an existing data disk. It is mounted with `nofail` and is **outside** disko so a reinstall does not format it.
 
-Networking overrides NetworkManager (`mkForce false`): systemd-networkd, static `45.92.216.66/23`, gateway `45.92.216.1`, DNS `1.1.1.1` / `1.0.0.1`. No Mullvad, no desktop, no gaming.
+Networking overrides NetworkManager (`mkForce false`): systemd-networkd, static `45.92.216.66/23`, gateway `45.92.216.1`, DNS `1.1.1.1` / `1.0.0.1`. Mullvad egress is available through Tailscale exit nodes; there is no Mullvad daemon, desktop, or gaming stack.
 
 Imports: `common`, `tailscale`, `nginx.nix`, `cron.nix`, disko. Home is `common` + `dev-tui` only.
 
@@ -46,6 +46,8 @@ Other facts:
 - Nginx vhosts are written inline in `hosts/abacab/nginx.nix` (ACME per hostname, email `acme@hammerpot.dev`). The comment about `../../nginx-conf/` is historical. The Ubuntu copies live in the unversioned parent folder `nixOSmoment/nginx-conf/` and are not imported.
 - Minecraft Java for `ftc.hammerpot.dev` is TCP/UDP `40002`.
 - Cron (`hosts/abacab/cron.nix`) runs `/mnt/storage/auto-rob` (`npm start`) on weekdays. Jobs source `/etc/profile` because cron's default PATH misses user profiles. Log: `/var/log/auto-rob.log`.
+- qBittorrent runs headlessly. Downloads go to `/mnt/storage/torrents`, and the service requires that mount. Potter belongs to the `qbittorrent` group to manage downloaded files after a new login. Torrent sockets are bound to `tailscale0` and the systemd unit allows only `tailscale0` and loopback; its Web UI listens on `127.0.0.1:8080` and the firewall does not expose it. From the laptop, run `ssh -L 8080:127.0.0.1:8080 abacab` and open `http://127.0.0.1:8080`. On first launch, get the temporary admin password with `sudo journalctl -u qbittorrent -b` and set a permanent one in the Web UI.
+- Select a licensed Mullvad exit node **on abacab** with `sudo tailscale set --exit-node=<mullvad-node>`; `tailscale exit-node list` lists available nodes. Check the route with `curl https://am.i.mullvad.net/connected` before starting torrents. This changes outbound routing for the whole server, including non-torrent services. If no exit node is selected, the torrent service's interface restriction prevents it from falling back to the public NIC.
 
 ## ewbtciast
 

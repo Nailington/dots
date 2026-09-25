@@ -21,5 +21,6 @@
     bind
     doggo
     ldns
+    cloudflare-speed-cli
   ];
 }
