@@ -1,0 +1,7 @@
+output "eDP-1" {
+    mode "1920x1200@180.001"
+}
+
+output "HDMI-A-1" {
+    mode "3840x2160@119.880"
+}

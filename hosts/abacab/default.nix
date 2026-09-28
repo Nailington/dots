@@ -57,7 +57,7 @@ in
   # Existing data disk — mount only, never format. Kept out of disko on purpose.
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/39ed1bbb-0ebf-43fd-a02e-62187377b916";
-    fsType = "auto";
+    fsType = "ext4";
     options = [
       "defaults"
       "nofail"
@@ -122,7 +122,7 @@ in
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = "${pkgs.coreutils}/bin/install -d -m 2770 -o qbittorrent -g qbittorrent /mnt/storage/torrents";
+      ExecStart = "${pkgs.coreutils}/bin/install -d -m 2770 -o potter -g qbittorrent /mnt/storage/torrents";
     };
   };
   systemd.services.qbittorrent = {
