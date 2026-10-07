@@ -12,7 +12,7 @@ Matching 26.05 inputs (do not point them at nixos-unstable):
 - `inputs.home-manager-darwin` — `github:nix-community/home-manager/release-26.05`
 - `inputs.nixpkgs-darwin`
 
-`inputs.nixpkgs` stays `nixos-unstable` for roundabout and abacab. Their `follows` lines for the Darwin inputs are commented out in `flake.nix` so a Linux bump cannot drag the iMac forward.
+`inputs.nixpkgs` stays `nixos-unstable-small` for roundabout and abacab. Their `follows` lines for the Darwin inputs are commented out in `flake.nix` so a Linux bump cannot drag the iMac forward.
 
 26.05 EOLs at the end of 2026. Revisit the pin then; do not move the iMac early.
 

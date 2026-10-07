@@ -30,7 +30,7 @@ Three host kinds, three constructors in `lib/hosts.nix`:
 
 ## Nixpkgs split
 
-Linux always tracks `github:NixOS/nixpkgs/nixos-unstable` (`inputs.nixpkgs`).
+Linux always tracks `github:NixOS/nixpkgs/nixos-unstable-small` (`inputs.nixpkgs`). Potter uses `-small` because new packages reach it faster; keep this choice when updating the input unless asked to change channels.
 
 Darwin is split because Intel Macs left unstable in 26.11:
 

@@ -44,7 +44,7 @@ let
   inherit (inputs) nixpkgs home-manager darwin home-manager-darwin;
   inherit (nixpkgs.lib) hasPrefix hasSuffix;
 
-  # NixOS / Linux HM: always github:NixOS/nixpkgs/nixos-unstable — not nixpkgs-unstable.
+  # NixOS / Linux HM: always github:NixOS/nixpkgs/nixos-unstable-small — not nixpkgs-unstable.
   nixosNixpkgs = inputs.nixpkgs;
 
   # Darwin pkgs: Intel is gone from unstable, so x86_64 stays on 26.05.

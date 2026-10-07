@@ -20,7 +20,7 @@ A host picks **one greeter stack**. The choice is the import list in `hosts/<nam
 - `services.gnome.gnome-keyring.enable = mkForce false`. KDE apps use KWallet.
 - XWayland: `xwayland-satellite` on PATH (niri starts it). File chooser portal is KDE. Secret portal is kwallet.
 - Greeter user `greeter` is in `video`, `render`, `input`.
-- `pam_kwallet_init` is not on PATH (`libexec`). niri starts it from `xdg.configFile."niri/pam-kwallet.kdl"`. That is the Hyprland `exec-once` equivalent. Hyprland's own config should keep the same call if Hyprland is turned back on.
+- `pam_kwallet_init` is not on PATH (`libexec`). niri includes `xdg.configFile."niri/pam-kwallet.kdl"` from `config.kdl` to start it at login. That is the Hyprland `exec-once` equivalent. Hyprland's own config should keep the same call if Hyprland is turned back on.
 
 DMS plugin helper scripts often assume a distro layout. On NixOS they need a `pkgs.writeShellApplication` (or an existing package) rather than a curl-to-`~/.local` installer.
 

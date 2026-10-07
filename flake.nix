@@ -2,7 +2,7 @@
   description = "Potter's NixOS Configuration";
 
   inputs = {   
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -10,7 +10,7 @@
     };
 
     # Intel Mac (x86_64-darwin) is unsupported on nixos-unstable/26.11.
-    # Keep Linux on nixos-unstable; Darwin follows 26.05 until it EOL's end of 2026.
+    # Keep Linux on nixos-unstable-small; Darwin follows 26.05 until it EOL's end of 2026.
     nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     nixpkgs-darwin.url = "github:NixOS/nixpkgs/nixpkgs-26.05-darwin";
 
@@ -229,6 +229,14 @@
           postPatch = (old.postPatch or "") + ''
             sed -i '1i#include <cstring>' src/audio_core/cubeb_sink.cpp src/audio_core/cubeb_input.cpp
           '';
+        });
+
+        # lazarus 4.8 wraps startlazarus with --prefix NIX_LDFLAGS after stripping
+        # -rpath, which leaves a leading, trailing, or doubled space. makeBinaryWrapper
+        # rejects that (GHSA-p7v3-pr2c-8584). Collapse the whitespace. Drop this when
+        # nixpkgs no longer passes the sed expression below.
+        lazarus-qt6 = prev.lazarus-qt6.overrideAttrs (old: {
+          postInstall = prev.lib.replaceStrings [ "s/-rpath [^ ]+//g" ] [ "s/-rpath [^ ]+//g; s/[[:space:]]+/ /g; s/^ //; s/ $//" ] old.postInstall;
         });
 
         # aseprite 1.3.18 + fmt 12: fmt::format moved out of fmt/core.h

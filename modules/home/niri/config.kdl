@@ -244,6 +244,7 @@ recent-windows {
 }
 
 // Include dms files
+include "pam-kwallet.kdl"
 include optional=true "dms/colors.kdl"
 include optional=true "dms/layout.kdl"
 include optional=true "dms/alttab.kdl"

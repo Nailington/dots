@@ -23,5 +23,6 @@
     ldns
     cloudflare-speed-cli
     mullvad-compass
+    codex
   ];
 }
