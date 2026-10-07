@@ -8,6 +8,9 @@
 let
   cfg = config.potter.ssh;
 
+  # Incoming SSH: GitHub supplies PUBLIC keys; the client proves it has a matching
+  # private key. No GitHub PAT or age decryption is needed to accept a login.
+  # This applies to potter and root only. New GitHub keys work without a rebuild.
   # Public list — same keys as GET /users/{user}/keys, no token needed at login.
   # https://docs.github.com/en/rest/users/keys
   loginKeys = import ../../lib/ssh-login-keys.nix;
@@ -66,7 +69,8 @@ in
       "z /home/potter/.ssh/id_ed25519.pub 0644 potter users -"
     ];
 
-    # Decrypt with this machine's SSH key (user key on roundabout, host key on servers).
+    # Separate from login: agenix uses these local PRIVATE keys to decrypt .age files.
+    # A recipient public key grants decryption access but is not a private-key backup.
     age.identityPaths = [
       "/etc/ssh/ssh_host_ed25519_key"
       "/home/potter/.ssh/id_ed25519"

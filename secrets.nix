@@ -1,5 +1,9 @@
-# agenix secrets. Recipients = GitHub .keys (+ host pubs) from secrets/recipients.nix,
-# refreshed by sync-age-recipients (nixos-remote-install and nh os switch; commits + pushes).
+# Encryption rules: publicKeys says WHO can decrypt each file, not WHAT is inside.
+# github.age holds a GitHub PAT; ssh/<host>/*.age hold encrypted private SSH keys.
+# Recipients come from GitHub + host public keys and retain previously added keys.
+# sync-age-recipients expands recipients and re-encrypts (also commits and pushes).
+# Declaring a file here does not install it: modules use age.secrets for that.
+# See docs/agents/secrets-and-ssh.md.
 let
   inherit (import ./lib/ssh-keys.nix) roundaboutPub;
 

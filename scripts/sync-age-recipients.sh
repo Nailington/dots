@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Snapshot this machine's SSH pubs, fetch GitHub SSH pubs, refresh age recipients.
-# Re-encrypt + commit only when something new appears.
-# Run from nixos-remote-install or as `sync-age-recipients` on PATH (nh os/darwin switch).
+# Keep two public-key lists: who can log in, and who can decrypt secrets.
+# Login keys follow GitHub; age recipients keep old keys and add new ones.
+# New recipients trigger re-encryption of every secrets/**/*.age file.
+# Changed files are staged, committed and pushed automatically.
+# Run from the flake root. nh calls this before switch/boot/test as appropriate.
+# Full flow and phone-key examples: docs/agents/secrets-and-ssh.md.
 set -euo pipefail
 
 FLAKE_ROOT="${FLAKE_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
@@ -11,6 +14,8 @@ if [[ ! -f flake.nix ]]; then
   exit 1
 fi
 
+# Identity = a local PRIVATE key that can already decrypt the age store.
+# Fetching a public key from GitHub does not provide its private half.
 AGE_IDENTITY="${AGE_IDENTITY:-$HOME/.ssh/id_ed25519}"
 if [[ ! -r "$AGE_IDENTITY" && -r /etc/ssh/ssh_host_ed25519_key ]]; then
   AGE_IDENTITY=/etc/ssh/ssh_host_ed25519_key
@@ -110,10 +115,12 @@ for gh_user in "${GH_USERS[@]}"; do
   echo >>"$STAGING/github.keys"
 done
 
-# GitHub-only snapshot for sshd authorized_keys (host pubs must not go there).
+# Login list: current GitHub PUBLIC keys only. A host key identifies a server;
+# it must not grant that server permission to log in as potter or root.
 cp "$STAGING/github.keys" "$STAGING/github-login.keys"
 
-# Also keep host keys so servers can decrypt at activation via ssh_host_ed25519_key.
+# Decryption list: GitHub keys plus host public keys, with roundabout as a fallback.
+# Host private keys let agenix decrypt during activation, before user keys exist.
 if [[ -d secrets/ssh ]]; then
   find secrets/ssh -name 'ssh_host_ed25519_key.pub' -print0 2>/dev/null \
     | xargs -0 -r cat >>"$STAGING/github.keys" || true
@@ -188,6 +195,8 @@ fetched = keys_from_raw(Path(all_raw).read_text())
 if not fetched and not old_keys:
     raise SystemExit("no recipient keys found")
 
+# Deliberately append-only: removing a GitHub key does NOT revoke age access.
+# Revocation requires a separate recipient cleanup and re-encryption.
 new_keys = [k for k in fetched if ident(k) not in old_seen]
 if new_keys:
     print(f"    {len(new_keys)} new age recipient(s):")
@@ -213,11 +222,15 @@ print("    no new age recipients")
 raise SystemExit(3 if login_changed else 2)
 PY
 
+# Python result: 0 = new recipients, 2 = unchanged, 3 = login-only change.
+# Re-encrypt only for result 0; a login-only update needs just a new snapshot.
 stage_secret_pubs() {
   git add -- secrets/ssh/*/id_ed25519.pub secrets/ssh/*/ssh_host_ed25519_key.pub \
     2>/dev/null || true
 }
 
+# This commits the entire Git index, including anything staged before this run.
+# Keep unrelated changes unstaged before calling sync or an nh switch.
 commit_and_push_secrets() {
   if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "==> not a git checkout; skip commit/push" >&2
@@ -288,6 +301,8 @@ if [[ "$py_rc" -eq 3 ]]; then
   exit 0
 fi
 
+# Includes optional backups such as secrets/ssh/termius-phone/id_ed25519.age, not just host keys.
+# A newly added file alone does not trigger this branch; new recipients do.
 shopt -s globstar nullglob
 AGE_FILES=(secrets/**/*.age)
 if [[ ${#AGE_FILES[@]} -eq 0 ]]; then
@@ -309,6 +324,8 @@ if [[ ! -r "$AGE_IDENTITY" ]]; then
   exit 0
 fi
 
+# Plaintext exists only inside the private mktemp directory, removed on exit.
+# Never print it: decrypt locally, encrypt to the expanded list, replace ciphertext.
 reencrypt_ok=1
 for f in "${AGE_FILES[@]}"; do
   echo "    $f"

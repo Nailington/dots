@@ -1,4 +1,7 @@
-# nh that runs sync-age-recipients before os/darwin switch (Linux + Darwin).
+# Run the key sync BEFORE nh builds/applies the configuration, so it sees fresh keys.
+# os switch/boot/test and darwin switch can therefore re-encrypt, commit and push.
+# SYNC_AGE_DONE prevents repeated syncs in the same inherited environment.
+# See docs/agents/secrets-and-ssh.md.
 { pkgs, syncAgeRecipientsText }:
 let
   sync-age-recipients = pkgs.writeShellApplication {

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # Remote NixOS install helper (on PATH after roundabout switch).
-# For hosts in this flake: keygen → GitHub POST → agenix → git commit/push → nixos-anywhere.
+# Prepare keys locally, publish only the user PUBLIC key to GitHub, store encrypted
+# private keys, sync recipients, then pass the keys to nixos-anywhere for first boot.
+# This script commits and pushes; run with no unrelated staged changes.
+# Full flow: docs/agents/secrets-and-ssh.md.
 #
 #   nixos-remote-install --flake .#abacab root@<iso-ip>
 #
@@ -80,6 +83,8 @@ if [[ ! -f "$GITHUB_SECRET" ]]; then
   exit 1
 fi
 
+# github.age contains a GitHub API token, NOT an SSH private key.
+# The token uploads to its owning GitHub account; never print it.
 GH_TOKEN="$(age -d -i "$AGE_IDENTITY" "$GITHUB_SECRET")"
 if [[ -z "$GH_TOKEN" ]]; then
   echo "Failed to decrypt ${GITHUB_SECRET}" >&2
@@ -88,6 +93,8 @@ fi
 
 mkdir -p "$STAGING/keys" "$STAGING/extra/home/potter/.ssh" "$STAGING/extra/etc/ssh"
 
+# Reinstall: reuse the stored pair only when both encrypted private keys exist.
+# Otherwise generate a user key (outgoing SSH) and a host key (server identity).
 REUSED=0
 if [[ -f "${SECRET_DIR}/id_ed25519.age" && -f "${SECRET_DIR}/ssh_host_ed25519_key.age" ]]; then
   echo "==> reusing agenix keys for ${HOST}"
@@ -137,6 +144,7 @@ if [[ "$REUSED" -eq 0 ]]; then
   umask 077
   cp "$STAGING/keys/id_ed25519.pub" "${SECRET_DIR}/id_ed25519.pub"
   cp "$STAGING/keys/ssh_host_ed25519_key.pub" "${SECRET_DIR}/ssh_host_ed25519_key.pub"
+  # Bootstrap encryption to the installer first; sync adds GitHub + host recipients.
   age -e -R "$AGE_RECIPIENT" -o "${SECRET_DIR}/id_ed25519.age" "$STAGING/keys/id_ed25519"
   age -e -R "$AGE_RECIPIENT" -o "${SECRET_DIR}/ssh_host_ed25519_key.age" "$STAGING/keys/ssh_host_ed25519_key"
 fi
@@ -145,6 +153,8 @@ echo "==> re-encrypt secrets to current GitHub .keys"
 sleep 2
 sync-age-recipients
 
+# Put decrypted keys into the installer payload so the new host can decrypt
+# its age store on its very first activation. These plaintext files stay in STAGING.
 install -m 700 -d "$STAGING/extra/home/potter/.ssh"
 install -m 600 "$STAGING/keys/id_ed25519" "$STAGING/extra/home/potter/.ssh/id_ed25519"
 install -m 644 "$STAGING/keys/id_ed25519.pub" "$STAGING/extra/home/potter/.ssh/id_ed25519.pub"
