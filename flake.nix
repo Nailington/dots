@@ -57,7 +57,7 @@
     rofi-tools.url = "github:szaffarano/rofi-tools";
 
     # CachyOS-patched kernel (do not override nixpkgs on this input)
-    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
+    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel";
 
     # renatus777rr/OSX-KVM-updated — scripts + OpenCore + OVMF (devShell flake ignored via flake = false)
     osx-kvm = {
@@ -173,9 +173,27 @@
         in
         {
           inherit sync-age-recipients nh;
+          update-local-packages = pkgs.writeShellApplication {
+            name = "update-local-packages";
+            runtimeInputs = [
+              # nix-update captures hash-fetching stderr to parse the result.
+              # Tee it to the terminal while retaining that captured output.
+              (pkgs.nix-update.overrideAttrs (old: {
+                patches = (old.patches or [ ]) ++ [ ./pkgs/nix-update-stream-logs.patch ];
+              }))
+            ] ++ (with pkgs; [ nix git coreutils diffutils ]);
+            text = builtins.readFile ./scripts/update-local-packages.sh;
+          };
+          althea = pkgs.althea;
+          singularcard = pkgs.singularcard;
+          google-sans = pkgs.google-sans;
+          google-sans-flex = pkgs.google-sans-flex;
           twitch-drops-miner = pkgs.twitch-drops-miner;
           auto-rob = pkgs.auto-rob;
           kde-craft = pkgs.kde-craft;
+          sweetpad = pkgs.sweetpad;
+          sweetpad-vscode = pkgs.sweetpad.vscodeExtension;
+          t3code = pkgs.t3code;
           nixos-remote-install = pkgs.writeShellApplication {
             name = "nixos-remote-install";
             runtimeInputs = (with pkgs; [
@@ -212,11 +230,93 @@
         twitch-drops-miner = final.callPackage ./pkgs/twitch-drops-miner { };
         auto-rob = final.callPackage ./pkgs/auto-rob { };
         kde-craft = final.callPackage ./pkgs/kde-craft { };
+        sweetpad = final.callPackage ./pkgs/sweetpad { };
+
+        # Pin the published nightly and its dependencies together.
+        t3code = let
+          unwrapped = prev.t3code.unwrapped.overrideAttrs (finalAttrs: old: {
+            version = "0.1.1-nightly.20261017.3238";
+            src = final.fetchFromGitHub {
+              owner = "pingdotgg";
+              repo = "t3code";
+              rev = "v0.1.1-nightly.20261017.3238";
+              hash = "sha256-GPxZU0JHzsMhcepJe1J9hdGnDsjjkG709iFTc3/94Sw=";
+            };
+            pnpmDeps = old.pnpmDeps.override {
+              inherit (finalAttrs) src version;
+              hash = "sha256-mjfKnjQuCRYydNtD368e9WBqdtfaDAjhouEtlwr1Li4=";
+            };
+            meta = old.meta // {
+              changelog = "https://github.com/pingdotgg/t3code/releases/tag/v${finalAttrs.version}";
+            };
+          });
+        in (prev.t3code.override { t3code-unwrapped = unwrapped; }).overrideAttrs (old: {
+          # node-pty's Linux prebuild lacks a C++ runtime search path.
+          # Remove this wrapper once nixpkgs#569702 reaches the pinned input.
+          # symlinkJoin embeds postBuild in buildCommand before overrideAttrs.
+          buildCommand = old.buildCommand + ''
+            for program in t3 t3code-desktop; do
+              wrapProgram "$out/bin/$program" \
+                --prefix LD_LIBRARY_PATH : ${final.lib.makeLibraryPath [ final.stdenv.cc.cc.lib ]}
+            done
+          '';
+        });
+
+        # VMware ships GTK 3.14, which cannot render DMS's modern adw-gtk3
+        # theme. Keep VMware's C++ interfaces (old gtkmm ABI), but load the
+        # system C GTK stack and font libraries through its system-lib mode.
+        vmware-workstation = let
+          workstation = prev.vmware-workstation.overrideAttrs (old: {
+            # nixpkgs omits the bundled Windows Tools image; the install menu
+            # looks for it under the package's own libdir/isoimages.
+            postInstall = (old.postInstall or "") + ''
+              install -m644 unpacked/vmware-tools-windows/windows.iso \
+                "$out/lib/vmware/isoimages/windows.iso"
+            '';
+          });
+        in final.symlinkJoin {
+          name = "vmware-workstation-${workstation.version}";
+          inherit (workstation) version meta;
+          paths = [ workstation ];
+          nativeBuildInputs = [ final.makeWrapper ];
+          postBuild = ''
+            # System GTK also needs its schemas and image loaders; VMware's
+            # bundled GTK data does not match the libraries loaded above.
+            for program in vmware vmplayer; do
+              wrapProgram "$out/bin/$program" \
+                --set VMWARE_USE_SYSTEM_LIBS 1 \
+                --set GDK_BACKEND x11 \
+                --set GSETTINGS_SCHEMA_DIR ${final.gtk3}/share/gsettings-schemas/${final.gtk3.name}/glib-2.0/schemas \
+                --set GDK_PIXBUF_MODULE_FILE ${final.librsvg}/${final.gdk-pixbuf.binaryDir}/loaders.cache \
+                --set-default XDG_DATA_DIRS /usr/local/share:/usr/share \
+                --prefix XDG_DATA_DIRS : ${final.lib.makeSearchPath "share" (with final; [ shared-mime-info hicolor-icon-theme adwaita-icon-theme ])}:${final.gsettings-desktop-schemas}/share/gsettings-schemas/${final.gsettings-desktop-schemas.name} \
+                --prefix LD_LIBRARY_PATH : ${final.lib.makeLibraryPath (with final; [
+                  stdenv.cc.cc.lib gtk3 glib cairo pango fontconfig gdk-pixbuf
+                  at-spi2-core expat freetype harfbuzz fribidi pixman libpng
+                ])}
+            done
+            # Upstream desktop entries use absolute paths, bypassing PATH.
+            for desktop in vmware-workstation.desktop vmware-player.desktop; do
+              cp --remove-destination \
+                ${workstation}/share/applications/$desktop \
+                "$out/share/applications/$desktop"
+              chmod u+w "$out/share/applications/$desktop"
+              substituteInPlace "$out/share/applications/$desktop" \
+                --replace-fail '${workstation}/bin/' "$out/bin/"
+            done
+          '';
+        };
 
         nix-index = nix-index.packages.${system}.default;
 
         # Interim until nixpkgs PR merges — github:Nytelife26/nixpkgs/helium/init
         helium = helium.legacyPackages.${system}.helium;
+
+        # sphinxHook reads only the first array item with structured attrs,
+        # skipping khal's man output. Remove once the hook handles arrays.
+        khal = prev.khal.overrideAttrs (_: {
+          sphinxBuilders = "html man";
+        });
 
         # nixpkgs#426717 — koffydrop: doCheck off only for i686, keeps x86_64 openldap cached
         openldap = prev.openldap.overrideAttrs (_: {
@@ -229,14 +329,6 @@
           postPatch = (old.postPatch or "") + ''
             sed -i '1i#include <cstring>' src/audio_core/cubeb_sink.cpp src/audio_core/cubeb_input.cpp
           '';
-        });
-
-        # lazarus 4.8 wraps startlazarus with --prefix NIX_LDFLAGS after stripping
-        # -rpath, which leaves a leading, trailing, or doubled space. makeBinaryWrapper
-        # rejects that (GHSA-p7v3-pr2c-8584). Collapse the whitespace. Drop this when
-        # nixpkgs no longer passes the sed expression below.
-        lazarus-qt6 = prev.lazarus-qt6.overrideAttrs (old: {
-          postInstall = prev.lib.replaceStrings [ "s/-rpath [^ ]+//g" ] [ "s/-rpath [^ ]+//g; s/[[:space:]]+/ /g; s/^ //; s/ $//" ] old.postInstall;
         });
 
         # aseprite 1.3.18 + fmt 12: fmt::format moved out of fmt/core.h
@@ -262,7 +354,16 @@
           ./home/potter
           ./hosts/roundabout/home.nix
         ];
-        extraOverlays = [ nix-cachyos-kernel.overlays.default ];
+        extraOverlays = [
+          nix-cachyos-kernel.overlays.pinned
+          (final: prev: {
+            # Match CachyOS's pinned kernel packaging until it supplies modules.cer.
+            aggregateModules = modules:
+              prev.callPackage
+                "${nix-cachyos-kernel.inputs.nixpkgs}/pkgs/os-specific/linux/kmod/aggregator.nix"
+                { inherit modules; };
+          })
+        ];
       };
 
       # Headless server — nixos-remote-install --flake .#abacab (see hosts/abacab/disk.nix).

@@ -233,22 +233,23 @@ debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Override to disable super+tab
-recent-windows {
-    binds {
-        Alt+Tab         { next-window scope="output"; }
-        Alt+Shift+Tab   { previous-window scope="output"; }
-        Alt+grave       { next-window filter="app-id"; }
-        Alt+Shift+grave { previous-window filter="app-id"; }
-    }
-}
-
 // Include dms files
 include "pam-kwallet.kdl"
 include optional=true "dms/colors.kdl"
 include optional=true "dms/layout.kdl"
 include optional=true "dms/alttab.kdl"
-include optional=true "dms/binds.kdl"
 include optional=true "dms/outputs.kdl"
 include optional=true "dms/cursor.kdl"
 include optional=true "dms/input.kdl"
+
+// Plan C selects normal bindings or gaming mode. Home Manager initializes this
+// writable include; plan-c validates changes before niri live-reloads them.
+include "plan-c.kdl"
+spawn-at-startup "plan-c" "off" "--quiet"
+binds {
+    // Keep the Hyprland escape hatch available in BOTH modes. Use explicit Alt:
+    // Plan C moves Mod to the normally unmapped Mod3 to prevent Alt+mouse grabs.
+    Alt+Shift+Backslash repeat=false allow-inhibiting=false hotkey-overlay-title="Plan C: Toggle desktop shortcuts" {
+        spawn "plan-c" "toggle";
+    }
+}

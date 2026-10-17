@@ -32,8 +32,11 @@
   # Flakes + binary caches (Hydra/Attic; apply before first kernel switch)
   nix.settings = {
     experimental-features = [ "nix-command" "flakes" ];
+    # Finish independent builds even when another package fails.
+    keep-going = true;
     extra-substituters = [
-      "https://attic.xuyh0120.win/lantian"
+      # CachyOS/Lantian cache — temporarily disabled while Attic is down.
+      # "https://attic.xuyh0120.win/lantian"
       "https://hyprland.cachix.org"
     ];
     extra-trusted-substituters = [ "https://hyprland.cachix.org" ];
@@ -53,6 +56,7 @@
     age
     self.packages.${pkgs.system}.nh
     self.packages.${pkgs.system}.sync-age-recipients
+    self.packages.${pkgs.system}.update-local-packages
     fuse3
     e2fsprogs
     usbutils

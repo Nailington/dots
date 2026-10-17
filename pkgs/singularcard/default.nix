@@ -11,7 +11,7 @@ in
 
 python3.pkgs.buildPythonApplication {
   pname = "singularcard";
-  version = "unstable-2025-03-17";
+  version = "0-unstable-2025-03-17";
   format = "other";
 
   src = fetchFromGitHub {

@@ -15,10 +15,11 @@ let
   pname = "twitch-drops-miner";
   version = "dev-build";
 
-  # AppImage is shipped inside a zip on the dev-build release
+  # Upstream replaces this ZIP in-place under the same dev-build tag/URL.
+  # Refresh the hash from the current asset when it changes.
   zip = fetchurl {
     url = "https://github.com/DevilXD/TwitchDropsMiner/releases/download/dev-build/Twitch.Drops.Miner.Linux.AppImage-x86_64.zip";
-    hash = "sha256-HLMHuP6OnFNusy2Tquuen7fmClJcNZJeIOj6PxuToBo=";
+    hash = "sha256-mbpSZV1dGWir5XKG/UYg4Wpua6Zaa8xMrh3s9Yx6Zas=";
   };
 
   # Extract AppImage from zip (zip contains single .AppImage file)
@@ -63,6 +64,9 @@ appimageTools.wrapAppImage {
   runScript = runScript;
 
   extraPkgs = pkgs: with pkgs; [ tk tcl libffi ];
+
+  # Let the updater rehash the mutable download without extracting the AppImage.
+  passthru = { inherit zip; };
 
   extraInstallCommands = ''
     mkdir -p $out/share/applications

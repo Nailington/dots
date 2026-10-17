@@ -37,13 +37,13 @@ in
 
 stdenvNoCC.mkDerivation rec {
   pname = "althea";
-  version = "0.5.0-unstable-2026-02-07";
+  version = "altlinux-unstable-2026-06-09";
 
   src = fetchFromGitHub {
     owner = "vyvir";
     repo = "althea";
-    rev = "506a8a757221bca771bab67c7f5b3eec74ec4486";
-    hash = "sha256-4N5z9t/Z1KmAB4TDkuOWwLSvENrrcw0nFU+19o54sqY=";
+    rev = "215d8aaa748fe9bb0d18446ceaee242e40683719";
+    hash = "sha256-GQPbdz+lLX46V8YLFXIvt06wsjufaCn4sdkzll75S9Q=";
   };
 
   nativeBuildInputs = [

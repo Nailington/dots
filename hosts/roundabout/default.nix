@@ -18,22 +18,32 @@
     ../../modules/nixos/acer-sense
   ];
 
-  # NTFS "Acer" partition - same permission style as Dolphin (uid/gid, dmask/fmask)
-  # nofail + 10s timeout: boot proceeds if partition missing (e.g. dual-boot, disk not present)
-  # Get UUID with: blkid -s UUID -o value /dev/nvmeXn1pN
-  #  fileSystems."/run/media/potter/Acer" = {
-  #    device = "/dev/disk/by-uuid/122AEF932AEF7261";
-  #    fsType = "ntfs-3g";
-  #    options = [
-  #      "uid=${toString config.users.users.potter.uid}"
-  #      "gid=${toString config.users.groups.users.gid}"
-  #      "dmask=0022"
-  #      "fmask=0133"
-  #      "windows_names"
-  #      "nofail"
-  #      "x-systemd.device-timeout=10s"
-  #    ];
-  #  };
+  # Acer Windows partition: match Dolphin's live ntfs mount (potter:users, mode 0777).
+  # Try at boot; missing devices or mount failures must not block startup.
+  fileSystems."/run/media/potter/Acer" = {
+    device = "/dev/disk/by-uuid/122AEF932AEF7261";
+    fsType = "ntfs";
+    noCheck = true;
+    options = [
+      "rw"
+      "nosuid"
+      "nodev"
+      "relatime"
+      "uid=1000"
+      "gid=100"
+      "umask=000"
+      "iocharset=utf8"
+      "case_sensitive"
+      "errors=continue"
+      "mft_zone_multiplier=1"
+      "windows_names"
+      "native_symlink=raw"
+      "symlink=wsl"
+      "nofail"
+      "x-systemd.device-timeout=10s"
+      "x-systemd.mount-timeout=10s"
+    ];
+  };
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -49,7 +59,7 @@
   '';
   networking.networkmanager.wifi.powersave = false;
 
-  # Prefer ntfs-3g (fuse) over ntfs3 (kernel)
+  # Prefer ntfs (the kernel driver on CachyOS >= 7.1) over ntfs3.
   environment.etc."udisks2/mount_options.conf".text = ''
     [defaults]
     ntfs_defaults=uid=$UID,gid=$GID,windows_names

@@ -132,6 +132,8 @@ StartupWMClass=electron-svelte
 DESKTOP
   '';
 
+  passthru.unwrapped = auto-rob-unwrapped;
+
   meta = with lib; {
     description = "Autonomous Robinhood portfolio agent";
     homepage = "https://github.com/Cattn/auto-rob";

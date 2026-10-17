@@ -9,7 +9,10 @@
     gpu-screen-recorder
     gpu-screen-recorder-gtk
     unityhub
-    godot
+    # Godot 4.7 requires harfbuzz-vector; nixpkgs currently leaves it disabled.
+    (godot.override {
+      harfbuzz = pkgs.harfbuzz.override { withVector = true; };
+    })
   ];
 
   programs.obs-studio = {

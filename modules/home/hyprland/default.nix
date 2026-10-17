@@ -35,8 +35,6 @@ in
     blueman
     hyprlock
     hypridle
-    xev
-    wev
     libnotify
     dunst
     wl-clipboard

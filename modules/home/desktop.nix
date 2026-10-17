@@ -1,7 +1,13 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports = [ ./flameshot ];
+
+  # Set the folder handler without replacing other apps' mimeapps.list preferences.
+  home.activation.defaultFileManager = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${pkgs.xdg-utils}/bin/xdg-mime default org.kde.dolphin.desktop inode/directory
+  '';
+
   home.packages = with pkgs; [
     (discord.override {
       withOpenASAR = true;
@@ -29,6 +35,8 @@
     mesa-demos
     inxi
     wlr-randr
+    xev
+    wev
     # Theme testing tools
     nwg-look
     lxappearance

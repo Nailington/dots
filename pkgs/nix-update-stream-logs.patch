@@ -1,0 +1,51 @@
+diff --git a/nix_update/utils.py b/nix_update/utils.py
+--- a/nix_update/utils.py
++++ b/nix_update/utils.py
+@@ -4,6 +4,7 @@ import os
+ import shlex
+ import subprocess
+ import sys
++import tempfile
+ import unicodedata
+ from pathlib import Path
+ from typing import IO, TYPE_CHECKING, Any
+@@ -56,6 +57,39 @@ def run(  # noqa: PLR0913
+     info("$ " + shlex.join(command))
+     env = os.environ.copy()
+     env.update(extra_env)
++    if stderr == subprocess.PIPE and env.get("NIX_UPDATE_STREAM_LOGS") == "1":
++        # Preserve stderr for hash parsing while showing downloads immediately.
++        # Spool stdout to a file so a full stdout pipe cannot block stderr.
++        with tempfile.TemporaryFile(mode="w+") as captured_stdout:
++            with subprocess.Popen(
++                command,
++                cwd=cwd,
++                text=True,
++                stdout=captured_stdout if stdout == subprocess.PIPE else stdout,
++                stderr=subprocess.PIPE,
++                env=env,
++            ) as process:
++                assert process.stderr is not None
++                stderr_lines = []
++                try:
++                    for line in process.stderr:
++                        sys.stderr.write(line)
++                        sys.stderr.flush()
++                        stderr_lines.append(line)
++                    process.wait()
++                except BaseException:
++                    process.kill()
++                    process.wait()
++                    raise
++                captured_stdout.seek(0)
++                result = subprocess.CompletedProcess(
++                    command, process.returncode,
++                    captured_stdout.read() if stdout == subprocess.PIPE else None,
++                    "".join(stderr_lines),
++                )
++                if check:
++                    result.check_returncode()
++                return result
+     return subprocess.run(
+         command,
+         cwd=cwd,

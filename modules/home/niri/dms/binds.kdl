@@ -153,8 +153,8 @@ binds {
     // === Move Workspaces ===
     Mod+Ctrl+F1 { move-workspace-up; }
     Mod+Ctrl+F2   { move-workspace-down; }
-    Super+Up { move-workspace-up; }
-    Super+Down   { move-workspace-down; }
+    Super+Up { focus-workspace-up; }
+    Super+Down   { focus-workspace-down; }
     // Mod+Shift+U         { move-workspace-down; }
     // Mod+Shift+I         { move-workspace-up; }
 

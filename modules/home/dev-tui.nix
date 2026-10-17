@@ -8,6 +8,7 @@
 
   home.packages = with pkgs; [
     cursor-cli
+    t3code
     gh
     nodejs
     bun

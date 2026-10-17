@@ -24,6 +24,26 @@ A host picks **one greeter stack**. The choice is the import list in `hosts/<nam
 
 DMS plugin helper scripts often assume a distro layout. On NixOS they need a `pkgs.writeShellApplication` (or an existing package) rather than a curl-to-`~/.local` installer.
 
+### Plan C for games
+
+`Alt+Shift+Backslash` toggles Plan C globally. ON omits the normal DMS/niri
+bindings, disables the recent-windows switcher, and moves the built-in mouse
+modifier to `Mod3` (ISO_Level5_Shift, unmapped by our keyboard configuration).
+The toggle uses explicit Alt and `allow-inhibiting=false`, so it works in either
+mode and with applications that request shortcut inhibition. Niri's native
+`toggle-keyboard-shortcuts-inhibit` alone cannot block shortcuts for Minecraft:
+it only toggles an inhibitor requested by the focused application.
+
+A thick cyan focus ring means ON; OFF restores the normal theme. Fullscreen
+windows hide the ring, so DMS also receives an ON notification with no expiry,
+replaced by a short OFF notification. It can be dismissed; DMS's notification
+timeout/DND settings still apply. `plan-c status` prints and shows the current
+state; `plan-c on` / `plan-c off` set it explicitly. Each new niri session starts
+OFF. Home Manager initializes a writable `niri/plan-c.kdl` include pointing into
+`~/.local/state/niri/`; the helper validates the complete candidate configuration
+before replacing it. Keep normal shortcuts in `dms/binds.kdl`, so Plan C can omit
+them. If a future keyboard layout maps Mod3, revisit the mouse modifier choice.
+
 ## KDE apps vs Plasma
 
 `modules/home/kde-apps.nix` is Dolphin, KIO (+ fuse, extras, admin), Ark, KWallet, kwalletmanager, and the KDE games. It exists so a non-Plasma host can keep those apps.
@@ -41,6 +61,7 @@ PAM hooks for `login`, `greetd`, and `sddm` are in `modules/nixos/desktop.nix` (
 ## Themes, cursor, fonts
 
 - QT/GTK theme blocks in `modules/home/desktop.nix` stay commented. The niri session uses qtengine (`programs.qtengine` in `modules/nixos/niri.nix`): Breeze style, icons `breeze-dark`, colors from DMS `~/.local/share/color-schemes/DankMatugen.colors`. qt5ct and qt6ct stay installed. Do not set `QT_QPA_PLATFORMTHEME` in `modules/nixos/desktop.nix`; that session variable overrides qtengine.
+- GTK 3/4 in the niri session follow DMS. `modules/home/niri/default.nix` runs DMS's upstream `gtk.sh` before shell startup to create writable adw-gtk3 light/dark copies and apply its generated colors. The old Breeze-only GTK 3 stylesheet is backed up as `gtk.css.pre-dms`. Keep GTK CSS/theme copies writable and do not pin `GTK_THEME`, `gtk-theme`, or dark-mode settings through Home Manager. `dms-xsettings` runs only GNOME's XSettings plugin to relay DMS's dconf changes to XWayland GTK apps (VMware's bundled GLib cannot load our dconf module). Its local package override allows taking over satellite's scaling-only XSettings selection; satellite yields to it. `DMS_ENABLE_GTK_REFRESH=1` enables upstream's live GTK 4 CSS refresh; upstream notes that some Chromium apps can miss the restored color-scheme signal. GTK 2 is outside DMS's supported GTK 3/4 color templates.
 - Cursor theme package is `posys-cursor-scalable` (hyprcursors). On niri it still needs a real X/hypr cursor theme (`posy-cursors` was installed for that). Check `modules/home/niri/dms/cursor.kdl` and `desktop.nix` before changing it.
 - Fonts are system packages in `modules/nixos/common.nix`: RobotoMono Nerd Font, Google fonts, Google Sans Code, `seguiemj`, `hojas-de-plata`, `google-sans`, `google-sans-flex`. The copies under `home.packages` in `desktop.nix` are commented because the system set already covers them.
 
