@@ -14,7 +14,7 @@ Each is `callPackage`'d in the overlay.
 | `althea`, `singularcard` | Potter's apps |
 | `cider` | Cider music client (packaged; the extracted AppImage under the workspace parent is leftover) |
 | `twitch-drops-miner` | AppImage wrapper; copies itself to a writable dir because the app writes next to its binary |
-| `auto-rob` | Cattn/auto-rob releases: standalone headless CLI + Electron GUI in an FHS env. Installed on both NixOS hosts by `modules/home/common.nix`. Abacab's existing cron still runs the separate `/mnt/storage/auto-rob` checkout |
+| `auto-rob` | Cattn/auto-rob releases: standalone headless CLI + Electron GUI in an FHS env. Installed on both NixOS hosts by `modules/home/common.nix`. Abacab's cron uses the packaged CLI with `/mnt/storage/auto-rob` as its workspace |
 | `kde-craft` | FHS sandbox. See [kde-craft.md](kde-craft.md) |
 | `sweetpad` | Nailington's remote Mac fork; matching Cursor extension at `sweetpad.vscodeExtension` |
 
@@ -103,8 +103,9 @@ The default workspace is `~/.config/auto-rob/workspace` (respecting
 `XDG_CONFIG_HOME`); `AUTO_ROB_WORKSPACE` selects another directory. Headless
 runs require an existing strategy prompt and an authenticated Cursor or Codex
 CLI with Robinhood connected. The package does not create or migrate account
-state. Abacab's existing cron jobs still use `npm start` in
-`/mnt/storage/auto-rob`; installing this package does not replace those jobs.
+state. Abacab's cron jobs invoke the packaged CLI with
+`AUTO_ROB_WORKSPACE=/mnt/storage/auto-rob`, preserving its existing workspace
+without running code from the checkout. The CLI includes its Node runtime.
 
 Use `update-local-packages auto-rob` to refresh the released ZIP and hash, or
 `update-local-packages --build auto-rob` to also build the CLI and GUI wrappers.
