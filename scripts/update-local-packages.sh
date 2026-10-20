@@ -26,7 +26,7 @@ althea             latest commit on the default branch
 singularcard       latest commit on the default branch
 sweetpad           latest commit on codex/windows-remote-testing; CLI + extension
 t3code             latest published nightly; source + pnpm dependencies
-auto-rob           latest stable release from Nailington/auto-rob
+auto-rob           latest stable release from Cattn/auto-rob; desktop + headless CLI
 google-sans        latest stable release
 google-sans-flex   latest stable release
 twitch-drops-miner current dev-build ZIP; refresh hash even if version is unchanged
@@ -143,7 +143,8 @@ for package in "${packages[@]}"; do
       ;;
     auto-rob)
       attr=auto-rob.unwrapped
-      downloads='published Electron application ZIP from the latest stable GitHub release'
+      args+=(--use-github-releases)
+      downloads='published desktop + headless CLI ZIP from the latest stable Cattn/auto-rob release'
       ;;
     google-sans|google-sans-flex)
       downloads='font ZIP from the latest stable GitHub release'
@@ -173,6 +174,12 @@ for package in "${packages[@]}"; do
       failed+=("$package")
       package_failed=true
       echo "Failed to build the SweetPad extension; restored $file." >&2
+    elif [[ "$package" == auto-rob ]] && "$build" && ! run_command nix build --no-link --print-build-logs .#auto-rob; then
+      # The update target is unwrapped; also verify the public CLI/GUI package.
+      cp -p -- "$backup_dir/package.nix" "$file"
+      failed+=("$package")
+      package_failed=true
+      echo "Failed to build the auto-rob launchers; restored $file." >&2
     fi
   else
     cp -p -- "$backup_dir/package.nix" "$file"

@@ -13,6 +13,7 @@
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
+    auto-rob
     nix-du
     ncdu
     unrar

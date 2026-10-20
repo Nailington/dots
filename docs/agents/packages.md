@@ -14,7 +14,7 @@ Each is `callPackage`'d in the overlay.
 | `althea`, `singularcard` | Potter's apps |
 | `cider` | Cider music client (packaged; the extracted AppImage under the workspace parent is leftover) |
 | `twitch-drops-miner` | AppImage wrapper; copies itself to a writable dir because the app writes next to its binary |
-| `auto-rob` | Electron app from Nailington/auto-rob releases, FHS env. Also what abacab's cron runs from `/mnt/storage/auto-rob` (that checkout is data, not this package) |
+| `auto-rob` | Cattn/auto-rob releases: standalone headless CLI + Electron GUI in an FHS env. Installed on both NixOS hosts by `modules/home/common.nix`. Abacab's existing cron still runs the separate `/mnt/storage/auto-rob` checkout |
 | `kde-craft` | FHS sandbox. See [kde-craft.md](kde-craft.md) |
 | `sweetpad` | Nailington's remote Mac fork; matching Cursor extension at `sweetpad.vscodeExtension` |
 
@@ -48,7 +48,8 @@ are suppressed after `--all`. Completion only lists choices; it runs no updates.
 Althea and SingularCard follow their default branches; SweetPad stays on
 `codex/windows-remote-testing` and refreshes both Cargo and extension npm hashes.
 T3 Code stays on published nightlies and refreshes its source and pnpm hashes.
-Auto-rob and the two Google Sans font packages follow stable GitHub releases.
+Auto-rob follows stable releases from `Cattn/auto-rob`; the two Google Sans font
+packages also follow stable GitHub releases.
 Twitch Drops Miner always rehashes the current `dev-build` ZIP, even when its
 tag/version is unchanged; it is also included in `--all`. The package exposes
 the original download as `zip` for nix-update's `--custom-dep` handling. Hash
@@ -81,6 +82,32 @@ Release-only binaries cannot track source commits: Auto-rob needs a newly
 published ZIP. The updater currently excludes Posy's multi-archive cursor
 theme, DAMX's coupled packages, and Cider's non-GitHub download. Local font files
 are also unchanged.
+
+## Auto-rob on NixOS
+
+`auto-rob` follows upstream's CLI-first launcher: no arguments run one portfolio
+job; `auto-rob --gui` opens the desktop app (also used by the desktop entry).
+The CLI uses Nix's Node 22 directly, without Electron, a display, or an FHS
+sandbox. The GUI retains the FHS wrapper. Both are installed by the shared
+Linux Home Manager profile on roundabout and abacab.
+
+```sh
+auto-rob --help
+auto-rob --version
+auto-rob --check             # checks setup without starting a portfolio job
+auto-rob list codex --json
+auto-rob --gui
+```
+
+The default workspace is `~/.config/auto-rob/workspace` (respecting
+`XDG_CONFIG_HOME`); `AUTO_ROB_WORKSPACE` selects another directory. Headless
+runs require an existing strategy prompt and an authenticated Cursor or Codex
+CLI with Robinhood connected. The package does not create or migrate account
+state. Abacab's existing cron jobs still use `npm start` in
+`/mnt/storage/auto-rob`; installing this package does not replace those jobs.
+
+Use `update-local-packages auto-rob` to refresh the released ZIP and hash, or
+`update-local-packages --build auto-rob` to also build the CLI and GUI wrappers.
 
 ## SweetPad on NixOS
 

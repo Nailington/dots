@@ -23,7 +23,6 @@
     })
     bluebubbles
     cider
-    auto-rob
     mpv
     qbittorrent
     singularcard
