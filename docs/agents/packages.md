@@ -40,6 +40,11 @@ nh os switch -- --flake .#roundabout
 For the first switch while the new script is still untracked, use
 `nh os switch -- --flake path:.#roundabout` so Nix includes it.
 
+The package installs Zsh completion for flags, package names (with their update
+policies), and directories after `--flake`. Open a new terminal after switching.
+Package suggestions come from `--list`, exclude packages already selected, and
+are suppressed after `--all`. Completion only lists choices; it runs no updates.
+
 Althea and SingularCard follow their default branches; SweetPad stays on
 `codex/windows-remote-testing` and refreshes both Cargo and extension npm hashes.
 T3 Code stays on published nightlies and refreshes its source and pnpm hashes.
@@ -124,6 +129,15 @@ private keys, the remote registry, and Mac provisioning are not managed by this
 package.
 
 ## T3 Code nightly
+
+On both NixOS hosts, `t3code-install.service` runs as potter after Home Manager
+and the lingering user manager are ready: `t3 service install`, then
+`t3 service restart`. It runs at boot and again when the home generation or T3
+package changes. The first install needs network access to download T3's
+standalone runtime. The base user unit stays writable and owned by T3.
+Each host's `home.nix` supplies `~/.config/systemd/user/t3code.service.d/host.conf`,
+binding port 3773 to that host's Tailscale IPv4 address. Update that drop-in if
+the machine is re-enrolled with a different Tailscale address.
 
 The `t3code` overlay in `flake.nix` builds the published nightly
 `0.0.46-nightly.20261015.3158`, commit

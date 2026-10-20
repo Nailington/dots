@@ -40,6 +40,13 @@ in
     resolution = "1920x1080";
   };
 
+  # Bind the background T3 server to roundabout's Tailscale address.
+  xdg.configFile."systemd/user/t3code.service.d/host.conf".text = ''
+    [Service]
+    Environment="T3CODE_HOST=100.67.7.114"
+    Environment="T3CODE_PORT=3773"
+  '';
+
   home.packages = [
     pkgs.evsieve
     bt51-pointer-bridge

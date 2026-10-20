@@ -1,6 +1,87 @@
 { config, lib, pkgs, inputs, ... }:
 
 let
+  steamFixCursor = pkgs.writeShellApplication {
+    name = "steam-fix-cursor";
+    runtimeInputs = [ pkgs.coreutils pkgs.procps pkgs.jq pkgs.niri pkgs.xlsclients pkgs.xrandr pkgs.util-linux pkgs.gawk pkgs.gnused ];
+    text = ''
+      if [[ $# -gt 0 ]]; then
+        echo 'Usage: steam-fix-cursor' >&2
+        exit 2
+      fi
+      if [[ -z "''${NIRI_SOCKET:-}" || ! "''${DISPLAY:-}" =~ ^:[0-9]+(\.0)?$ ]]; then
+        echo 'Run this command inside your niri desktop session.' >&2
+        exit 1
+      fi
+      command -v steam >/dev/null
+      exec 9>"$XDG_RUNTIME_DIR/steam-fix-cursor.lock"
+      flock -n 9 || { echo 'Steam cursor recovery is already running.' >&2; exit 1; }
+
+      # Match only the satellite serving this DISPLAY, including Nix's wrapper.
+      display=''${DISPLAY%.0}
+      satellite_pattern="^xwayland-satellite $display( |$)"
+      satellite=$(pgrep -u "$UID" -f "$satellite_pattern" || true)
+      if [[ ! "$satellite" =~ ^[0-9]+$ ]]; then
+        echo 'Could not identify a single XWayland satellite for this display.' >&2
+        exit 1
+      fi
+
+      # Niri reports satellite's PID for X11 windows. Check these as well as
+      # WM_COMMAND clients, since games do not always appear in xlsclients.
+      other_windows=$(niri msg --json windows | jq -r --argjson pid "$satellite" '
+        .[] | select(.pid == $pid and .app_id != "steam") | .title')
+      other_clients=$(xlsclients | awk '$2 != "steam" && $2 != "steamwebhelper"')
+      if [[ -n "$other_windows$other_clients" ]]; then
+        printf 'Close these XWayland apps/games first, then run steam-fix-cursor again:\n%s\n%s\n' \
+          "$other_windows" "$other_clients" >&2
+        exit 1
+      fi
+
+      echo 'Closing Steam cleanly…'
+      if pgrep -u "$UID" -x steam >/dev/null; then
+        timeout 15s steam -shutdown
+      fi
+      for ((attempt = 0; attempt < 30; attempt++)); do
+        if ! pgrep -u "$UID" -x 'steam|steamwebhelper' >/dev/null; then
+          break
+        fi
+        sleep 1
+      done
+      if pgrep -u "$UID" -x 'steam|steamwebhelper' >/dev/null; then
+        echo 'Steam has not exited. Close it and any running games, then retry.' >&2
+        exit 1
+      fi
+
+      # Recheck before resetting: another X11 app might have opened meanwhile.
+      if [[ -n "$(xlsclients)" ]] ||
+         ! niri msg --json windows | jq -e --argjson pid "$satellite" \
+           'all(.[]; .pid != $pid)' >/dev/null; then
+        echo 'An XWayland app is still open; leaving XWayland running. Close it and retry.' >&2
+        exit 1
+      fi
+      if [[ $(pgrep -u "$UID" -f "$satellite_pattern") != "$satellite" ]]; then
+        echo 'XWayland changed during recovery; run steam-fix-cursor again.' >&2
+        exit 1
+      fi
+
+      echo 'Resetting XWayland display information…'
+      kill -TERM "$satellite"
+      for ((attempt = 0; attempt < 50; attempt++)); do
+        if ! kill -0 "$satellite" 2>/dev/null; then
+          break
+        fi
+        sleep 0.1
+      done
+      if kill -0 "$satellite" 2>/dev/null; then
+        echo 'XWayland has not stopped; run steam-fix-cursor again.' >&2
+        exit 1
+      fi
+      # Connecting starts a fresh satellite through niri's on-demand integration.
+      xrandr --current | sed -n '1,3p'
+      niri msg action spawn -- steam
+      echo 'Steam reopened. Try the mouse at the screen edges.'
+    '';
+  };
   # Satellite provides a scaling-only XSettings manager and yields when another
   # manager claims the selection. GNOME normally refuses that handover.
   dmsXsettings = pkgs.gnome-settings-daemon.overrideAttrs (old: {
@@ -176,7 +257,15 @@ in
     Environment = [ "DMS_ENABLE_GTK_REFRESH=1" ];
   };
 
-  home.packages = [ planC ];
+  home.packages = [ planC steamFixCursor ];
+  xdg.desktopEntries.steam-fix-cursor = {
+    name = "Fix Steam cursor";
+    comment = "Refresh stale XWayland display information and reopen Steam";
+    exec = lib.getExe steamFixCursor;
+    icon = "steam";
+    terminal = true;
+    categories = [ "Game" ];
+  };
   # Only this include is mutable. Keep config.kdl and DMS bindings declarative.
   xdg.configFile."niri/plan-c.kdl".source = config.lib.file.mkOutOfStoreSymlink planCState;
   home.activation.initializePlanC = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''

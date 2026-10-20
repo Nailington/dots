@@ -24,6 +24,15 @@ A host picks **one greeter stack**. The choice is the import list in `hosts/<nam
 
 DMS plugin helper scripts often assume a distro layout. On NixOS they need a `pkgs.writeShellApplication` (or an existing package) rather than a curl-to-`~/.local` installer.
 
+### Steam cursor recovery
+
+`steam-fix-cursor` (also **Fix Steam cursor** in the app launcher) recovers when
+XWayland retains a small display size after the TV reconnects or wakes. It closes
+Steam cleanly, resets only the current display's satellite, and reopens Steam.
+It refuses to reset while other XWayland apps/games are open, and waits up to
+30 seconds for Steam to exit. Close games before running it. This is a manual
+workaround; it does not prevent the upstream display-state bug.
+
 ### Plan C for games
 
 `Alt+Shift+Backslash` toggles Plan C globally. ON omits the normal DMS/niri

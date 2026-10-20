@@ -173,7 +173,7 @@
         in
         {
           inherit sync-age-recipients nh;
-          update-local-packages = pkgs.writeShellApplication {
+          update-local-packages = (pkgs.writeShellApplication {
             name = "update-local-packages";
             runtimeInputs = [
               # nix-update captures hash-fetching stderr to parse the result.
@@ -183,7 +183,44 @@
               }))
             ] ++ (with pkgs; [ nix git coreutils diffutils ]);
             text = builtins.readFile ./scripts/update-local-packages.sh;
-          };
+          }).overrideAttrs (old: {
+            nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.installShellFiles ];
+            buildCommand = old.buildCommand + ''
+              cat > _update-local-packages <<'EOF'
+              #compdef update-local-packages
+
+              local state package description
+              local -a packages options selected
+              local have_package=false
+              selected=("''${(@)words[2,CURRENT-1]}")
+
+              # --list is read-only and keeps completion in sync with the updater.
+              while read -r package description; do
+                if (( ''${selected[(Ie)$package]} )); then
+                  have_package=true
+                else
+                  packages+=("$package:$description")
+                fi
+              done < <(update-local-packages --list)
+
+              options=(
+                '(-h --help --list *)'{-h,--help}'[Show help]'
+                '(-h --help --list *)--list[Show supported packages and update policies]'
+                '--build[Build each updated package]'
+                '--flake[Local flake checkout]:directory:_directories'
+              )
+              if ! $have_package; then
+                options+=('(*)--all[Update all supported packages]')
+              fi
+
+              _arguments -C "$options[@]" '(--all)*:package:->packages' && return
+              if [[ $state == packages ]]; then
+                _describe 'package' packages
+              fi
+              EOF
+              installShellCompletion --zsh _update-local-packages
+            '';
+          });
           althea = pkgs.althea;
           singularcard = pkgs.singularcard;
           google-sans = pkgs.google-sans;
@@ -235,16 +272,16 @@
         # Pin the published nightly and its dependencies together.
         t3code = let
           unwrapped = prev.t3code.unwrapped.overrideAttrs (finalAttrs: old: {
-            version = "0.1.1-nightly.20261017.3238";
+            version = "0.1.1-nightly.20261019.3360";
             src = final.fetchFromGitHub {
               owner = "pingdotgg";
               repo = "t3code";
-              rev = "v0.1.1-nightly.20261017.3238";
-              hash = "sha256-GPxZU0JHzsMhcepJe1J9hdGnDsjjkG709iFTc3/94Sw=";
+              rev = "v0.1.1-nightly.20261019.3360";
+              hash = "sha256-kGZOALOfyeF9JQEPsSUNOobjR7/ThnFjAPyPB5Mmig8=";
             };
             pnpmDeps = old.pnpmDeps.override {
               inherit (finalAttrs) src version;
-              hash = "sha256-mjfKnjQuCRYydNtD368e9WBqdtfaDAjhouEtlwr1Li4=";
+              hash = "sha256-Xb3OG+69N9Kq/BMZrajxs6AUfPIHlJvEYVHC3ATA/5A=";
             };
             meta = old.meta // {
               changelog = "https://github.com/pingdotgg/t3code/releases/tag/v${finalAttrs.version}";
