@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   # Gate every T3 start, including the lingering user manager's boot-time start.
@@ -12,7 +12,7 @@
 
   programs.java = {
     enable = true;
-    package = pkgs.jdk21;
+    package = lib.mkDefault pkgs.jdk21;
   };
 
   home.packages = with pkgs; [
