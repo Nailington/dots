@@ -44,7 +44,11 @@
     restartTriggers = [ config.home-manager.users.potter.home.activationPackage ];
     # A first install downloads and extracts T3's standalone runtime.
     path = [ pkgs.systemd pkgs.gnutar pkgs.gzip ];
-    environment.HOME = config.users.users.potter.home;
+    environment = {
+      HOME = config.users.users.potter.home;
+      # Keep service installation on the existing server home, separate from desktop.
+      T3CODE_HOME = "${config.users.users.potter.home}/.t3";
+    };
     serviceConfig = {
       Type = "oneshot";
       User = "potter";
@@ -68,13 +72,13 @@
     # Finish independent builds even when another package fails.
     keep-going = true;
     extra-substituters = [
-      # CachyOS/Lantian cache — temporarily disabled while Attic is down.
-      # "https://attic.xuyh0120.win/lantian"
+      # CachyOS/Lantian kernel cache.
+      "https://cache.lantian.pub/lantian"
       "https://hyprland.cachix.org"
     ];
     extra-trusted-substituters = [ "https://hyprland.cachix.org" ];
     extra-trusted-public-keys = [
-      "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc="
+      "lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
     ];
   };

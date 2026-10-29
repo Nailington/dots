@@ -20,6 +20,13 @@ Each is `callPackage`'d in the overlay.
 
 `nix-index` in the overlay is `inputs.nix-index.packages.x86_64-linux.default`, not nixpkgs' copy.
 
+`discordchatexporter-cli` and `discordchatexporter-desktop` use the
+`Nailington/DiscordChatExporter` fork, pinned together in `flake.nix`.
+Their NuGet dependency manifests are under `pkgs/discordchatexporter/`;
+regenerate both with each package's `fetch-deps` when changing the source pin.
+The desktop override keeps settings in `$XDG_CONFIG_HOME/discordchatexporter`
+(defaulting to `~/.config/discordchatexporter`), as in the original Nix package.
+
 ## Updating local GitHub packages
 
 `update-local-packages` is installed on NixOS by `modules/nixos/common.nix`.
@@ -166,6 +173,14 @@ standalone runtime. The base user unit stays writable and owned by T3.
 Each host's `home.nix` supplies `~/.config/systemd/user/t3code.service.d/host.conf`,
 binding port 3773 to that host's Tailscale IPv4 address. Update that drop-in if
 the machine is re-enrolled with a different Tailscale address.
+The shared `dev-tui.nix` profile adds a `tailscale.conf` user-unit drop-in:
+`tailscale wait` blocks every server start until Tailscale is running and its
+interface has an IP, then `tailscale ip --assert` checks the configured bind
+address. Startup has no timeout, so slow network startup does not exhaust T3's
+restart limit while Tailscale is still connecting.
+The installer explicitly sets `T3CODE_HOME=/home/potter/.t3`, and both user-unit
+drop-ins pin `T3CODE_HOME=%h/.t3`, keeping service state in the existing server
+home even when the desktop uses a separate directory.
 
 The `t3code` overlay in `flake.nix` builds the published nightly
 `0.0.46-nightly.20261015.3158`, commit
@@ -179,9 +194,20 @@ monitor follows the same source; if its Cargo dependencies change, its dependenc
 hash needs an override too. `nix flake update` alone does not advance this explicit
 nightly pin.
 
+The desktop launcher defaults to `T3CODE_HOME=~/.t3-desktop` so it can open while
+the background service owns `~/.t3`. An explicitly set `T3CODE_HOME` overrides
+this default. The CLI and service keep `~/.t3`, including all existing threads;
+do not copy or symlink the live database into the desktop directory.
+After switching, open the desktop app, run `t3 pair` in a terminal, and paste
+the fresh pairing URL into **Settings → Connections → Add environment**.
+Select that environment to continue existing threads. Pair once per desktop
+profile; saved connections survive restarts. To use the desktop only as a client,
+turn off **Local environment** in **Settings → Connections** after pairing.
+Keep pairing URLs private.
+
 Both launchers retain the C++ runtime in `LD_LIBRARY_PATH` because Linux
-`node-pty` prebuilds lack a runtime search path. Remove that wrapper once
-nixpkgs#569702 reaches the pinned input; keep the nightly source override.
+`node-pty` prebuilds lack a runtime search path. Remove those runtime additions once
+nixpkgs#569702 reaches the pinned input; keep the nightly pin and desktop home default.
 
 ## Temporary upstream fixes
 
@@ -192,16 +218,21 @@ These live in `overlays.default` and should be deleted once nixpkgs has them. Ea
 - `openldap` — `doCheck` off on i686 only (koffydrop / nixpkgs#426717) so x86_64 still uses the cached build.
 - `azahar` — add `#include <cstring>` after glibc 2.42 (azahar-emu/azahar#2232).
 - `aseprite` — `fmt/core.h` → `fmt/format.h` when the quoted include is still present (fmt 12). The substitute is conditional so a later nixpkgs bump does not fail the build.
-- `vmware-workstation` — wrap the GUI in system-library mode with current C GTK/font libraries, retaining VMware's bundled C++ GTK interfaces because their ABI differs from current gtkmm. Its GTK 3.14 cannot render DMS's modern adw-gtk3 theme, and its GLib/fontconfig cannot load current dconf/font configuration. Supply matching GTK schemas, the SVG-capable pixbuf loader cache, MIME data, and fallback icons; otherwise opening the file picker can abort with "No GSettings schemas are installed". Keep the GUI on X11 so the DMS XSettings bridge supplies live settings; do not force a theme name. Restore `unpacked/vmware-tools-windows/windows.iso` in the underlying package's `lib/vmware/isoimages` too: nixpkgs currently omits that component, and VMware's install menu resolves it through the underlying package's `libdir`. Services and VMX still use the upstream binaries.
+- `vmware-workstation` — wrap the GUI in system-library mode with current C GTK/font libraries, retaining VMware's bundled C++ GTK interfaces because their ABI differs from current gtkmm. Its GTK 3.14 cannot render DMS's modern adw-gtk3 theme, and its GLib/fontconfig cannot load current dconf/font configuration. Supply matching GTK schemas, the SVG-capable pixbuf loader cache, MIME data, and fallback icons; otherwise opening the file picker can abort with "No GSettings schemas are installed". Keep the GUI on X11 so the DMS XSettings bridge supplies live settings; do not force a theme name. Restore `unpacked/vmware-tools-windows/windows.iso` in the underlying package's `lib/vmware/isoimages` too: nixpkgs currently omits that component, and VMware's install menu resolves it through the underlying package's `libdir`. Use the locally pinned patchelf 0.15.2 for this package: both 0.18 and 0.19.2 move `vmnet-natd`'s `.dynamic` section into a read-only LOAD segment, causing a startup segfault when the linker writes `DT_DEBUG` and failing `vmware-networks.service` during switches. Remove that patcher override when the default handles this binary correctly; `vmnet-natd -h` must print usage (exit 124), not segfault. Services and VMX still use the upstream binaries.
 
 When a rebuild fails in one of these packages, check whether nixpkgs already fixed it before adding another patch.
+
+Roundabout's kernel package extension in `hosts/roundabout/default.nix` runs
+`kmodigest` on VMware's installed modules after stripping. The local Linuwu Sense
+package does the same. Their custom installers bypass `modules_install` and omit
+the `.ko.cer` files required by the current module aggregator. Remove the VMware
+extension when its upstream package generates those certificates itself.
 
 ## Caches
 
 `modules/nixos/common.nix` trusts:
 
-- `https://attic.xuyh0120.win/lantian` (Lantian, used by the CachyOS kernel path;
-  temporarily commented out while Attic is down)
+- `https://cache.lantian.pub/lantian` (Lantian, used by the CachyOS kernel path)
 - `https://hyprland.cachix.org`
 
 `niri-flake.cache.enable` is false on purpose.

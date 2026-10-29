@@ -43,6 +43,7 @@ in
   # Bind the background T3 server to roundabout's Tailscale address.
   xdg.configFile."systemd/user/t3code.service.d/host.conf".text = ''
     [Service]
+    Environment="T3CODE_HOME=%h/.t3"
     Environment="T3CODE_HOST=100.67.7.114"
     Environment="T3CODE_PORT=3773"
   '';

@@ -3,8 +3,10 @@
 {
   home.packages = with pkgs; [
     sweetpad
+    sim-relay
     github-desktop
     quickgui
+    discordchatexporter-desktop
   ];
 
   # HM's regeneration hook deletes Cursor's mutable registry, which Cursor

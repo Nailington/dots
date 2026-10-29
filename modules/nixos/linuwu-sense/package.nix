@@ -1,4 +1,4 @@
-{ stdenv, lib, fetchurl, kernel }:
+{ stdenv, lib, buildPackages, fetchurl, kernel }:
 
 stdenv.mkDerivation rec {
   pname = "linuwu-sense";
@@ -39,6 +39,13 @@ stdenv.mkDerivation rec {
     install -D Linuwu-Sense/src/linuwu_sense.ko \
       $out/lib/modules/${kernel.modDirVersion}/extra/linuwu_sense.ko
     runHook postInstall
+  '';
+
+  # The custom install skips modules_install's certificate generation. Sign
+  # after stripping so the signature matches the final installed module.
+  postFixup = ''
+    ${lib.getExe buildPackages.kmodigest} \
+      "$out/lib/modules/${kernel.modDirVersion}/extra/linuwu_sense.ko"
   '';
 
   meta = with lib; {

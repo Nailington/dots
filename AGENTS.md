@@ -4,6 +4,8 @@ Potter's multi-host Nix flake. Git repo: [Nailington/dots](https://github.com/Na
 
 Read this file first. Open one topic doc when the task needs it. Start from `main` unless the user says they are on another branch.
 
+For Nix work, read the shared [Nix skill](.agents/skills/nix/SKILL.md). It uses the Agent Skills format for Codex and other agents; agents without skill discovery can read that file directly. Keep `.agents/skills/nix/` as the source of truth.
+
 | Topic | File |
 | --- | --- |
 | Where code belongs, how to add a host | [docs/agents/layout.md](docs/agents/layout.md) |

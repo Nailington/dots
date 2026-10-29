@@ -1,4 +1,4 @@
-{ pkgs, self, ... }:
+{ lib, pkgs, self, ... }:
 
 {
   imports = [
@@ -49,7 +49,18 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # CachyOS kernel (nvidia-open must support this kernel ABI — verify after upgrades)
-  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
+  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest.extend (_: kernelPackages: {
+    # VMware copies modules without certificates. Sign after stripping until
+    # its upstream installer supports nixpkgs' module certificate generation.
+    vmware = kernelPackages.vmware.overrideAttrs (old: {
+      postFixup = (old.postFixup or "") + ''
+        for module in vmmon vmnet; do
+          ${lib.getExe pkgs.buildPackages.kmodigest} \
+            "$out/lib/modules/${kernelPackages.kernel.modDirVersion}/misc/$module.ko"
+        done
+      '';
+    });
+  });
   boot.supportedFilesystems = [ "ntfs" "vfat" ];
   boot.initrd.supportedFilesystems = [ "vfat" ];
   boot.extraModprobeConfig = ''

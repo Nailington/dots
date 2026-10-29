@@ -241,13 +241,17 @@ in
   systemd.user.services.dms-xsettings = {
     Unit = {
       Description = "DMS GTK settings for XWayland applications";
-      After = [ "graphical-session-pre.target" ];
+      # niri imports DISPLAY before signaling session readiness. Starting at
+      # graphical-session-pre can race that import and exit without an X display.
+      After = [ "graphical-session.target" ];
       PartOf = [ "graphical-session.target" ];
     };
     Service = {
       ExecStart = "${dmsXsettings}/libexec/gsd-xsettings";
       Environment = [ "GDK_BACKEND=x11" ];
-      Restart = "on-failure";
+      # Initialization can fail with exit status 0, so on-failure misses it.
+      Restart = "always";
+      RestartSec = 2;
     };
     Install.WantedBy = [ "graphical-session.target" ];
   };

@@ -4,7 +4,7 @@ User is `potter` on every host. Timezone is `America/New_York` via `modules/nixo
 
 ## roundabout
 
-Daily-driver laptop. NixOS, systemd-boot, CachyOS kernel (`linuxPackages-cachyos-latest` from `extraOverlays`), NVIDIA PRIME sync (AMD iGPU bus `PCI:101:0:0`, NVIDIA `PCI:1:0:0`). `stateVersion = "25.11"`. 32G swapfile, hibernation disabled. 
+Daily-driver laptop. NixOS, systemd-boot, CachyOS kernel (`linuxPackages-cachyos-latest` from `extraOverlays`), NVIDIA PRIME sync (AMD iGPU bus `PCI:101:0:0`, NVIDIA `PCI:1:0:0`). `stateVersion = "25.11"`. 32G swapfile, hibernation disabled.
 
 NixOS imports (`hosts/roundabout/default.nix`): `common`, `desktop`, `niri`, `gaming`, `networking-tailscale` (Tailscale **and** Mullvad), `virtualisation`, `nvidia-prime`, `linuwu-sense`, `damx`, `acer-sense`.
 

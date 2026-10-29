@@ -33,14 +33,7 @@
         port = 10022;
         user = "potter";
       };
-      "geoimac" = {
-        hostname = "192.168.6.36";
-        user = "gsiii";
-      };
-      "potterimac" = {
-        hostname = "192.168.6.36";
-        user = "potter";
-      };
+      
     };
   };
 }

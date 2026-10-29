@@ -121,6 +121,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    sim-relay = {
+      url = "github:Nailington/sim-relay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
   };
 
   outputs =
@@ -230,6 +235,7 @@
           kde-craft = pkgs.kde-craft;
           sweetpad = pkgs.sweetpad;
           sweetpad-vscode = pkgs.sweetpad.vscodeExtension;
+          sim-relay = pkgs.sim-relay;
           t3code = pkgs.t3code;
           nixos-remote-install = pkgs.writeShellApplication {
             name = "nixos-remote-install";
@@ -252,7 +258,28 @@
           };
         };
 
-      overlays.default = final: prev: {
+      overlays.default = final: prev:
+      let
+        # Override before buildDotnetModule resolves the NuGet dependency files.
+        discordChatExporterFork = package: nugetDeps: package.override {
+          buildDotnetModule = args: final.buildDotnetModule (finalAttrs:
+            let old = args finalAttrs;
+            in old // {
+              version = "2.48.1";
+              src = final.fetchFromGitHub {
+                owner = "Nailington";
+                repo = "DiscordChatExporter";
+                tag = finalAttrs.version;
+                hash = "sha256-PRPlTy7FjgzA55ns52DGfvE/F1MY9fU7n/muQQfMyqo=";
+              };
+              inherit nugetDeps;
+              meta = old.meta // {
+                homepage = "https://github.com/Nailington/DiscordChatExporter";
+                changelog = "https://github.com/Nailington/DiscordChatExporter/releases/tag/${finalAttrs.version}";
+              };
+            });
+        };
+      in {
         rofi-themes-collection = final.callPackage ./pkgs/rofi-themes {
           rofiThemesSrc = rofi-themes;
         };
@@ -268,34 +295,54 @@
         auto-rob = final.callPackage ./pkgs/auto-rob { };
         kde-craft = final.callPackage ./pkgs/kde-craft { };
         sweetpad = final.callPackage ./pkgs/sweetpad { };
+        sim-relay = inputs.sim-relay.packages.${system}.default;
+
+        discordchatexporter-cli = (discordChatExporterFork prev.discordchatexporter-cli
+          ./pkgs/discordchatexporter/cli-deps.json).overrideAttrs (_: {
+          # SQLite and HttpCloak add native libraries; only wrap the CLI itself.
+          dotnetExecutables = [ "DiscordChatExporter.Cli" ];
+        });
+        discordchatexporter-desktop = (discordChatExporterFork prev.discordchatexporter-desktop
+          ./pkgs/discordchatexporter/desktop-deps.json).overrideAttrs (_: {
+          # Keep the existing Nix package's XDG config path for saved settings.
+          postPatch = ''
+            substituteInPlace DiscordChatExporter.Gui/StartOptions.cs \
+              --replace-fail 'Environment.SpecialFolder.LocalApplicationData' 'Environment.SpecialFolder.ApplicationData' \
+              --replace-fail 'SettingsDirectoryName = "DiscordChatExporter"' 'SettingsDirectoryName = "discordchatexporter"'
+          '';
+        });
 
         # Pin the published nightly and its dependencies together.
         t3code = let
           unwrapped = prev.t3code.unwrapped.overrideAttrs (finalAttrs: old: {
-            version = "0.1.1-nightly.20261019.3360";
+            version = "0.1.3-nightly.20261025.3669";
             src = final.fetchFromGitHub {
               owner = "pingdotgg";
               repo = "t3code";
-              rev = "v0.1.1-nightly.20261019.3360";
-              hash = "sha256-kGZOALOfyeF9JQEPsSUNOobjR7/ThnFjAPyPB5Mmig8=";
+              rev = "v0.1.3-nightly.20261025.3669";
+              hash = "sha256-ho8gsLuGTfoyyx3xAv0uFfUtEYmhxeB6jAgyXb1zR00=";
             };
             pnpmDeps = old.pnpmDeps.override {
               inherit (finalAttrs) src version;
-              hash = "sha256-Xb3OG+69N9Kq/BMZrajxs6AUfPIHlJvEYVHC3ATA/5A=";
+              hash = "sha256-yMHoqvIpfLnROuEgts+Q6ZVisJZbzPiBzceg9XKz/Jo=";
             };
             meta = old.meta // {
               changelog = "https://github.com/pingdotgg/t3code/releases/tag/v${finalAttrs.version}";
             };
           });
         in (prev.t3code.override { t3code-unwrapped = unwrapped; }).overrideAttrs (old: {
+          nativeBuildInputs = (old.nativeBuildInputs or []) ++ [ final.makeWrapper ];
           # node-pty's Linux prebuild lacks a C++ runtime search path.
-          # Remove this wrapper once nixpkgs#569702 reaches the pinned input.
+          # Drop the LD_LIBRARY_PATH additions once nixpkgs#569702 reaches the input.
           # symlinkJoin embeds postBuild in buildCommand before overrideAttrs.
           buildCommand = old.buildCommand + ''
-            for program in t3 t3code-desktop; do
-              wrapProgram "$out/bin/$program" \
-                --prefix LD_LIBRARY_PATH : ${final.lib.makeLibraryPath [ final.stdenv.cc.cc.lib ]}
-            done
+            wrapProgramBinary "$out/bin/t3" \
+              --prefix LD_LIBRARY_PATH : ${final.lib.makeLibraryPath [ final.stdenv.cc.cc.lib ]}
+            # The background service owns ~/.t3; pair with it for existing threads.
+            # Expand HOME at launch time, while allowing an explicit T3CODE_HOME.
+            wrapProgramShell "$out/bin/t3code-desktop" \
+              --prefix LD_LIBRARY_PATH : ${final.lib.makeLibraryPath [ final.stdenv.cc.cc.lib ]} \
+              --run 'export T3CODE_HOME="''${T3CODE_HOME:-$HOME/.t3-desktop}"'
           '';
         });
 
@@ -303,7 +350,17 @@
         # theme. Keep VMware's C++ interfaces (old gtkmm ABI), but load the
         # system C GTK stack and font libraries through its system-lib mode.
         vmware-workstation = let
+          # Newer patchelf versions move vmnet-natd's .dynamic into a read-only
+          # LOAD segment, crashing ld.so when it writes DT_DEBUG at startup.
+          vmwarePatchelf = prev.patchelf.overrideAttrs (_: {
+            version = "0.15.2";
+            src = prev.fetchurl {
+              url = "https://github.com/NixOS/patchelf/releases/download/0.15.2/patchelf-0.15.2.tar.bz2";
+              hash = "sha256-F3RfVkFZyOIo/EEtplogSLhGxLa0Igt3y/IkFuAvLXw=";
+            };
+          });
           workstation = prev.vmware-workstation.overrideAttrs (old: {
+            nativeBuildInputs = [ vmwarePatchelf ] ++ (old.nativeBuildInputs or []);
             # nixpkgs omits the bundled Windows Tools image; the install menu
             # looks for it under the package's own libdir/isoimages.
             postInstall = (old.postInstall or "") + ''
@@ -393,13 +450,6 @@
         ];
         extraOverlays = [
           nix-cachyos-kernel.overlays.pinned
-          (final: prev: {
-            # Match CachyOS's pinned kernel packaging until it supplies modules.cer.
-            aggregateModules = modules:
-              prev.callPackage
-                "${nix-cachyos-kernel.inputs.nixpkgs}/pkgs/os-specific/linux/kmod/aggregator.nix"
-                { inherit modules; };
-          })
         ];
       };
 
