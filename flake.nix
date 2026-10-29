@@ -315,12 +315,12 @@
         # Pin the published nightly and its dependencies together.
         t3code = let
           unwrapped = prev.t3code.unwrapped.overrideAttrs (finalAttrs: old: {
-            version = "0.1.5-nightly.20261029.3877";
+            version = "0.1.6-nightly.20261029.3892";
             src = final.fetchFromGitHub {
               owner = "pingdotgg";
               repo = "t3code";
-              rev = "v0.1.5-nightly.20261029.3877";
-              hash = "sha256-MUIf+6/gk2jG3eziHFjtvOfooDeQbbcJxMBECFZh6KQ=";
+              rev = "v0.1.6-nightly.20261029.3892";
+              hash = "sha256-FFPC549L0Q1N0YSHK4BdSVQL1/mu0nGTqBhGtplSgxI=";
             };
             pnpmDeps = old.pnpmDeps.override {
               inherit (finalAttrs) src version;
@@ -405,6 +405,15 @@
 
         # Interim until nixpkgs PR merges — github:Nytelife26/nixpkgs/helium/init
         helium = helium.legacyPackages.${system}.helium;
+
+        # libguestfs is marked broken because guestmount still needs FUSE 2.
+        # OSX-KVM uses guestfish, so build without the optional FUSE support.
+        # https://libguestfs.org/guestfs-building.1.html
+        libguestfs = prev.libguestfs.overrideAttrs (old: {
+          buildInputs = final.lib.remove prev.fuse old.buildInputs;
+          configureFlags = old.configureFlags ++ [ "--disable-fuse" ];
+          meta = old.meta // { broken = false; };
+        });
 
         # sphinxHook reads only the first array item with structured attrs,
         # skipping khal's man output. Remove once the hook handles arrays.
