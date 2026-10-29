@@ -19,7 +19,7 @@ let
   # Refresh the hash from the current asset when it changes.
   zip = fetchurl {
     url = "https://github.com/DevilXD/TwitchDropsMiner/releases/download/dev-build/Twitch.Drops.Miner.Linux.AppImage-x86_64.zip";
-    hash = "sha256-mbpSZV1dGWir5XKG/UYg4Wpua6Zaa8xMrh3s9Yx6Zas=";
+    hash = "sha256-sr9/nyLrjfcjUU+AM9HlqruGsVVKuby/is8X2ItWf20=";
   };
 
   # Extract AppImage from zip (zip contains single .AppImage file)
