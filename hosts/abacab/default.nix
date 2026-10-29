@@ -100,10 +100,10 @@ in
 
   security.sudo.wheelNeedsPassword = true;
 
-  # Minecraft Java on ftc.hammerpot.dev — SRV _minecraft._tcp.ftc → port 40002
+  # Minecraft Java servers — ftc.hammerpot.dev uses port 40002; additional server on 40003.
   # add more ports as needed for servers
-  networking.firewall.allowedTCPPorts = [ 40002 ];
-  networking.firewall.allowedUDPPorts = [ 40002 ];
+  networking.firewall.allowedTCPPorts = [ 40002 40003 ];
+  networking.firewall.allowedUDPPorts = [ 40002 40003 ];
 
   # The Web UI is loopback-only. Reach it from another machine with:
   # ssh -L 8080:127.0.0.1:8080 abacab
