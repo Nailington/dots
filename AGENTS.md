@@ -9,7 +9,7 @@ For Nix work, read the shared [Nix skill](.agents/skills/nix/SKILL.md). It uses 
 | Topic | File |
 | --- | --- |
 | Where code belongs, how to add a host | [docs/agents/layout.md](docs/agents/layout.md) |
-| roundabout, abacab, ewbtciast | [docs/agents/hosts.md](docs/agents/hosts.md) |
+| roundabout, abacab, custard, ewbtciast | [docs/agents/hosts.md](docs/agents/hosts.md) |
 | agenix, GitHub keys, remote install | [docs/agents/secrets-and-ssh.md](docs/agents/secrets-and-ssh.md) |
 | niri / Hyprland / Plasma, KWallet | [docs/agents/desktops.md](docs/agents/desktops.md) |
 | Intel iMac, Determinate, Homebrew | [docs/agents/darwin.md](docs/agents/darwin.md) |
@@ -32,7 +32,10 @@ Three host kinds, three constructors in `lib/hosts.nix`:
 
 ## Nixpkgs split
 
-Linux always tracks `github:NixOS/nixpkgs/nixos-unstable-small` (`inputs.nixpkgs`). Potter uses `-small` because new packages reach it faster; keep this choice when updating the input unless asked to change channels.
+Existing x86_64 Linux hosts track `github:NixOS/nixpkgs/nixos-unstable-small`
+(`inputs.nixpkgs`). Keep that choice unless asked to change channels.
+`aarch64-linux` uses its own `inputs.nixpkgs-aarch64` on `nixos-unstable`
+(explicitly requested for custard), so Pi boot support can advance independently.
 
 Darwin is split because Intel Macs left unstable in 26.11:
 
@@ -40,7 +43,7 @@ Darwin is split because Intel Macs left unstable in 26.11:
 - other Darwin (future Apple Silicon) → `inputs.nixpkgs-unstable`.
 - `mkDarwinHost` does this check. Keep new Darwin hosts on that helper.
 
-`overlays.default` is Linux-only (hardcoded `x86_64-linux` packages). Darwin hosts pass `extraOverlays` only, which defaults to empty.
+`overlays.default` is Linux-only and resolves input packages for the target platform. Darwin hosts pass `extraOverlays` only, which defaults to empty.
 
 Inputs that must **not** follow `nixpkgs`:
 

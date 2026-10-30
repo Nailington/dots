@@ -49,6 +49,36 @@ Other facts:
 - qBittorrent runs headlessly. Downloads go to `/mnt/storage/torrents`, and the service requires that mount. Potter belongs to the `qbittorrent` group to manage downloaded files after a new login. Torrent sockets are bound to `tailscale0` and the systemd unit allows only `tailscale0` and loopback; its Web UI listens on `127.0.0.1:8080` and the firewall does not expose it. From the laptop, run `ssh -L 8080:127.0.0.1:8080 abacab` and open `http://127.0.0.1:8080`. On first launch, get the temporary admin password with `sudo journalctl -u qbittorrent -b` and set a permanent one in the Web UI.
 - Select a licensed Mullvad exit node **on abacab** with `sudo tailscale set --exit-node=<mullvad-node>`; `tailscale exit-node list` lists available nodes. Check the route with `curl https://am.i.mullvad.net/connected` before starting torrents. This changes outbound routing for the whole server, including non-torrent services. If no exit node is selected, the torrent service's interface restriction prevents it from falling back to the public NIC.
 
+## custard
+
+Raspberry Pi 5 Model B (4 GB), `aarch64-linux`, replacing EndeavourOS on microSD.
+Uses the separate `nixpkgs-aarch64` (`nixos-unstable`) input; existing Linux and
+Darwin pins are unchanged. `mkNixosHost` still supplies agenix and integrated HM.
+
+Imports the upstream `nixos-hardware` Pi 5 profile, the generic AArch64 SD-image
+module, common, desktop, niri/DMS, and Tailscale. No NVIDIA/CachyOS, Steam, VMware,
+or Intel macOS guest modules. Docker is enabled independently. Qtengine uses the
+host's Qt/KDE package set so the platform plugins match the apps.
+
+Boot: Raspberry Pi firmware → U-Boot → extlinux, from microSD. The firmware FAT
+partition is mounted at `/boot/firmware` and refreshed on activation. Root is
+ext4, label `CUSTARD`; firmware label `CUSTARD_FW`. `system.build.sdImage` is the
+spare-card installation path. Optional disko layout formats **only**
+`/dev/mmcblk0`; the Samsung T7 USB disk is outside the layout. Disko owns
+formatting; the image module owns the matching label-based mounts.
+
+Home imports common, niri, kitty, KDE apps, dev-tui, and Flameshot settings.
+Additional ARM apps live in `hosts/custard/home.nix`; see the
+[app manifest and migration guide](../custard/README.md) for exceptions.
+No local password or fixed Tailscale/T3 address is embedded. Set Potter's
+password over root SSH before using the greeter. T3 keeps its default loopback
+binding until a host address is explicitly configured.
+
+`system.stateVersion = "26.05"` for this new install; shared Linux home identity
+retains `home.stateVersion = "25.11"`. zram enabled; Nix builds limited to one
+job/two cores on the 4 GB Pi. Native ARM builds are required (or an explicitly
+configured remote/emulated builder); roundabout alone is not an ARM builder.
+
 ## ewbtciast
 
 2017 Intel iMac, OpenCore Legacy Patcher. Hostname spelling is intentional.
@@ -68,6 +98,7 @@ Install and switch happen **on the Mac** with `nh darwin switch`. Linux is not t
 | Alias | Target |
 | --- | --- |
 | `abacab` | `potter@abacab`, `~/.ssh/id_ed25519` |
+| `custard` | `potter@custard`, `~/.ssh/id_ed25519` |
 | `ewbtciast` | `potter@ewbtciast`, `~/.ssh/id_ed25519` |
 | `osx-kvm` | `potter@nixos:10022` |
 | `hammerpot` | `ubuntu@hammerpot-server`, key `~/.ssh/ssh-key-2024-11-04.key` |

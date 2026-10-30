@@ -1,0 +1,67 @@
+desktop_file	name	arch_package
+anydesk.desktop	AnyDesk	anydesk-arm-bin
+arandr.desktop	ARandR	arandr
+assistant.desktop	Qt Assistant	qt6-tools
+blueman-adapters.desktop	Bluetooth Adapters	blueman
+blueman-manager.desktop	Bluetooth Manager	blueman
+btop.desktop	btop++	btop
+chromium.desktop	Chromium	chromium
+cmake-gui.desktop	CMake	cmake
+designer.desktop	Qt Widgets Designer	qt6-tools
+eos-apps-info.desktop	EndeavourOS apps info	eos-apps-info
+eos-log-tool.desktop	EndeavourOS log tool	eos-log-tool
+eos-quickstart.desktop	EndeavourOS Quickstart Installer	eos-quickstart
+eos-update-notifier-configure.desktop	Configure EOS Update Notifier	eos-update-notifier
+eos-update.desktop	eos-update	eos-update
+firefox.desktop	Firefox	firefox
+galculator.desktop	Galculator	galculator
+github-desktop.desktop	GitHub Desktop	github-desktop-bin
+gparted.desktop	GParted	gparted
+grsync.desktop	Grsync	grsync
+jconsole-java-openjdk.desktop	OpenJDK Java 27 Console	jdk-openjdk
+jconsole-java17-openjdk.desktop	OpenJDK Java 17 Console	jdk17-openjdk
+jconsole-java21-openjdk.desktop	OpenJDK Java 21 Console	jdk21-openjdk
+jdownloader.desktop	JDownloader	jdownloader2
+jshell-java-openjdk.desktop	OpenJDK Java 27 Shell	jdk-openjdk
+jshell-java17-openjdk.desktop	OpenJDK Java 17 Shell	jdk17-openjdk
+jshell-java21-openjdk.desktop	OpenJDK Java 21 Shell	jdk21-openjdk
+kitty.desktop	kitty	kitty
+linguist.desktop	Qt Linguist	qt6-tools
+lxappearance.desktop	Customize Look and Feel	lxappearance
+mpv.desktop	mpv Media Player	mpv
+nm-connection-editor.desktop	Advanced Network Configuration	nm-connection-editor
+org.flameshot.Flameshot.desktop	Flameshot	flameshot-git
+org.gnome.Meld.desktop	Meld	meld
+org.inkscape.Inkscape.desktop	Inkscape	inkscape
+org.kde.dolphin.desktop	Dolphin	dolphin
+org.kde.partitionmanager.desktop	KDE Partition Manager	partitionmanager
+org.prismlauncher.PrismLauncher.desktop	Prism Launcher	prismlauncher-git
+org.pulseaudio.pavucontrol.desktop	Volume Control	pavucontrol
+org.wezfurlong.wezterm.desktop	WezTerm	wezterm
+org.x.editor.desktop	Text Editor	xed
+qdbusviewer.desktop	Qt D-Bus Viewer	qt6-tools
+qt5ct.desktop	Qt5 Settings	qt5ct
+qt6ct.desktop	Qt6 Settings	qt6ct-kde
+qv4l2.desktop	Qt V4L2 test Utility	v4l-utils
+qvidcap.desktop	Qt V4L2 video capture utility	v4l-utils
+rofi-theme-selector.desktop	Rofi Theme Selector	rofi
+rofi.desktop	Rofi	rofi
+stoken-gui-small.desktop	Software Token (small)	stoken
+stoken-gui.desktop	Software Token	stoken
+thunar-bulk-rename.desktop	Bulk Rename	thunar
+thunar-settings.desktop	Thunar Preferences	thunar
+thunar-volman-settings.desktop	Removable Drives and Media	thunar-volman
+thunar.desktop	Thunar File Manager	thunar
+twitch-drops-miner.desktop	Twitch Drops Miner	twitch-drops-miner-bin
+uxterm.desktop	UXTerm	xterm
+vesktop.desktop	Vesktop	vesktop-bin
+vim.desktop	Vim	vim
+welcome.desktop	Welcome	welcome
+xarchiver.desktop	Xarchiver	xarchiver
+xfce4-about.desktop	About Xfce	libxfce4ui
+xfce4-terminal.desktop	Xfce Terminal	xfce4-terminal
+xgps.desktop	xgps	gpsd
+xgpsspeed.desktop	xgpsspeed	gpsd
+xterm.desktop	XTerm	xterm
+yad-icon-browser.desktop	Icon Browser	yad
+yad-settings.desktop	YAD settings	yad

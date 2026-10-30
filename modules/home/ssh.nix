@@ -23,6 +23,11 @@
         identityFile = "~/.ssh/id_ed25519";
         user = "potter";
       };
+      "custard" = {
+        hostname = "custard";
+        identityFile = "~/.ssh/id_ed25519";
+        user = "potter";
+      };
       "ewbtciast" = {
         hostname = "ewbtciast";
         identityFile = "~/.ssh/id_ed25519";
