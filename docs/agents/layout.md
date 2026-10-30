@@ -63,6 +63,7 @@ Adding a Darwin host: [darwin.md](darwin.md). Adding an HM-only host: `homeConfi
 | --- | --- |
 | `common.nix` | zsh, ssh client, small CLI set (btop, ncdu, nix-index, …) |
 | `desktop.nix` | GUI apps shared by a desktop host: Chrome (`--password-store=kwallet6`), Discord, Cider, virt-manager, flameshot, qt6ct. Imports `flameshot/`. Theme blocks in this file are commented on purpose. |
+| `arm/desktop.nix` | Curated ARM desktop apps, extra utilities, cursor and Dolphin defaults; imports `flameshot/`. Shared common/niri/kitty/KDE profiles are selected separately. |
 | `niri/` | DankMaterialShell + `config.kdl` and `dms/*.kdl` shipped from the flake |
 | `hyprland/` | Hyprland session files. Commented out on roundabout. |
 | `kde-apps.nix` | Dolphin, Ark, KWallet, KDE games **without** Plasma |
@@ -70,6 +71,8 @@ Adding a Darwin host: [darwin.md](darwin.md). Adding an HM-only host: `homeConfi
 | `gaming.nix` / `creative.nix` / `spicetify.nix` | opt-in app groups |
 | `dev-tui.nix` | JDK 21, cursor-cli, gh, node, bun, nil/nixd, kitty, DNS tools |
 | `dev-gui.nix` | Cursor, GitHub Desktop, quickgui. No wrapper symlinks. |
+| `arm/dev-gui.nix` | ARM GUI development tools: GitHub Desktop and Meld. |
+| `arm/creative.nix` / `arm/gaming.nix` | ARM app selections: Inkscape / Prism Launcher, independent of the x86 creative/gaming profiles. |
 | `kitty/` | kitty config files from the flake, not `programs.kitty` settings |
 | `osx-kvm/` | QEMU macOS guest. Data lives in `~/VMs/osx-kvm` |
 | `zsh.nix` / `ssh.nix` | shared with Darwin |

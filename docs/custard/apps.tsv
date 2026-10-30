@@ -1,14 +1,14 @@
 arch_package	installed_version	nix_attribute	arm_metadata	nix_version	existing_flake_overlap	migration	notes
-chromium	156.0.8078.73-1	chromium	supported (metadata only)	156.0.8078.47	none; newly selected for custard	carry	
+chromium	156.0.8078.73-1	chromium	supported (metadata only)	156.0.8078.47	none; newly selected for custard	carry	Selected by modules/home/arm/desktop.nix.
 firefox	158.0.1-1	firefox	supported (metadata only)	158.0.1	modules/nixos/desktop.nix	carry	
-vesktop-bin	1.6.8-1	vesktop	supported (metadata only)	1.6.8	new on custard; desktop.nix uses Discord/Equibop	carry	
-github-desktop-bin	3.4.13_linux1-1	github-desktop	supported (metadata only)	3.6.6	modules/home/dev-gui.nix	carry	
+vesktop-bin	1.6.8-1	vesktop	supported (metadata only)	1.6.8	new on custard; desktop.nix uses Discord/Equibop	carry	Selected by modules/home/arm/desktop.nix.
+github-desktop-bin	3.4.13_linux1-1	github-desktop	supported (metadata only)	3.6.6	modules/home/dev-gui.nix	carry	Selected by modules/home/arm/dev-gui.nix.
 dolphin	26.08.2-1	kdePackages.dolphin	supported (metadata only)	26.08.2	modules/home/kde-apps.nix	carry	
-flameshot-git	r2195.f8ab6a67-1	flameshot	supported (metadata only)	14.0.0	modules/home/desktop.nix + flameshot/	carry	
-inkscape	1.4.4-7	inkscape	supported (metadata only)	1.4.4	modules/home/creative.nix	carry	
-prismlauncher-git	11.0.0.r889.g60bcc2694-1	prismlauncher	supported (metadata only)	11.1.1	modules/home/gaming.nix	carry	
+flameshot-git	r2195.f8ab6a67-1	flameshot	supported (metadata only)	14.0.0	modules/home/desktop.nix + flameshot/	carry	Selected by modules/home/arm/desktop.nix.
+inkscape	1.4.4-7	inkscape	supported (metadata only)	1.4.4	modules/home/creative.nix	carry	Selected by modules/home/arm/creative.nix.
+prismlauncher-git	11.0.0.r889.g60bcc2694-1	prismlauncher	supported (metadata only)	11.1.1	modules/home/gaming.nix	carry	Selected by modules/home/arm/gaming.nix.
 kitty	0.49.2-1	kitty	supported (metadata only)	0.49.2	modules/home/dev-tui.nix + kitty/	carry	
-mpv	1:0.41.0-6	mpv	supported (metadata only)	0.41.0	modules/home/desktop.nix	carry	
+mpv	1:0.41.0-6	mpv	supported (metadata only)	0.41.0	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
 btop	1.4.7-1	btop	supported (metadata only)	1.4.8	modules/home/common.nix	carry	
 fastfetch	2.70.0-1	fastfetch	supported (metadata only)	2.70.0	modules/home/common.nix	carry	
 ncdu	2.9.2-1	ncdu	supported (metadata only)	2.11.1	modules/home/common.nix	carry	
@@ -24,42 +24,42 @@ unzip	6.0-23	unzip	supported (metadata only)	6.0	modules/home/common.nix	carry
 zip	3.0-14	zip	supported (metadata only)	3.0	modules/home/common.nix	carry	
 unrar	1:7.3.2-1	unrar	supported (metadata only)	7.3.1	modules/home/common.nix	carry	
 screen	5.0.2-2	screen	supported (metadata only)	5.0.2	modules/home/common.nix	carry	
-wget	1.25.0-6	wget	supported (metadata only)	1.25.0	modules/nixos/common.nix	carry	
+wget	1.25.0-6	wget	supported (metadata only)	1.25.0	modules/nixos/common.nix	carry	Supplied by modules/nixos/common.nix; the duplicate Home Manager selection is commented out.
 ntfs-3g	2026.9.28-1	ntfs3g	supported (metadata only)	2026.9.28	new system setting for USB disk	carry	
-mesa-utils	9.0.0-7	mesa-demos	supported (metadata only)	9.0.0	modules/home/desktop.nix	carry	
-inxi	3.3.41.1-1	inxi	supported (metadata only)	3.3.41-1	modules/home/desktop.nix	carry	
-qt5ct	1.9-2	libsForQt5.qt5ct	supported (metadata only)	1.9	modules/home/desktop.nix	carry	
-qt6ct-kde	0.11-8	qt6Packages.qt6ct	supported (metadata only)	0.11	modules/home/desktop.nix	carry	
+mesa-utils	9.0.0-7	mesa-demos	supported (metadata only)	9.0.0	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+inxi	3.3.41.1-1	inxi	supported (metadata only)	3.3.41-1	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+qt5ct	1.9-2	libsForQt5.qt5ct	supported (metadata only)	1.9	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+qt6ct-kde	0.11-8	qt6Packages.qt6ct	supported (metadata only)	0.11	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
 posy-improved-cursors	1.6-1	posy-cursors	supported (metadata only)	1.6	modules/home/desktop.nix	carry	
-breeze	6.8.2-1	kdePackages.breeze	supported (metadata only)	6.8.1	modules/home/desktop.nix	carry	
-breeze-gtk	6.8.2-1	kdePackages.breeze-gtk	supported (metadata only)	6.8.1	modules/home/desktop.nix	carry	
+breeze	6.8.2-1	kdePackages.breeze	supported (metadata only)	6.8.1	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+breeze-gtk	6.8.2-1	kdePackages.breeze-gtk	supported (metadata only)	6.8.1	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
 blueman	2.4.6-2	blueman	supported (metadata only)	2.4.6	modules/nixos/desktop.nix	carry	
-pavucontrol	1:6.2-2	pavucontrol	supported (metadata only)	6.2	new on custard	carry	
-playerctl	2.4.1-5	playerctl	supported (metadata only)	2.4.1	new on custard	carry	
-grim	1.5.0-2	grim	supported (metadata only)	1.5.0	new on custard	carry	
+pavucontrol	1:6.2-2	pavucontrol	supported (metadata only)	6.2	new on custard	replace	Use DMS audio controls, matching roundabout; the separate GUI is commented out.
+playerctl	2.4.1-5	playerctl	supported (metadata only)	2.4.1	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+grim	1.5.0-2	grim	supported (metadata only)	1.5.0	new on custard	carry	Selected by modules/home/arm/desktop.nix.
 jdownloader2	latest-23	jdownloader	missing		new on custard	review	No jdownloader attribute in the pinned nixpkgs; preserve app data for a later runtime/package choice.
-meld	3.24.1-1	meld	supported (metadata only)	3.24.1	new on custard	carry	
-galculator	2.1.4-12	galculator	supported (metadata only)	2.1.4	new on custard	carry	
-grsync	1.3.1-3	grsync	supported (metadata only)	1.3.1	new on custard	carry	
-gparted	1.8.1-2	gparted	supported (metadata only)	1.8.1	new on custard	carry	
-partitionmanager	26.08.2-1	kdePackages.partitionmanager	supported (metadata only)	26.08.2	new on custard	carry	
-thunar	4.20.10-1	thunar	supported (metadata only)	4.20.10	new on custard	carry	
-thunar-archive-plugin	0.6.0-1	thunar-archive-plugin	supported (metadata only)	0.6.0	new on custard	carry	
-thunar-volman	4.20.0-2	thunar-volman	supported (metadata only)	4.20.0	new on custard	carry	
-xfce4-terminal	1.2.0-1	xfce4-terminal	supported (metadata only)	1.2.0	new on custard	carry	
-xarchiver	0.5.4.27-1	xarchiver	supported (metadata only)	0.5.4.27	new on custard	carry	
-xed	3.9.0-1	xed-editor	supported (metadata only)	3.9.0	new on custard	carry	
-wezterm	20240203.110809.5046fc22.r869.g76b606ec5-3	wezterm	supported (metadata only)	0-unstable-2026-10-10	new on custard	carry	
-rsync	3.5.1-3	rsync	supported (metadata only)	3.5.0	new on custard	carry	
-sshfs	3.7.6-1	sshfs	supported (metadata only)	3.7.6	new on custard	carry	
-glances	4.5.8-1	glances	supported (metadata only)	4.5.7	new on custard	carry	
-duf	0.9.1-1	duf	supported (metadata only)	0.9.1	new on custard	carry	
-tree	2.1.0-1	tree	supported (metadata only)	2.3.2	new on custard	carry	
-tldr	3.4.4-1	tldr	supported (metadata only)	3.4.4	new on custard	carry	
-whois	5.6.6-1	whois	supported (metadata only)	5.6.6	new on custard	carry	
-iperf	2.2.1-2	iperf	supported (metadata only)	3.21	new on custard	carry	
-iperf3	3.22-1	iperf3	supported (metadata only)	3.21	new on custard	carry	
-nm-connection-editor	1.36.0-2	networkmanagerapplet	supported (metadata only)	1.36.0	new on custard; dependency-owned desktop launcher	carry	
+meld	3.24.1-1	meld	supported (metadata only)	3.24.1	new on custard	carry	Selected by modules/home/arm/dev-gui.nix.
+galculator	2.1.4-12	galculator	supported (metadata only)	2.1.4	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+grsync	1.3.1-3	grsync	supported (metadata only)	1.3.1	new on custard	replace	Use the carried rsync CLI; the redundant GUI is commented out.
+gparted	1.8.1-2	gparted	supported (metadata only)	1.8.1	new on custard	carry	Retained alongside KDE Partition Manager in the current app selection. Selected by modules/home/arm/desktop.nix.
+partitionmanager	26.08.2-1	kdePackages.partitionmanager	supported (metadata only)	26.08.2	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+thunar	4.20.10-1	thunar	supported (metadata only)	4.20.10	new on custard	replace	Use Dolphin from kde-apps.nix, matching roundabout.
+thunar-archive-plugin	0.6.0-1	thunar-archive-plugin	supported (metadata only)	0.6.0	new on custard	replace	Use Dolphin with Ark; the Thunar extension is commented out.
+thunar-volman	4.20.0-2	thunar-volman	supported (metadata only)	4.20.0	new on custard	replace	Dolphin uses UDisks/KIO for removable volumes; Thunar volume management is commented out.
+xfce4-terminal	1.2.0-1	xfce4-terminal	supported (metadata only)	1.2.0	new on custard	replace	Use Kitty and the shared roundabout terminal configuration.
+xarchiver	0.5.4.27-1	xarchiver	supported (metadata only)	0.5.4.27	new on custard	replace	Use Ark from kde-apps.nix, matching roundabout.
+xed	3.9.0-1	xed-editor	supported (metadata only)	3.9.0	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+wezterm	20240203.110809.5046fc22.r869.g76b606ec5-3	wezterm	supported (metadata only)	0-unstable-2026-10-10	new on custard	replace	Use Kitty, matching roundabout; WezTerm is commented out.
+rsync	3.5.1-3	rsync	supported (metadata only)	3.5.0	new on custard	carry	Already in the system package set; the duplicate Home Manager selection is commented out.
+sshfs	3.7.6-1	sshfs	supported (metadata only)	3.7.6	new on custard	carry	Already supplied by the SD-image base profile as sshfs-fuse; the duplicate Home Manager selection is commented out.
+glances	4.5.8-1	glances	supported (metadata only)	4.5.7	new on custard	replace	Use btop from common.nix, matching roundabout.
+duf	0.9.1-1	duf	supported (metadata only)	0.9.1	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+tree	2.1.0-1	tree	supported (metadata only)	2.3.2	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+tldr	3.4.4-1	tldr	supported (metadata only)	3.4.4	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+whois	5.6.6-1	whois	supported (metadata only)	5.6.6	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+iperf	2.2.1-2	iperf	supported (metadata only)	3.21	new on custard	replace	Use iperf3; iperf2 is commented out and can be restored for older peers.
+iperf3	3.22-1	iperf3	supported (metadata only)	3.21	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+nm-connection-editor	1.36.0-2	networkmanagerapplet	supported (metadata only)	1.36.0	new on custard; dependency-owned desktop launcher	replace	Use DMS network controls, matching roundabout; the separate NetworkManager applet/editor is commented out.
 vim	9.2.1178-1	vim	supported (metadata only)	9.2.1164	modules/nixos/common.nix; dependency-owned desktop launcher	carry	
 anydesk-arm-bin	7.0.0-1	anydesk	supported (metadata only)	8.1.0	see note	review	ARM package exists, but the vendor requires Xorg for incoming sessions. Not enabled on niri.
 chrome-remote-desktop-existing-session	130.0.6723.14-1	chrome-remote-desktop	missing		see note	review	Existing X11-session workflow cannot be assumed on niri; no remote desktop service enabled.

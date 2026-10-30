@@ -42,7 +42,7 @@ its exact derivation is absent from binary caches.
 If niri starts to a black screen, check its
 [ARM/render-device guidance](https://niri-wm.github.io/niri/Getting-Started.html)
 and `/dev/dri/` before adding a `render-drm-device` override. No device number is
-hardcoded here. The existing WezTerm window rule is reused. Hardware video decode
+hardcoded here. The shared window rules are reused. Hardware video decode
 and Minecraft/modpack performance still need testing on the real desktop.
 
 ## Application manifest
@@ -66,11 +66,26 @@ This is a package/launcher inventory, not an audit of arbitrary scripts, browser
 extensions, npm/pip environments, or every downloaded application in the home.
 
 The carried app base includes Firefox, Chromium, Vesktop, GitHub Desktop,
-Dolphin, Thunar, Inkscape, Prism Launcher, Kitty, WezTerm, mpv, Meld, Xed,
-Flameshot, the partition/file/archive tools, and familiar CLI/development tools.
+Dolphin, Ark, Inkscape, Prism Launcher, Kitty, mpv, Meld, Xed, Flameshot,
+KDE Partition Manager, and familiar CLI/development tools.
 The shared common, KDE, dev-tui and NixOS desktop modules already cover many of
-these; custard selects individual apps from the mixed gaming/creative/desktop
-profiles instead of bringing in Steam, VMware, CUDA, Chrome, or local x86 binaries.
+these. Like roundabout, custard selects app profiles from `modules/home`:
+`arm/desktop.nix`, `arm/dev-gui.nix`, `arm/creative.nix`, and `arm/gaming.nix`.
+The ARM profiles own the package selections and reusable desktop defaults;
+`hosts/custard/home.nix` contains imports and host-specific T3 settings. The x86
+app profiles are kept separate, including their Steam, VMware, CUDA, Chrome,
+and local x86 binary selections.
+
+App defaults follow roundabout: Dolphin for files/removable volumes, Ark for
+archives, Kitty for terminals, btop for monitoring, and DMS for audio/network
+controls. Thunar and its extensions, Xarchiver, Xfce Terminal, WezTerm, Glances,
+Pavucontrol, and the NetworkManager applet/editor remain commented out in
+`arm/desktop.nix`. KDE Partition Manager and the re-enabled GParted are both
+retained for partition editing. The rsync CLI is
+kept instead of Grsync, and iperf3 instead of iperf2 (their protocols differ).
+Wget, rsync, SSHFS, and Qt5 Breeze are supplied by the system package set.
+Qt5ct and Qt6ct remain separate compatibility tools, as on roundabout. The original EndeavourOS
+inventory is retained; `apps.tsv` records the reduced migration selection.
 
 Exceptions:
 
@@ -210,3 +225,14 @@ Recorded checks (2026-10-29, Nix 2.31.2 in a temporary isolated store):
   validation-time build hit `setgroups failed` in the unprivileged temporary Nix
   namespace; the actual image build needs a regular Nix installation/builder.
   Real boot, graphics, peripherals, and application behavior remain untested.
+
+App-default cleanup (2026-10-30): Nix syntax and the integrated Home Manager
+activation derivation evaluated successfully with `--no-update-lock-file`.
+Package checks confirmed the selected defaults and removal of the alternate
+GUIs. No rebuild or activation was performed.
+
+ARM profile refactor (2026-10-30): all five changed/new Nix modules parsed, and
+custard's NixOS toplevel and Home Manager activation derivations evaluated with
+`--no-update-lock-file`. The before/after package selections (including GParted),
+cursor, MIME defaults, T3 settings, and Flameshot configuration matched. No
+build or activation was performed.
