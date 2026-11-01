@@ -48,7 +48,8 @@
     isNormalUser = true;
     description = "Potter";
     extraGroups = [ "wheel" "networkmanager" "docker" ];
-    # Set a local password with passwd after SSH enrollment; no default password.
+    # Initial desktop/sudo password; change it later with passwd.
+    initialHashedPassword = "$y$j9T$77GgtrrOntgRVBQrFk1j/0$onpad/mNxL7QV7p244qubRmZWf1y81SsDK2rQqcpIr8";
   };
 
   virtualisation.docker = {

@@ -75,9 +75,11 @@ GUI development, creative, and gaming profiles under `modules/home/arm/*.nix`.
 The ARM desktop profile owns Flameshot settings, cursor, and Dolphin defaults;
 `hosts/custard/home.nix` selects profiles and sets the host's T3 binding. See the
 [app manifest and migration guide](../custard/README.md) for exceptions.
-No local password or fixed Tailscale/T3 address is embedded. Set Potter's
-password over root SSH before using the greeter. T3 keeps its default loopback
-binding until a host address is explicitly configured.
+Potter's initial desktop/sudo password is set through `initialHashedPassword`
+in the host configuration. It was supplied privately and hashed locally;
+plaintext is not stored in the flake. Later `passwd` changes persist across
+rebuilds. No fixed Tailscale/T3 address is embedded. T3 keeps its default
+loopback binding until a host address is explicitly configured.
 
 Wi-Fi can connect before login: place the private `custard-wifi.nmconnection`
 on the flashed card's firmware partition. A host-local service imports it

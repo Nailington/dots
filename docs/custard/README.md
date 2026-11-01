@@ -156,17 +156,23 @@ session is not a system Nix installation or a deployment prerequisite installed
 by the flake.
 
 Before first boot, provision Wi-Fi on the flashed card as described below.
-Ethernet is optional. From an existing trusted host such as roundabout, use a
-GitHub-authorized SSH identity to connect as root to custard's LAN IP, then set
-the local desktop password:
+Ethernet is optional. The image sets Potter's initial desktop/sudo password
+from `initialHashedPassword` in the host configuration. The password was supplied
+privately and hashed locally; its plaintext is not in the flake. Log into DMS
+as `potter` with that password after first boot.
+
+From an existing trusted host such as roundabout, a GitHub-authorized SSH
+identity can also connect as root to administer the system or reset the password:
 
 ```sh
 ssh root@<custard-lan-ip>
 passwd potter
 ```
 
-There is no default local password. Root SSH uses keys; Potter's wheel sudo will
-ask for the password you set. The known public-key snapshot permits first login
+The initial password applies when the account is first created. It can be
+changed later with `passwd`; rebuilds preserve subsequent password changes.
+Root SSH uses keys; Potter's wheel sudo asks for the local password. The known
+public-key snapshot permits SSH login
 without having an agenix private-key backup on custard yet. Mounts use the
 `CUSTARD`/`CUSTARD_FW` labels so a flashed card can switch to the regular host
 configuration later. The SD image expands root on first boot. Do not leave two
@@ -247,7 +253,7 @@ rmdir "$wifi_stage"
 
 Unmount the card from the other computer and boot it in the Pi. Custard should join the same
 Wi-Fi network without Ethernet or a password prompt. Find its address through
-the router's DHCP client list, then use the root SSH/password setup above. Its
+the router's DHCP client list, then use the optional root SSH access above. Its
 address may differ from EndeavourOS's address. Keep the provisioning file
 private: it contains the Wi-Fi password. Reflashing requires copying it again.
 
