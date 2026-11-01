@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ lib, pkgs, ... }:
 
 {
   imports = [
@@ -16,6 +16,10 @@
 
   networking.hostName = "custard";
   networking.networkmanager.wifi.powersave = false;
+
+  # Codex Desktop's bundled Node dependency audit segfaults under QEMU ARM.
+  # Re-enable after the packaging/emulation issue is resolved or built natively.
+  programs.codexDesktopLinux.enable = lib.mkForce false;
 
   # Place this private keyfile on the flashed card, outside the Nix build/store.
   # Import before NetworkManager starts so Wi-Fi connects without a login.

@@ -62,6 +62,11 @@ module, common, desktop, niri/DMS, and Tailscale. No NVIDIA/CachyOS, Steam, VMwa
 or Intel macOS guest modules. Docker is enabled independently. Qtengine uses the
 host's Qt/KDE package set so the platform plugins match the apps.
 
+Codex Desktop is temporarily disabled only on custard: its bundled Node
+dependency audit segfaulted under QEMU ARM during the image build. The shared
+desktop default remains enabled for roundabout; the Codex CLI is still installed
+on custard through dev-tui.
+
 Boot: Raspberry Pi firmware → U-Boot → extlinux, from microSD. The firmware FAT
 partition is mounted at `/boot/firmware` and refreshed on activation. Root is
 ext4, label `CUSTARD`; firmware label `CUSTARD_FW`. `system.build.sdImage` is the
