@@ -250,6 +250,7 @@
               git
               nix
               coreutils
+              findutils
             ]) ++ [
               sync-age-recipients
               nixos-anywhere-unwrapped
@@ -258,6 +259,13 @@
               export NIXOS_ANYWHERE_REAL="${nixos-anywhere-unwrapped}/bin/nixos-anywhere"
               ${builtins.readFile ./scripts/nixos-remote-install.sh}
             '';
+          };
+          nixos-sd-image = pkgs.writeShellApplication {
+            name = "nixos-sd-image";
+            runtimeInputs = (with pkgs; [
+              nix git coreutils python3 util-linux e2fsprogs mtools zstd
+            ]) ++ [ self.packages.${system}.nixos-remote-install ];
+            text = builtins.readFile ./scripts/nixos-sd-image.sh;
           };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
           inherit (pkgs) althea singularcard twitch-drops-miner auto-rob kde-craft sweetpad sim-relay;

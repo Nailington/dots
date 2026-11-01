@@ -125,19 +125,44 @@ files, but a plain copy to NTFS does not preserve all Unix metadata; use a
 metadata-preserving archive or a filesystem that supports it. Keep private keys
 and application tokens out of this repository and the Nix store.
 
-On a machine with Nix and a native ARM builder (or explicitly configured remote
-ARM builder/emulation), from this flake root:
+Create the enrolled image on a trusted builder such as roundabout (or abacab
+if its identity can decrypt the existing age store). Switch that machine's
+updated host configuration first so `nixos-sd-image` is on PATH and ARM emulation
+is enabled. From the latest flake checkout, with unrelated changes unstaged:
 
 ```sh
-nix build --no-update-lock-file --out-link result-custard-sd \
-  '.#nixosConfigurations.custard.config.system.build.sdImage'
-ls result-custard-sd/sd-image/
+nixos-sd-image --flake .#custard --output /path/to/custard.img
 ```
 
-The output contains an `.img.zst`. Before erasing the running card, copy the
-actual image file to the T7 (a `result-custard-sd` symlink alone will not survive
-the wipe). Verify the copied file against the build output. Keep the separate
-Wi-Fi provisioning file and current flake archive on the T7 as well.
+The command reuses the enrollment flow from `nixos-remote-install`: it creates
+or reuses custard's SSH identities, uploads only the user public key to GitHub,
+backs up both private keys as `.age` files under `secrets/ssh/custard/`, and runs
+recipient sync. This step commits/pushes enrollment changes just like remote
+installation. The builder needs its existing SSH identity and the decryptable
+GitHub PAT in `secrets/github.age`; the PAT is not included in the image as
+plaintext. An unrelated staged change is refused before enrollment.
+
+Before building, the command verifies that custard's host identity can decrypt
+the age store. It then builds the SD image and provisions a writable copy
+outside the checkout/Nix store. That copy contains the private SSH host key in
+its ext4 root filesystem **before first-boot activation**. Agenix uses it to
+install Potter's encrypted user key; tmpfiles restores the public-key snapshot.
+No private key is added to a derivation or checked into Git as plaintext.
+Existing identities are reused; incomplete backups or mismatched keys fail
+rather than silently rotating the host's identity.
+
+The output is an uncompressed `custard.img` plus `custard.img.sha256`. Choose an
+unused output filename; the command will not overwrite existing files or write
+to a block device. No sudo, loop mounts, or VM is needed to provision the image.
+Allow working space for the image and a temporary copy of its root partition.
+The image contains custard's private host identity: keep it private and flash
+it only onto custard. The raw `system.build.sdImage` derivation remains available
+for build diagnostics, but direct `nix build` alone does **not** enroll or seed keys.
+
+Save the actual provisioned `.img` and its checksum to the T7 before erasing
+the running card. A result symlink or the unprovisioned Nix-store image is not a
+substitute. Verify the checksum after copying. Keep the current flake archive
+and any optional Wi-Fi profile there as well.
 
 For the image route, shut down the Pi, move this same card to another computer
 with a card reader, and flash the image there. Verify the destination: writing
@@ -155,8 +180,11 @@ stays x86_64. The temporary validation CLI used in this
 session is not a system Nix installation or a deployment prerequisite installed
 by the flake.
 
-Before first boot, provision Wi-Fi on the flashed card as described below.
-Ethernet is optional. The image sets Potter's initial desktop/sudo password
+For automatic Wi-Fi before login, supply `--wifi-profile /private/path/custard-wifi.nmconnection`
+to the image command, or copy it onto the flashed card as described below.
+With a local display/input devices, it is also fine to log in and join Wi-Fi
+manually through DMS; Ethernet and Wi-Fi pre-provisioning are optional.
+The image sets Potter's initial desktop/sudo password
 from `initialHashedPassword` in the host configuration. The password was supplied
 privately and hashed locally; its plaintext is not in the flake. Log into DMS
 as `potter` with that password after first boot.
@@ -183,12 +211,12 @@ files and uses `.backup` for existing files; do not replace its managed links
 with a wholesale Arch `/etc` or home-config restore. The USB T7 remains outside
 all formatting and can be mounted from Dolphin after boot.
 
-Enroll the host using the existing
-[SSH/agenix process](../agents/secrets-and-ssh.md). An `nh os switch` on custard
-can snapshot its public keys; if it cannot yet decrypt the store, add the new
-user public key to GitHub and run the usual switch on roundabout to refresh the
-encrypted recipients. Bring that updated checkout back to custard. No secret
-was created, re-encrypted, committed, or pushed during this onboarding edit.
+Images created with `nixos-sd-image` are already enrolled in the
+[SSH/agenix process](../agents/secrets-and-ssh.md). Restore the checkout containing
+the enrollment commit on custard before its first rebuild. There is no separate
+post-install GitHub upload, private-key backup, or recipient bootstrap step.
+The creation command performs those actions when run; editing or evaluating the
+flake does not enroll a real host.
 
 After the host is installed and the checkout is in place, its usual command is:
 
@@ -330,3 +358,11 @@ replacement checks for contents, permissions, persistence, and boot-copy removal
 The private connection file passed libnm and offline nmcli validation, with
 autoconnect and no user restrictions. No image build, activation, or actual
 first-boot association test was performed; the current Wi-Fi was not changed.
+
+Enrolled image creation (2026-11-01): Bash parsing and ShellCheck passed.
+Both Linux architectures' tool
+derivations evaluated with `--no-update-lock-file`, and all three NixOS hosts'
+SSH identity/public-key configuration evaluated. A broader host-assertion check
+was stopped while fetching unrelated existing inputs. No real key registration,
+secret refresh, commit/push, full custard image build, activation or Pi boot test
+was performed during this implementation.

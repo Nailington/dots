@@ -70,6 +70,13 @@ shutting the Pi down. Optional disko layout formats **only**
 `/dev/mmcblk0`; the Samsung T7 USB disk is outside the layout. Disko owns
 formatting; the image module owns the matching label-based mounts.
 
+Use `nixos-sd-image --flake .#custard --output /path/custard.img` on a trusted
+builder to create an enrolled image: the command reuses remote-install key
+preparation, GitHub upload, encrypted backups, and recipient sync/commit/push,
+then seeds the host identity into a private image copy outside the Nix store.
+First-boot agenix installs the user key. Direct `nix build` produces the generic
+image without this enrollment/provisioning step.
+
 Home imports common, niri, kitty, KDE apps, dev-tui, and the ARM desktop,
 GUI development, creative, and gaming profiles under `modules/home/arm/*.nix`.
 The ARM desktop profile owns Flameshot settings, cursor, and Dolphin defaults;
