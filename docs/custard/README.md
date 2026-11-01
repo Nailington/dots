@@ -32,9 +32,10 @@ requesting roundabout's 4K/120 Hz output. Qtengine is built against the host's
 Qt/KDE versions, avoiding plugins from the older x86 input pin.
 
 This establishes configuration/package support, not a successful boot test.
-Before replacing EndeavourOS, test a spare card with HDMI, Ethernet/Wi-Fi,
+The first boot after reflashing the current card must test HDMI, Wi-Fi,
 Bluetooth, audio, acceleration, DMS login/lock, file-manager mounts, screenshots,
-and the apps you use. With 4 GB RAM, start with a single 1080p display and assess
+and the apps you use. Keep the T7 backup available during this migration.
+With 4 GB RAM, start with a single 1080p display and assess
 responsiveness. Zram is enabled and native Nix builds are limited to one job/two
 cores. A kernel or large desktop package may need a substantial local build if
 its exact derivation is absent from binary caches.
@@ -111,12 +112,15 @@ Exceptions:
   version/native libraries needed by each instance rather than restoring Arch
   JDK paths. Dependency-owned JDK 17 and the rolling JDK are listed for review.
 
-## Safe transition on a spare microSD
+## Replace the current microSD installation
 
 Do not run `nh os switch` on EndeavourOS to convert the current installation.
-Keep the original card intact as the recovery path. Back up home/app data,
-SSH identities, browser profiles, Prism instances, JDownloader data, and any
-service data before writing installation media. The NTFS T7 can hold archive
+The intended install reuses the current microSD and erases EndeavourOS and all
+data on that card. The T7 holds the verified full-home backup; it must remain
+outside all formatting. Preserve the latest flake checkout and the first-boot
+Wi-Fi file there too, since both changed after the full-home backup. Back up
+any required data outside home separately before writing installation media.
+The NTFS T7 can hold archive
 files, but a plain copy to NTFS does not preserve all Unix metadata; use a
 metadata-preserving archive or a filesystem that supports it. Keep private keys
 and application tokens out of this repository and the Nix store.
@@ -130,17 +134,31 @@ nix build --no-update-lock-file --out-link result-custard-sd \
 ls result-custard-sd/sd-image/
 ```
 
-The output contains an `.img.zst` to flash to the **spare microSD** using an
-image-writing tool. Verify the destination: writing an image erases that card.
-No flashing or installation has been performed by this change. A normal
-x86_64 roundabout builder cannot build an ARM closure just by naming custard;
-configure a suitable builder first. The temporary validation CLI used in this
+The output contains an `.img.zst`. Before erasing the running card, copy the
+actual image file to the T7 (a `result-custard-sd` symlink alone will not survive
+the wipe). Verify the copied file against the build output. Keep the separate
+Wi-Fi provisioning file and current flake archive on the T7 as well.
+
+For the image route, shut down the Pi, move this same card to another computer
+with a card reader, and flash the image there. Verify the destination: writing
+an image erases that card. Do not write an image over the Pi's mounted root
+disk. A second microSD is not required. If the card must stay in the Pi, the
+alternative is a Pi-compatible installer running entirely in RAM; that
+bootstrap is not currently implemented or tested by this flake.
+
+No flashing or installation has been performed. Roundabout and abacab enable
+`boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` in their host files. After
+switching the updated configuration on the chosen builder, either x86_64 host
+can build custard through QEMU user-mode emulation. Use the latest checkout,
+including the uncommitted custard changes. Their own system/package platform
+stays x86_64. The temporary validation CLI used in this
 session is not a system Nix installation or a deployment prerequisite installed
 by the flake.
 
-Boot the spare card with Ethernet connected. From an existing trusted host such
-as roundabout, use a GitHub-authorized SSH identity to connect as root to its LAN
-IP, then set the local desktop password:
+Before first boot, provision Wi-Fi on the flashed card as described below.
+Ethernet is optional. From an existing trusted host such as roundabout, use a
+GitHub-authorized SSH identity to connect as root to custard's LAN IP, then set
+the local desktop password:
 
 ```sh
 ssh root@<custard-lan-ip>
@@ -177,6 +195,66 @@ unrelated work unstaged. Tailscale needs authentication/state migration before
 its old identity is usable. T3 is explicitly bound to loopback until a host-specific address and
 corresponding Tailscale startup guard are configured.
 
+## First-boot Wi-Fi
+
+Custard can connect to Wi-Fi before anyone logs in. Its NetworkManager startup
+wants `custard-wifi-bootstrap.service`, which runs first and imports an optional
+`/boot/firmware/custard-wifi.nmconnection`. The service installs it as a
+root-owned, mode-0600 profile under `/etc/NetworkManager/system-connections/`,
+flushes that filesystem, then removes the copy from the firmware partition.
+Subsequent boots use the saved profile. Without an import file, the service is
+skipped and NetworkManager starts normally. NetworkManager's keyfile permissions
+and format are documented [upstream](https://networkmanager.dev/docs/api/latest/nm-settings-keyfile.html).
+
+On 2026-10-31, the running Pi's active WPA-PSK connection was used to prepare:
+
+```text
+/home/potter/.local/share/custard/first-boot/custard-wifi.nmconnection
+```
+
+This private file includes the current network's credentials, unrestricted
+system autoconnect, and automatic IPv4/IPv6 configuration. It is not tied to an
+interface name or a desktop login. It was validated with libnm and offline
+nmcli without modifying the current connection. The file is outside Git and
+the Nix store; no password is embedded in the flake or its SD-image output.
+If the router credentials change, prepare an updated connection file before
+installing. This file was created after the full-home backup.
+
+The same-card migration snapshot on the T7 is
+`extra_backup/custard-install-<timestamp>/custard-install.tar`. It contains
+`dots/` (including Git metadata and uncommitted changes) and the separate
+`custard-wifi.nmconnection`. The archive preserves Unix permissions that the T7
+cannot enforce directly. It is not encrypted and contains the Wi-Fi password;
+keep it private alongside the full-home backup.
+
+After flashing, mount the **reflashed card's `CUSTARD_FW` FAT partition** on the
+other computer. Extract the connection file to a private temporary directory
+on that computer and copy it to the firmware partition's root. Replace the
+source/destination mounts below with their actual paths; the destination is
+not the T7 partition:
+
+```sh
+wifi_stage="$(mktemp -d)"
+tar --extract \
+  --file=/path/to/T7/extra_backup/custard-install-<timestamp>/custard-install.tar \
+  --directory="$wifi_stage" custard-wifi.nmconnection
+sudo install -m 0600 "$wifi_stage/custard-wifi.nmconnection" \
+  /path/to/CUSTARD_FW/custard-wifi.nmconnection
+sync
+rm "$wifi_stage/custard-wifi.nmconnection"
+rmdir "$wifi_stage"
+```
+
+Unmount the card from the other computer and boot it in the Pi. Custard should join the same
+Wi-Fi network without Ethernet or a password prompt. Find its address through
+the router's DHCP client list, then use the root SSH/password setup above. Its
+address may differ from EndeavourOS's address. Keep the provisioning file
+private: it contains the Wi-Fi password. Reflashing requires copying it again.
+
+This provisions the installed custard system. A future RAM-based remote
+installer must also be given Wi-Fi support and credentials; adding this hook
+alone does not configure that separate installer environment.
+
 ## Optional remote reinstall
 
 `hosts/custard/disk.nix` describes a destructive GPT layout on `/dev/mmcblk0`:
@@ -193,7 +271,8 @@ installation plan. Do not format the mounted root card of a normal SD installer.
 The wrapper also normally regenerates `hardware-configuration.nix`. For a Pi
 reinstall, direct hardware generation to a separate file and review it: do not
 overwrite the hand-maintained SD-image/firmware definitions in this host. The
-spare-card image route above avoids those bootstrap assumptions.
+image route above avoids those bootstrap assumptions, including when reusing
+the current microSD after shutting the Pi down.
 
 ## Validation
 
@@ -236,3 +315,12 @@ custard's NixOS toplevel and Home Manager activation derivations evaluated with
 `--no-update-lock-file`. The before/after package selections (including GParted),
 cursor, MIME defaults, T3 settings, and Flameshot configuration matched. No
 build or activation was performed.
+
+First-boot Wi-Fi (2026-10-31): the NixOS toplevel and SD-image derivations
+evaluated with `--no-update-lock-file`; all NixOS assertions passed. Checked the
+evaluated service's NetworkManager dependency, startup ordering, firmware mount,
+and optional-file condition. Its shell script passed isolated first-import and
+replacement checks for contents, permissions, persistence, and boot-copy removal.
+The private connection file passed libnm and offline nmcli validation, with
+autoconnect and no user restrictions. No image build, activation, or actual
+first-boot association test was performed; the current Wi-Fi was not changed.

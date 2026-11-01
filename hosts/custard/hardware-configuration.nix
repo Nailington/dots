@@ -3,7 +3,7 @@
 { lib, modulesPath, ... }:
 
 {
-  # Also expose system.build.sdImage for a spare-card installation/recovery.
+  # Expose an image to flash after shutdown, reusing the current microSD.
   imports = [ (modulesPath + "/installer/sd-card/sd-image-aarch64.nix") ];
 
   nixpkgs.hostPlatform = lib.mkDefault "aarch64-linux";
