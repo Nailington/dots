@@ -64,12 +64,48 @@ nixos-remote-install --flake .#<host> root@<iso-ip>
 For a host that does not already have both `.age` keys, the script:
 
 1. Generates `potter@<host>` and `<host> host` ed25519 keypairs in a temp dir.
-2. POSTs the user pub to `https://api.github.com/user/keys` with the PAT from `secrets/github.age`. HTTP 201 and 422 (already present) are success.
+2. POSTs the user pub to `https://api.github.com/user/keys` with the PAT from `secrets/github.age`. HTTP 201 succeeds; a 422 is accepted only after verifying that the same key is already registered on the token's account.
 3. Writes the pubs and age-encrypted privates under `secrets/ssh/<host>/`, encrypted to the **installer's** pubkey first.
 4. Runs `sync-age-recipients` so the new GitHub key and the new host pub join the recipient set and every `.age` file (including the ones just written) is re-encrypted.
 5. Copies the new private keys into nixos-anywhere's `--extra-files` (`/home/potter/.ssh` and the host key) so the machine can decrypt on first boot, then runs nixos-anywhere.
 
 Re-running against a host that already has both `.age` files decrypts and reuses them. It does not mint another GitHub key.
+
+`--prepare-only <private-directory>` performs enrollment and exports the same
+private provisioning files without invoking nixos-anywhere, generating hardware
+configuration, partitioning, or rebooting. It is used by `nixos-sd-image`.
+The destination must not exist and must be outside the checkout/Nix store; keep
+the Git index empty. It verifies that the target host identity can decrypt the
+age store and that its user key is in the GitHub login snapshot. An untrusted
+builder, incomplete encrypted backup, or mismatched keypair is rejected.
+
+## Enrolled SD images
+
+`nixos-sd-image` is on PATH after switching a NixOS host on `common.nix`:
+
+```sh
+nixos-sd-image --flake .#custard --output /path/to/custard.img
+```
+
+Run on a trusted machine with the existing age identity/GitHub PAT and native
+ARM build support or configured QEMU emulation. It calls the enrollment-only
+mode above, including its GitHub upload, recipient sync, and commit/push. Repeated
+image creation reuses the existing keys and verifies their GitHub registration.
+
+After building the generic image, it copies the image outside the store and
+writes the host private/public key into `/etc/ssh/` in its ext4 root partition.
+The private file is root-owned mode 0600 and is verified before publishing the
+output. This identity must exist before agenix runs during first-boot activation;
+agenix then installs the user private key, and tmpfiles supplies its public key.
+Only ciphertext and public keys enter the Nix store and Git checkout. No host
+key is uploaded to GitHub.
+
+The resulting `.img` contains the host identity and must stay private; it is for
+one host, not a public reusable installer. A checksum is emitted alongside it.
+The command refuses block devices, existing outputs, and paths inside the flake
+or `/nix/store`. It operates on regular files without sudo, loop mounts or a VM.
+Optional `--wifi-profile FILE` also provisions the first-boot Wi-Fi file onto
+the firmware partition. It does not flash media or run a remote installation.
 
 First-time PAT, if `secrets/github.age` is missing:
 
@@ -80,7 +116,7 @@ printf '%s' 'ghp_...' | age -e -R ~/.ssh/id_ed25519.pub -o secrets/github.age
 ## Adding a machine to the mesh
 
 1. Host directory + `mkNixosHost` / `mkDarwinHost` (see [layout.md](layout.md)).
-2. NixOS: install with `nixos-remote-install` from roundabout. Darwin: `nh darwin switch` on the Mac, which snapshots pubs; add the user pub to GitHub; `nh os switch` on roundabout to re-encrypt.
+2. NixOS: install with `nixos-remote-install`, or create an enrolled image with `nixos-sd-image`, from a trusted builder such as roundabout. Darwin: `nh darwin switch` on the Mac, which snapshots pubs; add the user pub to GitHub; `nh os switch` on roundabout to re-encrypt.
 3. Add an SSH client `matchBlocks` entry in `modules/home/ssh.nix` if the alias should exist on every host.
 
 After that, `potter` on any enrolled host logs in with `~/.ssh/id_ed25519`, and sshd accepts every key published on the GitHub accounts in `lib/github-users.nix`.

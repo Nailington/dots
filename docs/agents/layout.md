@@ -42,14 +42,16 @@ secrets/                  age files, recipient lists, public key snapshots
 
 `flake.nix` wires hosts. The helpers always add agenix, Home Manager (`useGlobalPkgs`, `useUserPackages`, `backupFileExtension = "backup"`), and the right nixpkgs.
 
-NixOS also gets `overlays.default`. Darwin gets Determinate (`determinateNix.enable = true`) and `home-manager-darwin`, and does not get `overlays.default`.
+NixOS also gets `overlays.default`. Linux constructors select `inputs.nixpkgs`
+for x86_64 (unstable-small) and `inputs.nixpkgs-aarch64` for aarch64 (unstable). Darwin gets Determinate (`determinateNix.enable = true`) and `home-manager-darwin`, and does not get `overlays.default`.
 
 Adding a NixOS host:
 
 1. `hosts/<name>/{default.nix,hardware-configuration.nix,home.nix}`.
 2. Import `modules/nixos/common.nix` plus the profiles that host needs. Headless servers also import `modules/nixos/tailscale.nix` and skip desktop/gaming.
 3. Home imports `home/potter` from `flake.nix`'s `homeModules`, then `hosts/<name>/home.nix` adds profiles.
-4. SSH enrollment is automatic once `modules/nixos/common.nix` is imported (it pulls in `ssh-github.nix`). Install with `nixos-remote-install`, not a hand-copied key. See [secrets-and-ssh.md](secrets-and-ssh.md).
+4. For custard, use the [Pi SD-image path](../custard/README.md); the generic
+   nixos-anywhere kexec path is not a verified Pi bootstrap. SSH enrollment is automatic once `modules/nixos/common.nix` is imported (it pulls in `ssh-github.nix`). Install with `nixos-remote-install`, not a hand-copied key. See [secrets-and-ssh.md](secrets-and-ssh.md).
 5. Register `nixosConfigurations.<name> = mkNixosHost { ... }`.
 6. A host that nixos-anywhere formats also gets `disk.nix` and `disko.nixosModules.disko` in `modules`.
 
@@ -61,6 +63,7 @@ Adding a Darwin host: [darwin.md](darwin.md). Adding an HM-only host: `homeConfi
 | --- | --- |
 | `common.nix` | zsh, ssh client, small CLI set (btop, ncdu, nix-index, …) |
 | `desktop.nix` | GUI apps shared by a desktop host: Chrome (`--password-store=kwallet6`), Discord, Cider, virt-manager, flameshot, qt6ct. Imports `flameshot/`. Theme blocks in this file are commented on purpose. |
+| `arm/desktop.nix` | Curated ARM desktop apps, extra utilities, cursor and Dolphin defaults; imports `flameshot/`. Shared common/niri/kitty/KDE profiles are selected separately. |
 | `niri/` | DankMaterialShell + `config.kdl` and `dms/*.kdl` shipped from the flake |
 | `hyprland/` | Hyprland session files. Commented out on roundabout. |
 | `kde-apps.nix` | Dolphin, Ark, KWallet, KDE games **without** Plasma |
@@ -68,6 +71,8 @@ Adding a Darwin host: [darwin.md](darwin.md). Adding an HM-only host: `homeConfi
 | `gaming.nix` / `creative.nix` / `spicetify.nix` | opt-in app groups |
 | `dev-tui.nix` | JDK 21, cursor-cli, gh, node, bun, nil/nixd, kitty, DNS tools |
 | `dev-gui.nix` | Cursor, GitHub Desktop, quickgui. No wrapper symlinks. |
+| `arm/dev-gui.nix` | ARM GUI development tools: GitHub Desktop and Meld. |
+| `arm/creative.nix` / `arm/gaming.nix` | ARM app selections: Inkscape / Prism Launcher, independent of the x86 creative/gaming profiles. |
 | `kitty/` | kitty config files from the flake, not `programs.kitty` settings |
 | `osx-kvm/` | QEMU macOS guest. Data lives in `~/VMs/osx-kvm` |
 | `zsh.nix` / `ssh.nix` | shared with Darwin |
@@ -95,7 +100,10 @@ Adding a Darwin host: [darwin.md](darwin.md). Adding an HM-only host: `homeConfi
 
 ## Flake packages on PATH
 
-Built for `x86_64-linux` and installed by modules, not by `nix profile`:
+The maintenance tools (`nh`, `sync-age-recipients`, `update-local-packages`,
+`nixos-remote-install`) are built for both `x86_64-linux` and `aarch64-linux`.
+Local x86-only application exports stay under `packages.x86_64-linux`.
+Tools are installed by modules, not by `nix profile`:
 
 | Package | What it is |
 | --- | --- |

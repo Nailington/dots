@@ -33,6 +33,7 @@ let
 
   hostUserAge = ../../secrets/ssh/${config.networking.hostName}/id_ed25519.age;
   haveHostSecret = builtins.pathExists hostUserAge;
+  hostUserPub = ../../secrets/ssh/${config.networking.hostName}/id_ed25519.pub;
 in
 {
   options.potter.ssh = {
@@ -67,7 +68,8 @@ in
       "d /home/potter/.ssh 0700 potter users -"
       "z /home/potter/.ssh/id_ed25519 0600 potter users -"
       "z /home/potter/.ssh/id_ed25519.pub 0644 potter users -"
-    ];
+    ] ++ lib.optional (haveHostSecret && builtins.pathExists hostUserPub)
+      "C /home/potter/.ssh/id_ed25519.pub 0644 potter users - ${hostUserPub}";
 
     # Separate from login: agenix uses these local PRIVATE keys to decrypt .age files.
     # A recipient public key grants decryption access but is not a private-key backup.

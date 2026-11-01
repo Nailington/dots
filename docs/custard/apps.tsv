@@ -1,0 +1,105 @@
+arch_package	installed_version	nix_attribute	arm_metadata	nix_version	existing_flake_overlap	migration	notes
+chromium	156.0.8078.73-1	chromium	supported (metadata only)	156.0.8078.47	none; newly selected for custard	carry	Selected by modules/home/arm/desktop.nix.
+firefox	158.0.1-1	firefox	supported (metadata only)	158.0.1	modules/nixos/desktop.nix	carry	
+vesktop-bin	1.6.8-1	vesktop	supported (metadata only)	1.6.8	new on custard; desktop.nix uses Discord/Equibop	carry	Selected by modules/home/arm/desktop.nix.
+github-desktop-bin	3.4.13_linux1-1	github-desktop	supported (metadata only)	3.6.6	modules/home/dev-gui.nix	carry	Selected by modules/home/arm/dev-gui.nix.
+dolphin	26.08.2-1	kdePackages.dolphin	supported (metadata only)	26.08.2	modules/home/kde-apps.nix	carry	
+flameshot-git	r2195.f8ab6a67-1	flameshot	supported (metadata only)	14.0.0	modules/home/desktop.nix + flameshot/	carry	Selected by modules/home/arm/desktop.nix.
+inkscape	1.4.4-7	inkscape	supported (metadata only)	1.4.4	modules/home/creative.nix	carry	Selected by modules/home/arm/creative.nix.
+prismlauncher-git	11.0.0.r889.g60bcc2694-1	prismlauncher	supported (metadata only)	11.1.1	modules/home/gaming.nix	carry	Selected by modules/home/arm/gaming.nix.
+kitty	0.49.2-1	kitty	supported (metadata only)	0.49.2	modules/home/dev-tui.nix + kitty/	carry	
+mpv	1:0.41.0-6	mpv	supported (metadata only)	0.41.0	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+btop	1.4.7-1	btop	supported (metadata only)	1.4.8	modules/home/common.nix	carry	
+fastfetch	2.70.0-1	fastfetch	supported (metadata only)	2.70.0	modules/home/common.nix	carry	
+ncdu	2.9.2-1	ncdu	supported (metadata only)	2.11.1	modules/home/common.nix	carry	
+git	2.56.0-1	git	supported (metadata only)	2.56.0	modules/nixos/common.nix	carry	
+github-cli	2.102.1-1	gh	supported (metadata only)	2.103.2	modules/home/dev-tui.nix	carry	
+jdk21-openjdk	21.0.13.u9-1	jdk21	supported (metadata only)	21.0.12.1+1	modules/home/dev-tui.nix	carry	
+bind	9.20.30-1	bind	supported (metadata only)	9.20.30	modules/home/dev-tui.nix	carry	
+cloudflare-speed-cli-bin	0.6.6-1	cloudflare-speed-cli	supported (metadata only)	1.0.10	modules/home/dev-tui.nix	carry	
+docker	1:29.9.2-1	docker	supported (metadata only)	29.9.1	modules/nixos/virtualisation.nix; selected independently on custard	carry	
+tailscale	1.104.4-1	tailscale	supported (metadata only)	1.104.2	modules/nixos/tailscale.nix	carry	
+zsh	5.9.2-1	zsh	supported (metadata only)	5.9.2	modules/nixos/common.nix + modules/home/zsh.nix	carry	
+unzip	6.0-23	unzip	supported (metadata only)	6.0	modules/home/common.nix	carry	
+zip	3.0-14	zip	supported (metadata only)	3.0	modules/home/common.nix	carry	
+unrar	1:7.3.2-1	unrar	supported (metadata only)	7.3.1	modules/home/common.nix	carry	
+screen	5.0.2-2	screen	supported (metadata only)	5.0.2	modules/home/common.nix	carry	
+wget	1.25.0-6	wget	supported (metadata only)	1.25.0	modules/nixos/common.nix	carry	Supplied by modules/nixos/common.nix; the duplicate Home Manager selection is commented out.
+ntfs-3g	2026.9.28-1	ntfs3g	supported (metadata only)	2026.9.28	new system setting for USB disk	carry	
+mesa-utils	9.0.0-7	mesa-demos	supported (metadata only)	9.0.0	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+inxi	3.3.41.1-1	inxi	supported (metadata only)	3.3.41-1	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+qt5ct	1.9-2	libsForQt5.qt5ct	supported (metadata only)	1.9	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+qt6ct-kde	0.11-8	qt6Packages.qt6ct	supported (metadata only)	0.11	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+posy-improved-cursors	1.6-1	posy-cursors	supported (metadata only)	1.6	modules/home/desktop.nix	carry	
+breeze	6.8.2-1	kdePackages.breeze	supported (metadata only)	6.8.1	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+breeze-gtk	6.8.2-1	kdePackages.breeze-gtk	supported (metadata only)	6.8.1	modules/home/desktop.nix	carry	Selected by modules/home/arm/desktop.nix.
+blueman	2.4.6-2	blueman	supported (metadata only)	2.4.6	modules/nixos/desktop.nix	carry	
+pavucontrol	1:6.2-2	pavucontrol	supported (metadata only)	6.2	new on custard	replace	Use DMS audio controls, matching roundabout; the separate GUI is commented out.
+playerctl	2.4.1-5	playerctl	supported (metadata only)	2.4.1	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+grim	1.5.0-2	grim	supported (metadata only)	1.5.0	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+jdownloader2	latest-23	jdownloader	missing		new on custard	review	No jdownloader attribute in the pinned nixpkgs; preserve app data for a later runtime/package choice.
+meld	3.24.1-1	meld	supported (metadata only)	3.24.1	new on custard	carry	Selected by modules/home/arm/dev-gui.nix.
+galculator	2.1.4-12	galculator	supported (metadata only)	2.1.4	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+grsync	1.3.1-3	grsync	supported (metadata only)	1.3.1	new on custard	replace	Use the carried rsync CLI; the redundant GUI is commented out.
+gparted	1.8.1-2	gparted	supported (metadata only)	1.8.1	new on custard	carry	Retained alongside KDE Partition Manager in the current app selection. Selected by modules/home/arm/desktop.nix.
+partitionmanager	26.08.2-1	kdePackages.partitionmanager	supported (metadata only)	26.08.2	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+thunar	4.20.10-1	thunar	supported (metadata only)	4.20.10	new on custard	replace	Use Dolphin from kde-apps.nix, matching roundabout.
+thunar-archive-plugin	0.6.0-1	thunar-archive-plugin	supported (metadata only)	0.6.0	new on custard	replace	Use Dolphin with Ark; the Thunar extension is commented out.
+thunar-volman	4.20.0-2	thunar-volman	supported (metadata only)	4.20.0	new on custard	replace	Dolphin uses UDisks/KIO for removable volumes; Thunar volume management is commented out.
+xfce4-terminal	1.2.0-1	xfce4-terminal	supported (metadata only)	1.2.0	new on custard	replace	Use Kitty and the shared roundabout terminal configuration.
+xarchiver	0.5.4.27-1	xarchiver	supported (metadata only)	0.5.4.27	new on custard	replace	Use Ark from kde-apps.nix, matching roundabout.
+xed	3.9.0-1	xed-editor	supported (metadata only)	3.9.0	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+wezterm	20240203.110809.5046fc22.r869.g76b606ec5-3	wezterm	supported (metadata only)	0-unstable-2026-10-10	new on custard	replace	Use Kitty, matching roundabout; WezTerm is commented out.
+rsync	3.5.1-3	rsync	supported (metadata only)	3.5.0	new on custard	carry	Already in the system package set; the duplicate Home Manager selection is commented out.
+sshfs	3.7.6-1	sshfs	supported (metadata only)	3.7.6	new on custard	carry	Already supplied by the SD-image base profile as sshfs-fuse; the duplicate Home Manager selection is commented out.
+glances	4.5.8-1	glances	supported (metadata only)	4.5.7	new on custard	replace	Use btop from common.nix, matching roundabout.
+duf	0.9.1-1	duf	supported (metadata only)	0.9.1	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+tree	2.1.0-1	tree	supported (metadata only)	2.3.2	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+tldr	3.4.4-1	tldr	supported (metadata only)	3.4.4	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+whois	5.6.6-1	whois	supported (metadata only)	5.6.6	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+iperf	2.2.1-2	iperf	supported (metadata only)	3.21	new on custard	replace	Use iperf3; iperf2 is commented out and can be restored for older peers.
+iperf3	3.22-1	iperf3	supported (metadata only)	3.21	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+nm-connection-editor	1.36.0-2	networkmanagerapplet	supported (metadata only)	1.36.0	new on custard; dependency-owned desktop launcher	replace	Use DMS network controls, matching roundabout; the separate NetworkManager applet/editor is commented out.
+vim	9.2.1178-1	vim	supported (metadata only)	9.2.1164	modules/nixos/common.nix; dependency-owned desktop launcher	carry	
+anydesk-arm-bin	7.0.0-1	anydesk	supported (metadata only)	8.1.0	see note	review	ARM package exists, but the vendor requires Xorg for incoming sessions. Not enabled on niri.
+chrome-remote-desktop-existing-session	130.0.6723.14-1	chrome-remote-desktop	missing		see note	review	Existing X11-session workflow cannot be assumed on niri; no remote desktop service enabled.
+twitch-drops-miner-bin	20261028.230155-1	twitch-drops-miner	absent in nixpkgs; repo binary is x86_64-only		see note	review	Repo package pkgs/twitch-drops-miner uses an x86_64 AppImage; existing Arch ARM package is not reusable as-is.
+neofetch	7.1.0-2	neofetch	removed from nixpkgs; use fastfetch		see note	review	Removed from nixpkgs; fastfetch is carried instead.
+jdk-openjdk	27.0.1.0.3.u1-1	jdk	supported (metadata only)	21.0.12.1+1	see note	review	Nix JDK 21 is the default; other JDK versions are not blindly added to PATH.
+jdk17-openjdk	17.0.21.u9-1	jdk17	supported (metadata only)	17.0.20.1+1	see note	review	Dependency-installed JDK; Prism can select Java runtimes per instance.
+docker-compose	5.6.1-1	docker-compose	supported (metadata only)	5.6.0	modules/nixos/virtualisation.nix; selected independently on custard	carry	The nixpkgs Docker package enables the Compose plugin by default; use docker compose.
+cmake	4.4.5-1	cmake	supported (metadata only)	4.4.4	see note	review	Dependency-owned GUI/developer tool; available for project devShells.
+qt6-tools	6.12.0-1	qt6.qttools	supported (metadata only)	6.12.0	see note	review	Dependency-owned Qt Assistant/Designer/Linguist/D-Bus viewer; available for project devShells.
+v4l-utils	1.32.0-2	v4l-utils	supported (metadata only)	1.32.0	see note	review	Dependency-owned qv4l2/qvidcap; optional capture tools.
+stoken	0.92-6	stoken	supported (metadata only)	0.93	see note	review	Dependency-owned software token GUI; optional.
+gpsd	3.27.5-1	gpsd	supported (metadata only)	3.27.5	see note	review	Dependency-owned xgps/xgpsspeed; optional, daemon not enabled.
+yad	15.0-2	yad	supported (metadata only)	15.0	see note	review	Dependency-owned dialog development tools; optional.
+libxfce4ui	4.20.2-1	libxfce4ui	supported (metadata only)	4.20.2	see note	review	About Xfce launcher; no full Xfce desktop selected.
+i3-wm	4.25.1-1	i3	supported (metadata only)	4.25.1	old desktop stack	replace	Replaced by niri.
+i3blocks	1.5-4	i3blocks	supported (metadata only)	1.5	old desktop stack	replace	Replaced by DMS.
+i3status	2.15-1	i3status	supported (metadata only)	2.15	old desktop stack	replace	Replaced by DMS.
+dmenu	5.4-1	dmenu	supported (metadata only)	5.4	old desktop stack	replace	Replaced by the DMS launcher.
+dunst	1.13.2-3	dunst	supported (metadata only)	1.13.2	old desktop stack	replace	Replaced by DMS notifications.
+picom	13-2	picom	supported (metadata only)	13	old desktop stack	replace	X11 compositor; replaced by niri.
+rofi	1.7.5-3	rofi	supported (metadata only)	2.0.0	old desktop stack	replace	DMS provides the launcher; upstream Nix package remains available.
+rofi-adi1090x	r118.b76c16b-1	rofi-themes-collection	absent in nixpkgs; local Linux data package		old desktop stack	replace	Not in vanilla nixpkgs; repo pkgs/rofi-themes is a Linux data package. DMS is the selected launcher.
+arandr	0.1.11-6	arandr	supported (metadata only)	0.1.11	old desktop stack	replace	X11 display configuration; use DMS/niri outputs.
+feh	3.13.1-1	feh	supported (metadata only)	3.13.1	old desktop stack	replace	X11 wallpaper/image tool; not selected automatically.
+lxappearance	0.6.4-3	lxappearance	supported (metadata only)	0.6.4	old desktop stack	replace	DMS controls GTK appearance.
+xterm	411-1	xterm	supported (metadata only)	411	old desktop stack	replace	Kitty and WezTerm retained.
+betterlockscreen	4.4.0-1	betterlockscreen	supported (metadata only)	4.4.0	old desktop stack	replace	X11 locker; DMS supplies the lock screen.
+i3lock-color	2.13.c.5-3	i3lock-color	supported (metadata only)	2.13.c.5	old desktop stack	replace	X11 locker; DMS supplies the lock screen.
+hyprlock	0.9.6-3	hyprlock	supported (metadata only)	0.9.6	old desktop stack	replace	Use DMS lock integration.
+polybar	3.7.2-3	polybar	supported (metadata only)	3.7.2	old desktop stack	replace	DMS replaces the old bar.
+waybar	0.15.0-3	waybar	supported (metadata only)	0.15.0	old desktop stack	replace	DMS supplies the bar.
+lightdm	1:1.33.1-1	lightdm	supported (metadata only)	1.33.1	old desktop stack	replace	greetd + DMS greeter selected.
+sddm	0.21.0-7	kdePackages.sddm	supported (metadata only)	0.21.0	old desktop stack	replace	greetd + DMS greeter selected.
+weston	15.0.1-3	weston	supported (metadata only)	16.0.0	old desktop stack	replace	niri selected.
+user-local:codex	codex-cli 0.163.0	codex	supported (metadata only)	0.164.0	modules/home/dev-tui.nix	carry	Standalone ~/.local/bin launcher observed; use the flake-managed ARM package after migration. T3 also has a local nightly overlay.
+user-local:t3	not pacman-managed	t3code	supported (metadata only)	0.1.2	modules/home/dev-tui.nix	carry	Standalone ~/.local/bin launcher observed; use the flake-managed ARM package after migration. T3 also has a local nightly overlay.
+eos-apps-info	26.6-1		EndeavourOS-specific		none	replace	Distro launcher is not carried to NixOS; use the flake/nh and NixOS service tooling.
+eos-log-tool	26.10.2-1		EndeavourOS-specific		none	replace	Distro launcher is not carried to NixOS; use the flake/nh and NixOS service tooling.
+eos-quickstart	1.4.1-1		EndeavourOS-specific		none	replace	Distro launcher is not carried to NixOS; use the flake/nh and NixOS service tooling.
+eos-update	26.9.2-1		EndeavourOS-specific		none	replace	Distro launcher is not carried to NixOS; use the flake/nh and NixOS service tooling.
+eos-update-notifier	26.9-1		EndeavourOS-specific		none	replace	Distro launcher is not carried to NixOS; use the flake/nh and NixOS service tooling.
+welcome	26.10.2-1		EndeavourOS-specific		none	replace	Distro launcher is not carried to NixOS; use the flake/nh and NixOS service tooling.

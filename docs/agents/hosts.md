@@ -22,6 +22,7 @@ Hardware quirks that belong in the host file, not a shared module:
 - USB devices and USB disks are group `kvm` so osx-kvm can pass them through.
 - NTFS: prefer ntfs-3g via udisks2. An "Acer" partition mount is commented out; leave it commented unless asked.
 - `nixos-remote-install` is on the system path so this machine installs the others.
+- ARM image builds: `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` enables QEMU user-mode emulation after switching; roundabout's own platform remains x86_64.
 - Wi-Fi powersave off. `cfg80211` regdom `US`. Nested KVM (`kvm_amd nested=1`, `kvm ignore_msrs=1`).
 
 `osx-kvm` launchers come from `modules/home/osx-kvm`. VM disk and firmware vars live in `~/VMs/osx-kvm`, not the Nix store. SSH to the guest is `ssh osx-kvm` (port 10022, user potter) from `modules/home/ssh.nix`.
@@ -40,6 +41,7 @@ Imports: `common`, `tailscale`, `nginx.nix`, `cron.nix`, disko. Home is `common`
 
 Other facts:
 
+- ARM image builds: `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` enables QEMU user-mode emulation after switching; abacab's own platform remains x86_64.
 - SSH: passwords off, root is `prohibit-password`. Login is GitHub keys via `ssh-github.nix`.
 - `users.mutableUsers = true`. potter has a `hashedPassword` in `hosts/abacab/default.nix` so the first boot has a local password. `wheel` sudo still asks for it. Do not copy that hash into docs or chat.
 - `programs.nix-ld` comes from `common.nix` (wanted so unpacked binaries work here too).
@@ -48,6 +50,55 @@ Other facts:
 - Cron (`hosts/abacab/cron.nix`) runs the packaged headless `auto-rob` on weekdays, with `AUTO_ROB_WORKSPACE=/mnt/storage/auto-rob` preserving the existing workspace. Jobs source `/etc/profile` so the agent harness CLIs are on PATH. Log: `/var/log/auto-rob.log`.
 - qBittorrent runs headlessly. Downloads go to `/mnt/storage/torrents`, and the service requires that mount. Potter belongs to the `qbittorrent` group to manage downloaded files after a new login. Torrent sockets are bound to `tailscale0` and the systemd unit allows only `tailscale0` and loopback; its Web UI listens on `127.0.0.1:8080` and the firewall does not expose it. From the laptop, run `ssh -L 8080:127.0.0.1:8080 abacab` and open `http://127.0.0.1:8080`. On first launch, get the temporary admin password with `sudo journalctl -u qbittorrent -b` and set a permanent one in the Web UI.
 - Select a licensed Mullvad exit node **on abacab** with `sudo tailscale set --exit-node=<mullvad-node>`; `tailscale exit-node list` lists available nodes. Check the route with `curl https://am.i.mullvad.net/connected` before starting torrents. This changes outbound routing for the whole server, including non-torrent services. If no exit node is selected, the torrent service's interface restriction prevents it from falling back to the public NIC.
+
+## custard
+
+Raspberry Pi 5 Model B (4 GB), `aarch64-linux`, replacing EndeavourOS on microSD.
+Uses the separate `nixpkgs-aarch64` (`nixos-unstable`) input; existing Linux and
+Darwin pins are unchanged. `mkNixosHost` still supplies agenix and integrated HM.
+
+Imports the upstream `nixos-hardware` Pi 5 profile, the generic AArch64 SD-image
+module, common, desktop, niri/DMS, and Tailscale. No NVIDIA/CachyOS, Steam, VMware,
+or Intel macOS guest modules. Docker is enabled independently. Qtengine uses the
+host's Qt/KDE package set so the platform plugins match the apps.
+
+Boot: Raspberry Pi firmware → U-Boot → extlinux, from microSD. The firmware FAT
+partition is mounted at `/boot/firmware` and refreshed on activation. Root is
+ext4, label `CUSTARD`; firmware label `CUSTARD_FW`. `system.build.sdImage` is the
+image installation path; Potter intends to reflash the current card after
+shutting the Pi down. Optional disko layout formats **only**
+`/dev/mmcblk0`; the Samsung T7 USB disk is outside the layout. Disko owns
+formatting; the image module owns the matching label-based mounts.
+
+Use `nixos-sd-image --flake .#custard --output /path/custard.img` on a trusted
+builder to create an enrolled image: the command reuses remote-install key
+preparation, GitHub upload, encrypted backups, and recipient sync/commit/push,
+then seeds the host identity into a private image copy outside the Nix store.
+First-boot agenix installs the user key. Direct `nix build` produces the generic
+image without this enrollment/provisioning step.
+
+Home imports common, niri, kitty, KDE apps, dev-tui, and the ARM desktop,
+GUI development, creative, and gaming profiles under `modules/home/arm/*.nix`.
+The ARM desktop profile owns Flameshot settings, cursor, and Dolphin defaults;
+`hosts/custard/home.nix` selects profiles and sets the host's T3 binding. See the
+[app manifest and migration guide](../custard/README.md) for exceptions.
+Potter's initial desktop/sudo password is set through `initialHashedPassword`
+in the host configuration. It was supplied privately and hashed locally;
+plaintext is not stored in the flake. Later `passwd` changes persist across
+rebuilds. No fixed Tailscale/T3 address is embedded. T3 keeps its default
+loopback binding until a host address is explicitly configured.
+
+Wi-Fi can connect before login: place the private `custard-wifi.nmconnection`
+on the flashed card's firmware partition. A host-local service imports it
+before NetworkManager starts and removes the firmware copy after persisting
+the profile. Credentials remain outside Git/the Nix store; see the migration
+guide for provisioning. This does not configure a separate RAM installer.
+
+`system.stateVersion = "26.05"` for this new install; shared Linux home identity
+retains `home.stateVersion = "25.11"`. zram enabled; Nix builds limited to one
+job/two cores on the 4 GB Pi. Builds need native ARM or an emulated builder;
+roundabout and abacab provide QEMU ARM emulation after switching their updated
+host configurations. Building custard's image does not activate it on the builder.
 
 ## ewbtciast
 
@@ -68,6 +119,7 @@ Install and switch happen **on the Mac** with `nh darwin switch`. Linux is not t
 | Alias | Target |
 | --- | --- |
 | `abacab` | `potter@abacab`, `~/.ssh/id_ed25519` |
+| `custard` | `potter@custard`, `~/.ssh/id_ed25519` |
 | `ewbtciast` | `potter@ewbtciast`, `~/.ssh/id_ed25519` |
 | `osx-kvm` | `potter@nixos:10022` |
 | `hammerpot` | `ubuntu@hammerpot-server`, key `~/.ssh/ssh-key-2024-11-04.key` |

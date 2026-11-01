@@ -94,6 +94,7 @@
     self.packages.${pkgs.system}.nh
     self.packages.${pkgs.system}.sync-age-recipients
     self.packages.${pkgs.system}.update-local-packages
+    self.packages.${pkgs.system}.nixos-sd-image
     fuse3
     e2fsprogs
     usbutils
