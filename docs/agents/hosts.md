@@ -82,6 +82,11 @@ shutting the Pi down. Optional disko layout formats **only**
 `/dev/mmcblk0`; the Samsung T7 USB disk is outside the layout. Disko owns
 formatting; the image module owns the matching label-based mounts.
 
+The existing NTFS T7 (`5D9E678510127802`) mounts at `/run/media/potter/T7`
+using NTFS-3G, preserving `uid=1000,gid=1000,umask=0002` from EndeavourOS.
+It uses `nofail` and 10-second device/mount timeouts. This is a mount-only
+`fileSystems` entry; the T7 remains outside disko and is never auto-formatted.
+
 Use `nixos-sd-image --flake .#custard --output /path/custard.img` on a trusted
 builder to create an enrolled image: the command reuses remote-install key
 preparation, GitHub upload, encrypted backups, and recipient sync/commit/push,

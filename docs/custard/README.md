@@ -241,7 +241,10 @@ cards with the same labels attached during that boot.
 Restore user data deliberately. Home Manager owns the declared shell/Kitty/niri
 files and uses `.backup` for existing files; do not replace its managed links
 with a wholesale Arch `/etc` or home-config restore. The USB T7 remains outside
-all formatting and can be mounted from Dolphin after boot.
+all formatting and mounts at `/run/media/potter/T7` by UUID `5D9E678510127802`.
+The optional NTFS-3G mount preserves the current `uid=1000,gid=1000,umask=0002`
+rules and `nosuid,nodev,relatime`, with `nofail` and 10-second device/mount
+timeouts so a missing or failed disk does not prevent boot.
 
 Images created with `nixos-sd-image` are already enrolled in the
 [SSH/agenix process](../agents/secrets-and-ssh.md). Restore the checkout containing
@@ -325,8 +328,9 @@ alone does not configure that separate installer environment.
 
 `hosts/custard/disk.nix` describes a destructive GPT layout on `/dev/mmcblk0`:
 1 GiB FAT firmware and the remaining space as ext4 root. It intentionally
-excludes the T7. The SD-image module owns the runtime mounts; disko uses the
-same filesystem labels and only supplies formatting/mount scripts.
+excludes the T7. The SD-image module owns the root/firmware mounts; the host
+defines the optional T7 mount. Disko uses the same root/firmware labels and only
+supplies formatting/mount scripts.
 
 The repo's `nixos-remote-install` wrapper can prepare SSH/agenix keys and run
 nixos-anywhere, but **its default generic kexec installer is not a verified Pi 5

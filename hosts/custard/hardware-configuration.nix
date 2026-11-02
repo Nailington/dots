@@ -49,5 +49,23 @@ in
   # The upstream image uses mkForce for automount; this host mounts it at boot.
   fileSystems."/boot/firmware".options = lib.mkOverride 40 [ "umask=0077" ];
 
-  # The Samsung T7 USB data disk is deliberately outside the install layout.
+  # Existing Samsung T7: preserve its EndeavourOS path and NTFS-3G ownership.
+  # Mount only; this data disk stays outside the destructive install layout.
+  fileSystems."/run/media/potter/T7" = {
+    device = "/dev/disk/by-uuid/5D9E678510127802";
+    fsType = "ntfs-3g";
+    noCheck = true;
+    options = [
+      "rw"
+      "nosuid"
+      "nodev"
+      "relatime"
+      "uid=1000"
+      "gid=1000"
+      "umask=0002"
+      "nofail"
+      "x-systemd.device-timeout=10s"
+      "x-systemd.mount-timeout=10s"
+    ];
+  };
 }
