@@ -261,8 +261,8 @@ in
     Environment = [ "DMS_ENABLE_GTK_REFRESH=1" ];
   };
 
-  home.packages = [ planC steamFixCursor ];
-  xdg.desktopEntries.steam-fix-cursor = {
+  home.packages = [ planC ] ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [ steamFixCursor ];
+  xdg.desktopEntries.steam-fix-cursor = lib.mkIf pkgs.stdenv.hostPlatform.isx86_64 {
     name = "Fix Steam cursor";
     comment = "Refresh stale XWayland display information and reopen Steam";
     exec = lib.getExe steamFixCursor;
@@ -282,9 +282,14 @@ in
 
   xdg.configFile."niri/config.kdl".source = ./config.kdl;
   xdg.configFile."niri/dms" = {
-    source = ./dms;
+    # Monitor modes belong to the host; roundabout's HDMI 4K/120 mode is not
+    # appropriate for the Pi. Keep the remaining DMS fragments shared.
+    source = builtins.filterSource (path: _: baseNameOf path != "outputs.kdl") ./dms;
     recursive = true;
   };
+  xdg.configFile."niri/dms/outputs.kdl".source = lib.mkDefault (
+    pkgs.writeText "niri-outputs.kdl" "// Let niri detect this host's connected monitors.\n"
+  );
   # libexec is not on PATH; niri spawn-at-startup is the Hyprland exec-once equivalent.
   xdg.configFile."niri/pam-kwallet.kdl".text = ''
     spawn-at-startup "${pkgs.kdePackages.kwallet-pam}/libexec/pam_kwallet_init"

@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 
 {
   imports = [
@@ -13,14 +13,13 @@
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
-    auto-rob
     nix-du
     ncdu
     unrar
     fastfetch
     (btop.override {
-      rocmSupport = true;
-      cudaSupport = true;
+      rocmSupport = pkgs.stdenv.hostPlatform.isx86_64;
+      cudaSupport = pkgs.stdenv.hostPlatform.isx86_64;
     })
     lshw
     libinput
@@ -31,5 +30,7 @@
     unzip
     sqlite
     tea
+  ] ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
+    pkgs.auto-rob # The local Electron release is x86_64-only.
   ];
 }

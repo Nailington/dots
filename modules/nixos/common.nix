@@ -75,11 +75,17 @@
       # CachyOS/Lantian kernel cache.
       "https://cache.lantian.pub/lantian"
       "https://hyprland.cachix.org"
+      # Custard's vendor kernel/firmware, also needed by the x86 image builders.
+      "https://nixos-raspberrypi.cachix.org"
     ];
-    extra-trusted-substituters = [ "https://hyprland.cachix.org" ];
+    extra-trusted-substituters = [
+      "https://hyprland.cachix.org"
+      "https://nixos-raspberrypi.cachix.org"
+    ];
     extra-trusted-public-keys = [
       "lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
+      "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
     ];
   };
 
@@ -94,6 +100,7 @@
     self.packages.${pkgs.system}.nh
     self.packages.${pkgs.system}.sync-age-recipients
     self.packages.${pkgs.system}.update-local-packages
+    self.packages.${pkgs.system}.nixos-sd-image
     fuse3
     e2fsprogs
     usbutils

@@ -4,6 +4,11 @@
   inputs = {   
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
+    # Custard's OS and apps use full unstable, independently of x86_64.
+    nixpkgs-aarch64.url = "github:NixOS/nixpkgs/nixos-unstable";
+    # Keep its own nixpkgs pin: the Pi kernel/firmware must match its Cachix builds.
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/develop";
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -153,17 +158,21 @@
         mkDarwinHost
         ;
 
-      pkgs = import nixpkgs {
-        inherit system;
+      linuxSystems = [ "x86_64-linux" "aarch64-linux" ];
+      pkgsFor = platform: import
+        (if platform == "aarch64-linux" then inputs.nixpkgs-aarch64 else nixpkgs) {
+        system = platform;
         config = {
           allowUnfree = true;
         };
         overlays = [ self.overlays.default ];
       };
+      pkgs = pkgsFor system;
     in
     {
-      packages.${system} =
+      packages = nixpkgs.lib.genAttrs linuxSystems (system:
         let
+          pkgs = pkgsFor system;
           inherit
             (import ./pkgs/nh-wrapped.nix {
               inherit pkgs;
@@ -226,16 +235,8 @@
               installShellCompletion --zsh _update-local-packages
             '';
           });
-          althea = pkgs.althea;
-          singularcard = pkgs.singularcard;
           google-sans = pkgs.google-sans;
           google-sans-flex = pkgs.google-sans-flex;
-          twitch-drops-miner = pkgs.twitch-drops-miner;
-          auto-rob = pkgs.auto-rob;
-          kde-craft = pkgs.kde-craft;
-          sweetpad = pkgs.sweetpad;
-          sweetpad-vscode = pkgs.sweetpad.vscodeExtension;
-          sim-relay = pkgs.sim-relay;
           t3code = pkgs.t3code;
           nixos-remote-install = pkgs.writeShellApplication {
             name = "nixos-remote-install";
@@ -247,6 +248,7 @@
               git
               nix
               coreutils
+              findutils
             ]) ++ [
               sync-age-recipients
               nixos-anywhere-unwrapped
@@ -256,10 +258,21 @@
               ${builtins.readFile ./scripts/nixos-remote-install.sh}
             '';
           };
-        };
+          nixos-sd-image = pkgs.writeShellApplication {
+            name = "nixos-sd-image";
+            runtimeInputs = (with pkgs; [
+              nix git coreutils python3 util-linux e2fsprogs mtools zstd
+            ]) ++ [ self.packages.${system}.nixos-remote-install ];
+            text = builtins.readFile ./scripts/nixos-sd-image.sh;
+          };
+        } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
+          inherit (pkgs) althea singularcard twitch-drops-miner auto-rob kde-craft sweetpad sim-relay;
+          sweetpad-vscode = pkgs.sweetpad.vscodeExtension;
+        });
 
       overlays.default = final: prev:
       let
+        system = final.stdenv.hostPlatform.system;
         # Override before buildDotnetModule resolves the NuGet dependency files.
         discordChatExporterFork = package: nugetDeps: package.override {
           buildDotnetModule = args: final.buildDotnetModule (finalAttrs:
@@ -401,7 +414,9 @@
           '';
         };
 
-        nix-index = nix-index.packages.${system}.default;
+        # Keep ARM tools on custard's package pin; preserve the x86 flake build.
+        nix-index = if system == "aarch64-linux" then prev.nix-index
+          else nix-index.packages.${system}.default;
 
         # Interim until nixpkgs PR merges — github:Nytelife26/nixpkgs/helium/init
         helium = helium.legacyPackages.${system}.helium;
@@ -472,6 +487,27 @@
         homeModules = [
           ./home/potter
           ./hosts/abacab/home.nix
+        ];
+      };
+
+      # Raspberry Pi 5 — microSD boot, niri + DMS, native aarch64 packages.
+      nixosConfigurations.custard = mkNixosHost {
+        system = "aarch64-linux";
+        specialArgs = {
+          inherit self inputs;
+          nixos-raspberrypi = inputs.nixos-raspberrypi;
+        };
+        modules = [
+          ./hosts/custard
+          inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.base
+          inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.display-vc4
+          inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.bluetooth
+          inputs.nixos-raspberrypi.nixosModules.sd-image
+          disko.nixosModules.disko
+        ];
+        homeModules = [
+          ./home/potter
+          ./hosts/custard/home.nix
         ];
       };
 

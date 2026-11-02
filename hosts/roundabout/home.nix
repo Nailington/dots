@@ -35,6 +35,9 @@ in
     ../../modules/home/osx-kvm # macOS guest on NixOS via KVM — not nix-darwin
   ];
 
+  # Laptop/external-monitor modes belong to roundabout, not every niri host.
+  xdg.configFile."niri/dms/outputs.kdl".source = ../../modules/home/niri/dms/outputs.kdl;
+
   programs.osx-kvm = {
     enable = true;
     resolution = "1920x1080";

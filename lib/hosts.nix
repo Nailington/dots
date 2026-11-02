@@ -37,15 +37,16 @@
 #          modules = [ ./hosts/<name> ];
 #          homeModules = [ ./hosts/<name>/home.nix ];
 #        };
-#   Do not apply overlays.default (Linux-only packages / hardcoded x86_64-linux).
+#   Do not apply overlays.default (Linux-only packages).
 { self, inputs }:
 
 let
   inherit (inputs) nixpkgs home-manager darwin home-manager-darwin;
   inherit (nixpkgs.lib) hasPrefix hasSuffix;
 
-  # NixOS / Linux HM: always github:NixOS/nixpkgs/nixos-unstable-small — not nixpkgs-unstable.
-  nixosNixpkgs = inputs.nixpkgs;
+  # Linux: existing x86_64 pin stays on unstable-small; ARM uses its own nixos-unstable pin.
+  nixosNixpkgsFor = system:
+    if system == "aarch64-linux" then inputs.nixpkgs-aarch64 else inputs.nixpkgs;
 
   # Darwin pkgs: Intel is gone from unstable, so x86_64 stays on 26.05.
   darwinNixpkgsFor =
@@ -69,7 +70,7 @@ in
         inherit self inputs;
       },
     }:
-    nixosNixpkgs.lib.nixosSystem {
+    (nixosNixpkgsFor system).lib.nixosSystem {
       inherit system specialArgs;
       modules = modules ++ [
         { nixpkgs.overlays = [ self.overlays.default ] ++ extraOverlays; }
@@ -95,7 +96,7 @@ in
       extraOverlays ? [ ],
     }:
     home-manager.lib.homeManagerConfiguration {
-      pkgs = import nixosNixpkgs {
+      pkgs = import (nixosNixpkgsFor system) {
         inherit system;
         config = {
           allowUnfree = true;

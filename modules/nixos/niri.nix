@@ -7,7 +7,12 @@
   imports = [
     inputs.niri.nixosModules.niri
     inputs.dank-greeter.nixosModules.default
-    inputs.qtengine.nixosModules.default
+    # Build the Qt platform plugins with this host's Qt/KDE versions. The
+    # upstream module otherwise takes packages from its x86-oriented input pin.
+    (import "${inputs.qtengine}/nix/module.nix" {
+      self.packages.${pkgs.stdenv.hostPlatform.system}.default =
+        pkgs.callPackage "${inputs.qtengine}/nix/default.nix" { };
+    })
   ];
 
   assertions = [

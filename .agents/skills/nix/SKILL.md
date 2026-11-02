@@ -33,9 +33,11 @@ Read [commands.md](commands.md) for command examples and troubleshooting.
 - Here, NixOS and Darwin hosts integrate Home Manager into the system rebuild.
   `homeConfigurations."potter@roundabout"` is a scaffold, not roundabout's normal
   deployment path. Read [lib/hosts.nix](../../../lib/hosts.nix) before adding hosts.
-- Keep Linux on `nixos-unstable-small`. Host constructors choose Darwin inputs
-  separately; do not apply the Linux-only overlay to Darwin or make every input
-  follow `nixpkgs`. Preserve the documented exceptions.
+- Keep existing x86_64 Linux hosts on `nixos-unstable-small`. ARM Linux uses the
+  separate `nixpkgs-aarch64` input on `nixos-unstable`, requested for custard.
+  Host constructors choose Darwin inputs separately; do not apply the Linux-only
+  overlay to Darwin or make every input follow `nixpkgs`. Preserve the documented
+  exceptions.
 
 ## Nix semantics that affect edits
 

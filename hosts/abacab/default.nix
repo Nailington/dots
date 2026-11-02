@@ -65,6 +65,9 @@ in
     ];
   };
 
+  # Build custard's ARM image using QEMU user-mode emulation.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
   # This host kexec'd in BIOS (not EFI). systemd-boot cannot boot that.
   boot.loader.systemd-boot.enable = false;
   boot.loader.efi.canTouchEfiVariables = false;

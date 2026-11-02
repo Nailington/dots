@@ -45,6 +45,9 @@
     ];
   };
 
+  # Build custard's ARM image using QEMU user-mode emulation.
+  boot.binfmt.emulatedSystems = [ "aarch64-linux" ];
+
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 

@@ -234,6 +234,21 @@ extension when its upstream package generates those certificates itself.
 
 - `https://cache.lantian.pub/lantian` (Lantian, used by the CachyOS kernel path)
 - `https://hyprland.cachix.org`
+- `https://nixos-raspberrypi.cachix.org` (custard's vendor kernel/firmware;
+  enabled on roundabout and abacab too so image builds can substitute them)
+
+Custard takes its kernel and boot/wireless firmware directly from the locked
+`nixos-raspberrypi` input's package outputs. That input keeps its own nixpkgs
+pin for cache matching; ordinary custard packages still come from our full
+ARM `nixos-unstable` input. Avoid overriding the vendor kernel configuration or
+making its nixpkgs follow ours: either changes the derivation and can lose the
+cached build. A published cache does not guarantee every revision/output is
+present. Verify the exact kernel output before promising a download.
+
+The host's narrow overlay also supplies `raspberrypi-utils` and
+`raspberrypi-udev-rules` from the Pi input. Its board modules reference both
+through `pkgs`; the latter is used by udev and systemd tmpfiles. Our unstable
+pin no longer exports these attributes. Keep these vendor dependencies together.
 
 `niri-flake.cache.enable` is false on purpose.
 
