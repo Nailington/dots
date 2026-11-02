@@ -41,9 +41,10 @@ The cached kernel package predates unstable's `kernel.target`/`buildDTBs`
 metadata defaults. A host-local passthru extension supplies that metadata
 without changing its build or output paths. The complete device-tree directory,
 including firmware overlays, is enabled.
-The upstream board utility is supplied from its own package output because
-our unstable pin no longer exports that attribute. The generic all-hardware
-profile and unused ZFS support are disabled for this ext4 Pi image.
+The upstream board utility and udev/tmpfiles rules are supplied from its own
+package outputs because our unstable pin no longer exports those attributes.
+The generic all-hardware profile and unused ZFS support are disabled for this
+ext4 Pi image.
 
 Niri, DMS, the DMS greeter, Mesa, and Xwayland are available for ARM. The
 [pinned DMS flake](https://github.com/AvengeMedia/DankMaterialShell/blob/8ce37501bd9c4dcbac04d1deb4e57d50f3e2c94f/flake.nix)

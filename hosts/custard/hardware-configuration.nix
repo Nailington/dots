@@ -27,9 +27,11 @@ in
   # Keep the complete DTB tree, including overlays used by config.txt.
   hardware.deviceTree.enable = true;
 
-  # The board module installs this vendor utility; unstable no longer exports it.
+  # Board modules require these vendor packages, absent from our unstable pin.
   nixpkgs.overlays = [
-    (_final: _prev: { raspberrypi-utils = vendorPackages.raspberrypi-utils; })
+    (_final: _prev: {
+      inherit (vendorPackages) raspberrypi-utils raspberrypi-udev-rules;
+    })
   ];
   # Keep the vendor wireless firmware matched to the cached kernel/boot firmware.
   hardware.firmware = [ vendorPackages.raspberrypiWirelessFirmware ];

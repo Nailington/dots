@@ -245,6 +245,11 @@ making its nixpkgs follow ours: either changes the derivation and can lose the
 cached build. A published cache does not guarantee every revision/output is
 present. Verify the exact kernel output before promising a download.
 
+The host's narrow overlay also supplies `raspberrypi-utils` and
+`raspberrypi-udev-rules` from the Pi input. Its board modules reference both
+through `pkgs`; the latter is used by udev and systemd tmpfiles. Our unstable
+pin no longer exports these attributes. Keep these vendor dependencies together.
+
 `niri-flake.cache.enable` is false on purpose.
 
 ## nix-ld
