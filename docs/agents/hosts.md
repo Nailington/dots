@@ -115,7 +115,8 @@ the profile. Credentials remain outside Git/the Nix store; see the migration
 guide for provisioning. This does not configure a separate RAM installer.
 
 `system.stateVersion = "26.05"` for this new install; shared Linux home identity
-retains `home.stateVersion = "25.11"`. zram enabled; Nix builds limited to one
+retains `home.stateVersion = "25.11"`. zram enabled with a 64 GiB `/swapfile`
+on the microSD root filesystem; Nix builds limited to one
 job/two cores on the 4 GB Pi. Builds need native ARM or an emulated builder;
 roundabout and abacab provide QEMU ARM emulation after switching their updated
 host configurations. Building custard's image does not activate it on the builder.

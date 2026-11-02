@@ -63,6 +63,12 @@
 
   # This Pi has 4 GB of RAM. Avoid exhausting it during native builds.
   zramSwap.enable = true;
+  swapDevices = [
+    {
+      device = "/swapfile";
+      size = 64 * 1024;
+    }
+  ];
   nix.settings = {
     max-jobs = 1;
     cores = 2;
