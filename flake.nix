@@ -4,12 +4,10 @@
   inputs = {   
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
-    # Pi 5 needs newer boot firmware/U-Boot than the existing x86_64 pin.
+    # Custard's OS and apps use full unstable, independently of x86_64.
     nixpkgs-aarch64.url = "github:NixOS/nixpkgs/nixos-unstable";
-    nixos-hardware = {
-      url = "github:NixOS/nixos-hardware";
-      inputs.nixpkgs.follows = "nixpkgs-aarch64";
-    };
+    # Keep its own nixpkgs pin: the Pi kernel/firmware must match its Cachix builds.
+    nixos-raspberrypi.url = "github:nvmd/nixos-raspberrypi/develop";
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -495,9 +493,16 @@
       # Raspberry Pi 5 — microSD boot, niri + DMS, native aarch64 packages.
       nixosConfigurations.custard = mkNixosHost {
         system = "aarch64-linux";
+        specialArgs = {
+          inherit self inputs;
+          nixos-raspberrypi = inputs.nixos-raspberrypi;
+        };
         modules = [
           ./hosts/custard
-          inputs.nixos-hardware.nixosModules.raspberry-pi-5
+          inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.base
+          inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.display-vc4
+          inputs.nixos-raspberrypi.nixosModules.raspberry-pi-5.bluetooth
+          inputs.nixos-raspberrypi.nixosModules.sd-image
           disko.nixosModules.disko
         ];
         homeModules = [

@@ -57,18 +57,25 @@ Raspberry Pi 5 Model B (4 GB), `aarch64-linux`, replacing EndeavourOS on microSD
 Uses the separate `nixpkgs-aarch64` (`nixos-unstable`) input; existing Linux and
 Darwin pins are unchanged. `mkNixosHost` still supplies agenix and integrated HM.
 
-Imports the upstream `nixos-hardware` Pi 5 profile, the generic AArch64 SD-image
-module, common, desktop, niri/DMS, and Tailscale. No NVIDIA/CachyOS, Steam, VMware,
+Imports `nixos-raspberrypi`'s Pi 5 base, HDMI/VC4, Bluetooth and SD-image
+modules, common, desktop, niri/DMS, and Tailscale. No NVIDIA/CachyOS, Steam, VMware,
 or Intel macOS guest modules. Docker is enabled independently. Qtengine uses the
 host's Qt/KDE package set so the platform plugins match the apps.
+
+The vendor kernel and matched boot/wireless firmware come directly from
+`inputs.nixos-raspberrypi.packages.aarch64-linux`, retaining that flake's own
+nixpkgs revision for Cachix compatibility. Do not make its nixpkgs follow our
+ARM or x86 inputs, or apply its media overlays globally. The host stays on the
+existing `mkNixosHost` constructor and full ARM `nixos-unstable` for OS/apps.
 
 Codex Desktop is temporarily disabled only on custard: its bundled Node
 dependency audit segfaulted under QEMU ARM during the image build. The shared
 desktop default remains enabled for roundabout; the Codex CLI is still installed
 on custard through dev-tui.
 
-Boot: Raspberry Pi firmware → U-Boot → extlinux, from microSD. The firmware FAT
-partition is mounted at `/boot/firmware` and refreshed on activation. Root is
+Boot: Raspberry Pi firmware → Linux, using the upstream `kernel` bootloader
+with separate NixOS generation directories. The firmware FAT partition is
+mounted at `/boot/firmware` and refreshed on activation. Root is
 ext4, label `CUSTARD`; firmware label `CUSTARD_FW`. `system.build.sdImage` is the
 image installation path; Potter intends to reflash the current card after
 shutting the Pi down. Optional disko layout formats **only**
@@ -104,6 +111,9 @@ retains `home.stateVersion = "25.11"`. zram enabled; Nix builds limited to one
 job/two cores on the 4 GB Pi. Builds need native ARM or an emulated builder;
 roundabout and abacab provide QEMU ARM emulation after switching their updated
 host configurations. Building custard's image does not activate it on the builder.
+The shared system profile enables `nixos-raspberrypi.cachix.org` and its signing
+key on both builders as well as custard; switch the chosen builder before
+restarting image creation to enable cache substitution in its Nix daemon.
 
 ## ewbtciast
 

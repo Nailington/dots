@@ -14,14 +14,36 @@ Existing x86_64 and Darwin input revisions are unchanged. Linux package/tool
 outputs now exist for both architectures; ARM does not export the local
 x86-only application binaries.
 
-The pinned upstream [Pi 5 profile](https://github.com/NixOS/nixos-hardware/blob/b6754c901c21478fd8450d62101e712b2a4f0d75/raspberry-pi/5/default.nix)
-supplies the Raspberry Pi downstream kernel, BCM2712 device trees, RP1/PCIe
-initrd support, and wireless firmware. The
-[firmware module](https://github.com/NixOS/nixos-hardware/blob/b6754c901c21478fd8450d62101e712b2a4f0d75/raspberry-pi/README.md)
-stages firmware and U-Boot on `/boot/firmware`; extlinux supplies NixOS generations.
-Use microSD boot. Upstream documents limitations for USB/NVMe boot and USB
-keyboard input in the Pi 5 U-Boot menu. Those do not imply USB is unavailable
-after Linux boots. This configuration does not use the archived Pi 5 UEFI port.
+The pinned [nixos-raspberrypi](https://github.com/nvmd/nixos-raspberrypi) input
+supplies the Pi 5 base, HDMI/VC4, Bluetooth and SD-image modules. Its vendor
+kernel and matched boot/wireless firmware retain that project's own nixpkgs
+pin so their derivations can match its Cachix builds. Do not make that input's
+nixpkgs follow ours. Custard's OS and applications remain on our separate full
+ARM `nixos-unstable`; Pi media overlays are not applied globally.
+
+Boot is directly from Raspberry Pi firmware into Linux using the upstream
+`kernel` bootloader. It maintains separate generation directories under
+`/boot/firmware/nixos/` instead of using U-Boot/extlinux. Older generations can
+be selected through `os_prefix` in `config.txt`; this is not an interactive
+U-Boot boot menu. Use microSD for this installation. The disk labels, first-boot
+Wi-Fi import and private SSH enrollment are unchanged.
+
+The 2026-11-01 migration pins `nixos-raspberrypi/develop` at
+`fdc482225ff7989c54c75c08734e9a5371185411`, selecting kernel
+`6.18.59-unstable_20261026` and boot firmware dated 2026-10-27. The exact kernel
+image and module outputs were downloaded from the upstream Cachix with Nix's
+signature verification enabled; the exact boot-firmware cache entry was also
+confirmed. Cache availability is specific to those store paths, not every
+future pin. The `unstable_20261026` suffix identifies the Pi kernel source
+snapshot, independently of the OS/application channel.
+
+The cached kernel package predates unstable's `kernel.target`/`buildDTBs`
+metadata defaults. A host-local passthru extension supplies that metadata
+without changing its build or output paths. The complete device-tree directory,
+including firmware overlays, is enabled.
+The upstream board utility is supplied from its own package output because
+our unstable pin no longer exports that attribute. The generic all-hardware
+profile and unused ZFS support are disabled for this ext4 Pi image.
 
 Niri, DMS, the DMS greeter, Mesa, and Xwayland are available for ARM. The
 [pinned DMS flake](https://github.com/AvengeMedia/DankMaterialShell/blob/8ce37501bd9c4dcbac04d1deb4e57d50f3e2c94f/flake.nix)
@@ -128,7 +150,10 @@ and application tokens out of this repository and the Nix store.
 Create the enrolled image on a trusted builder such as roundabout (or abacab
 if its identity can decrypt the existing age store). Switch that machine's
 updated host configuration first so `nixos-sd-image` is on PATH and ARM emulation
-is enabled. From the latest flake checkout, with unrelated changes unstaged:
+and the Pi Cachix cache are enabled. This is needed even if ARM emulation was
+already enabled before the cache migration. On roundabout, use
+`nh os switch -- --flake .#roundabout` from the updated checkout. Then, with
+unrelated changes unstaged:
 
 ```sh
 nixos-sd-image --flake .#custard --output /path/to/custard.img
@@ -150,6 +175,12 @@ install Potter's encrypted user key; tmpfiles restores the public-key snapshot.
 No private key is added to a derivation or checked into Git as plaintext.
 Existing identities are reused; incomplete backups or mismatched keys fail
 rather than silently rotating the host's identity.
+
+The shared system profile trusts `https://nixos-raspberrypi.cachix.org` with
+the upstream signing key on custard, roundabout and abacab. Retain the Pi
+input's locked package set to use its kernel/firmware cache. Other uncached ARM
+applications still build under QEMU. Abandoning the older kernel build does
+not discard other successfully built packages; Nix reuses matching store paths.
 
 The output is an uncompressed `custard.img` plus `custard.img.sha256`. Choose an
 unused output filename; the command will not overwrite existing files or write
@@ -366,3 +397,13 @@ SSH identity/public-key configuration evaluated. A broader host-assertion check
 was stopped while fetching unrelated existing inputs. No real key registration,
 secret refresh, commit/push, full custard image build, activation or Pi boot test
 was performed during this implementation.
+
+Pi stack migration (2026-11-01): the final custard configuration evaluated
+with no failed assertions. It retains full ARM unstable for OS/apps, direct
+`kernel` boot, `Image`, complete DTBs/overlays, CUSTARD/CUSTARD_FW mounts,
+first-boot Wi-Fi ordering, and agenix identities. Its final kernel and module
+store paths exactly match the Cachix outputs downloaded with signature checks.
+No out-of-tree kernel modules or ZFS are enabled. Existing direct input pins
+were preserved. A complete SD-image derivation evaluation was stopped because
+of memory pressure and heavy microSD I/O on the running 4 GB Pi; no full image
+build, activation, enrollment or physical boot was performed for this migration.

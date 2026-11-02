@@ -49,6 +49,7 @@ Inputs that must **not** follow `nixpkgs`:
 
 - `spicetify-nix` — it tracks a Spotify version it can patch.
 - `nix-cachyos-kernel` — CachyOS kernel ABI; applied only as `extraOverlays` on roundabout.
+- `nixos-raspberrypi` — custard's vendor kernel/firmware retain the upstream nixpkgs pin to match its Cachix builds. Custard's OS and apps still use `nixpkgs-aarch64` on full `nixos-unstable`.
 - `determinate` — Darwin only. Never import `determinate.nixosModules` on Linux.
 
 ## Where apps go
