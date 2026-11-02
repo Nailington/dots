@@ -1,4 +1,4 @@
-{ ... }:
+{ config, ... }:
 
 {
   imports = [
@@ -18,6 +18,11 @@
     # ../../modules/home/spicetify.nix # Spotify's Linux client is x86-only.
     # ../../modules/home/osx-kvm # Intel macOS guests need an x86 host.
   ];
+
+  # Pi display modes stay writable without changing the laptop's monitor setup.
+  xdg.configFile."niri/dms/outputs.kdl".source = config.lib.file.mkOutOfStoreSymlink (
+    "${config.potter.flakeDirectory}/hosts/custard/outputs.kdl"
+  );
 
   # No fixed Tailscale bind address has been assigned to this new host.
   # Keep T3's default loopback binding until enrollment; the shared guard is for

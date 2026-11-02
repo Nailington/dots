@@ -1,6 +1,12 @@
 { config, lib, pkgs, inputs, ... }:
 
 let
+  flakeDirectory = config.potter.flakeDirectory;
+  niriDirectory = "${flakeDirectory}/modules/home/niri";
+  writableFile = config.lib.file.mkOutOfStoreSymlink;
+  dmsFragments = lib.filterAttrs
+    (name: type: type == "regular" && lib.hasSuffix ".kdl" name)
+    (builtins.readDir ./dms);
   steamFixCursor = pkgs.writeShellApplication {
     name = "steam-fix-cursor";
     runtimeInputs = [ pkgs.coreutils pkgs.procps pkgs.jq pkgs.niri pkgs.xlsclients pkgs.xrandr pkgs.util-linux pkgs.gawk pkgs.gnused ];
@@ -270,29 +276,43 @@ in
     terminal = true;
     categories = [ "Game" ];
   };
-  # Only this include is mutable. Keep config.kdl and DMS bindings declarative.
-  xdg.configFile."niri/plan-c.kdl".source = config.lib.file.mkOutOfStoreSymlink planCState;
+  # Session state stays outside Git; DMS preferences and fragments use the checkout.
   home.activation.initializePlanC = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
     run mkdir -p ${lib.escapeShellArg "${config.xdg.stateHome}/niri"}
     if [ ! -e ${lib.escapeShellArg planCState} ]; then
       run cp ${planCOff} ${lib.escapeShellArg planCState}
       run chmod u+w ${lib.escapeShellArg planCState}
     fi
+    # Hosts without tracked monitor settings get a writable, autodetected default.
+    if [ ! -e ${lib.escapeShellArg "${config.xdg.stateHome}/niri/outputs.kdl"} ]; then
+      run touch ${lib.escapeShellArg "${config.xdg.stateHome}/niri/outputs.kdl"}
+    fi
   '';
 
-  xdg.configFile."niri/config.kdl".source = ./config.kdl;
-  xdg.configFile."niri/dms" = {
-    # Monitor modes belong to the host; roundabout's HDMI 4K/120 mode is not
-    # appropriate for the Pi. Keep the remaining DMS fragments shared.
-    source = builtins.filterSource (path: _: baseNameOf path != "outputs.kdl") ./dms;
-    recursive = true;
+  # DMS resolves these links before replacing files, so its writes update Git's
+  # working tree rather than failing against /nix/store. Keep settings/session
+  # unset in the upstream module: generated store files would be read-only.
+  xdg.configFile = lib.mapAttrs' (name: _: lib.nameValuePair "niri/dms/${name}" {
+    source = writableFile "${niriDirectory}/dms/${name}";
+  }) dmsFragments // {
+    "niri/plan-c.kdl".source = writableFile planCState;
+    "dms/settings.json".source = writableFile "${niriDirectory}/settings.json";
+    "niri/config.kdl".source = writableFile "${niriDirectory}/config.kdl";
+    "niri/dms/outputs.kdl".source = lib.mkDefault (
+      writableFile "${config.xdg.stateHome}/niri/outputs.kdl"
+    );
+    # libexec is not on PATH; niri spawn-at-startup is the Hyprland exec-once equivalent.
+    "niri/pam-kwallet.kdl".text = ''
+      spawn-at-startup "${pkgs.kdePackages.kwallet-pam}/libexec/pam_kwallet_init"
+    '';
   };
-  xdg.configFile."niri/dms/outputs.kdl".source = lib.mkDefault (
-    pkgs.writeText "niri-outputs.kdl" "// Let niri detect this host's connected monitors.\n"
-  );
-  # libexec is not on PATH; niri spawn-at-startup is the Hyprland exec-once equivalent.
-  xdg.configFile."niri/pam-kwallet.kdl".text = ''
-    spawn-at-startup "${pkgs.kdePackages.kwallet-pam}/libexec/pam_kwallet_init"
+  # Fail before changing the home rather than install dangling desktop links.
+  home.activation.checkDesktopCheckout = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+    if [ ! -f ${lib.escapeShellArg "${niriDirectory}/settings.json"} ] ||
+       [ ! -f ${lib.escapeShellArg "${niriDirectory}/config.kdl"} ]; then
+      echo ${lib.escapeShellArg "DMS needs a local flake checkout at ${flakeDirectory}; clone/pull it before switching, or set potter.flakeDirectory."} >&2
+      exit 1
+    fi
   '';
 
   programs.dank-material-shell = {

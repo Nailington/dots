@@ -15,7 +15,7 @@ A host picks **one greeter stack**. The choice is the import list in `hosts/<nam
 ## niri + DMS
 
 - Package is `pkgs.niri` from nixpkgs. niri-flake is an input because DMS needs `niri.includes` to rewrite `config.kdl`, and because its NixOS module is imported. `programs.niri.package` overrides niri-flake's older `niri-stable`. `niri-flake.cache.enable = false`.
-- `programs.niri.config = null` so niri-flake does not generate a config. The source of truth is `modules/home/niri/config.kdl` plus `modules/home/niri/dms/*.kdl`, installed with `xdg.configFile`.
+- `programs.niri.config = null` so niri-flake does not generate a config. The source of truth is `modules/home/niri/config.kdl` plus `modules/home/niri/dms/*.kdl`, linked to the writable checkout with `xdg.configFile`. Monitor modes live in `hosts/<name>/outputs.kdl`.
 - DMS's polkit agent is the one that runs. `systemd.user.services.niri-flake-polkit.enable = false`.
 - `services.gnome.gnome-keyring.enable = mkForce false`. KDE apps use KWallet.
 - XWayland: `xwayland-satellite` on PATH (niri starts it). File chooser portal is KDE. Secret portal is kwallet.
@@ -23,6 +23,52 @@ A host picks **one greeter stack**. The choice is the import list in `hosts/<nam
 - `pam_kwallet_init` is not on PATH (`libexec`). niri includes `xdg.configFile."niri/pam-kwallet.kdl"` from `config.kdl` to start it at login. That is the Hyprland `exec-once` equivalent. Hyprland's own config should keep the same call if Hyprland is turned back on.
 
 DMS plugin helper scripts often assume a distro layout. On NixOS they need a `pkgs.writeShellApplication` (or an existing package) rather than a curl-to-`~/.local` installer.
+
+### Writable desktop configuration
+
+`potter.flakeDirectory` is the local checkout path, defaulting to
+`/home/potter/dots` on both Linux desktops. Override it in the
+host's home module if its checkout lives elsewhere. Keep it user-owned and
+writable. Home Manager links these files into that checkout rather than the
+immutable flake snapshot in `/nix/store`:
+
+- `~/.config/dms/settings.json` → `modules/home/niri/settings.json` (captured from roundabout).
+- `~/.config/niri/config.kdl` and `dms/*.kdl` → the shared niri sources.
+- `~/.config/niri/dms/outputs.kdl` → `hosts/roundabout/outputs.kdl` or `hosts/custard/outputs.kdl`.
+- `~/.config/kitty` → `modules/home/kitty/config/`, including DMS's generated themes.
+
+DMS resolves the niri links before saving; its JSON writer follows file
+symlinks as well. Tools that replace a file symlink itself should edit its
+resolved checkout path instead. Kitty uses a directory link so generated theme
+files can also be replaced atomically.
+
+Clone the repository **before the first switch** on custard:
+
+```sh
+git clone https://github.com/Nailington/dots.git ~/dots
+cd ~/dots
+nh os switch -- --flake .#custard
+```
+
+If it is already cloned, pull the committed changes there instead. Activation
+checks for the checkout before changing home files. A fresh SD image also needs
+this checkout before Home Manager activation can succeed; these mutable links
+depend on local files, so the system closure alone does not contain the desktop
+configuration. Home Manager backs up existing unmanaged configs using the
+flake's `.backup` suffix on the first switch.
+
+After setup, DMS changes appear directly in `git diff`. Review and commit/push
+the wanted changes, then `git pull --ff-only` on the other machine. Existing
+linked files update immediately after pulling; restart DMS with
+`systemctl --user restart dms` if it has not reloaded a setting. Rebuild when
+Nix declarations change, including when adding/removing a linked niri fragment.
+Resolve or commit local DMS edits before pulling if Git reports a conflict.
+Nothing commits, pushes, or pulls these preferences automatically. A NixOS
+rollback does not roll back the writable checkout; use Git to restore configs.
+
+Plugin installs/settings (including Acer Sense), wallpaper/session state,
+notepad contents, and generated GTK files stay local. Custard gets the shared
+bar/theme/settings without installing the laptop's Acer hardware plugin.
 
 ### Steam cursor recovery
 
@@ -76,6 +122,6 @@ PAM hooks for `login`, `greetd`, and `sddm` are in `modules/nixos/desktop.nix` (
 
 ## Kitty and flameshot
 
-Kitty's files live in `modules/home/kitty/` and are linked into the home. `programs.kitty` settings in `desktop.nix` are commented; the file tree is the config.
+Kitty's files live in `modules/home/kitty/config/` and the whole directory is linked into the home so DMS can write its themes. `programs.kitty` settings in `desktop.nix` are commented; the file tree is the config.
 
 Flameshot's ini is `modules/home/flameshot/`, imported by `desktop.nix`, so any desktop host gets it. It is not Hyprland-specific. DMS can replace it later; until that import is removed, leave the module.

@@ -89,16 +89,21 @@ and T3 launchers; the flake supplies those through the shared dev-tui profile.
 This is a package/launcher inventory, not an audit of arbitrary scripts, browser
 extensions, npm/pip environments, or every downloaded application in the home.
 
-The carried app base includes Firefox, Chromium, Vesktop, GitHub Desktop,
-Dolphin, Ark, Inkscape, Prism Launcher, Kitty, mpv, Meld, Xed, Flameshot,
-KDE Partition Manager, and familiar CLI/development tools.
+The carried app base follows roundabout: Firefox, Google Chrome (with KWallet),
+Equibop, BlueBubbles, GitHub Desktop, Cursor, DiscordChatExporter, Dolphin, Ark,
+Inkscape, Prism Launcher, Kitty, mpv, qBittorrent, SingularCard, Flameshot,
+and familiar CLI/development tools. Meld and the partition tools remain available.
 The shared common, KDE, dev-tui and NixOS desktop modules already cover many of
 these. Like roundabout, custard selects app profiles from `modules/home`:
 `arm/desktop.nix`, `arm/dev-gui.nix`, `arm/creative.nix`, and `arm/gaming.nix`.
-The ARM profiles own the package selections and reusable desktop defaults;
-`hosts/custard/home.nix` contains imports and host-specific T3 settings. The x86
-app profiles are kept separate, including their Steam, VMware, CUDA, Chrome,
-and local x86 binary selections.
+The ARM profiles own the package selections and desktop defaults;
+`hosts/custard/home.nix` contains imports and host-specific settings. Keep these
+profiles aligned with roundabout for the same tasks, using native ARM packages
+where available. Chromium, Vesktop, and Xed are shelved in favor of Chrome,
+Equibop, and Cursor. The lighter selection omits extra VM GUIs, benchmarks, duplicate
+Discord clients, Steam/Wine, CUDA OBS, and the larger creative/emulator set.
+Slack, Zoom, Cider, Quickgui, and the local SweetPad/sim-relay binaries remain
+excluded because these pinned packages do not support ARM Linux.
 
 App defaults follow roundabout: Dolphin for files/removable volumes, Ark for
 archives, Kitty for terminals, btop for monitoring, and DMS for audio/network
@@ -108,7 +113,11 @@ Pavucontrol, and the NetworkManager applet/editor remain commented out in
 retained for partition editing. The rsync CLI is
 kept instead of Grsync, and iperf3 instead of iperf2 (their protocols differ).
 Wget, rsync, SSHFS, and Qt5 Breeze are supplied by the system package set.
-Qt5ct and Qt6ct remain separate compatibility tools, as on roundabout. The original EndeavourOS
+The ARM desktop also selects the same appearance packages as roundabout:
+GTK 3/4, adw-gtk3, Qt5/Qt6 Breeze, Breeze GTK/icons, Qt5ct/Qt6ct, Nwg-look,
+and Lxappearance. Both use the same Posy cursor, shared DMS GTK setup, and
+qtengine Breeze style with DMS-generated colors; GTK/Qt themes are not pinned
+separately in Home Manager. The original EndeavourOS
 inventory is retained; `apps.tsv` records the reduced migration selection.
 
 Exceptions:
@@ -345,6 +354,15 @@ image route above avoids those bootstrap assumptions, including when reusing
 the current microSD after shutting the Pi down.
 
 ## Validation
+
+App alignment (2026-11-02): the custard and roundabout NixOS toplevel and
+integrated Home Manager derivations evaluated with `--no-update-lock-file` and
+no failed assertions. Custard's selected Home Manager packages use native ARM;
+Chrome, Equibop, Cursor, the added daily apps, and the matching appearance
+packages are present. Chromium, Vesktop, and Xed are absent from that selection.
+The evaluated qtengine configuration and cursor settings match roundabout.
+Nix parsing, `git diff --check`, and the Home Manager build dry-run passed.
+No full build, activation, or Pi runtime verification was performed.
 
 See the recorded checks below. Package metadata is tied to the exact ARM
 nixpkgs revision in `flake.lock`; it does not guarantee cache availability or

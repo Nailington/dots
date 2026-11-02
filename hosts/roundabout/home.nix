@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 let
   # hwdb sends BTN_FORWARD/BTN_BACK on the keyboard BT HID node; clone onto a virtual pointer.
@@ -36,7 +36,9 @@ in
   ];
 
   # Laptop/external-monitor modes belong to roundabout, not every niri host.
-  xdg.configFile."niri/dms/outputs.kdl".source = ../../modules/home/niri/dms/outputs.kdl;
+  xdg.configFile."niri/dms/outputs.kdl".source = config.lib.file.mkOutOfStoreSymlink (
+    "${config.potter.flakeDirectory}/hosts/roundabout/outputs.kdl"
+  );
 
   programs.osx-kvm = {
     enable = true;

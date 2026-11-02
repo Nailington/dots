@@ -1,7 +1,7 @@
 arch_package	installed_version	nix_attribute	arm_metadata	nix_version	existing_flake_overlap	migration	notes
-chromium	156.0.8078.73-1	chromium	supported (metadata only)	156.0.8078.47	none; newly selected for custard	carry	Selected by modules/home/arm/desktop.nix.
+chromium	156.0.8078.73-1	google-chrome	supported (metadata only)	156.0.8078.47	modules/home/desktop.nix	replace	Use native ARM Google Chrome with --password-store=kwallet6, matching roundabout; Chromium is commented out.
 firefox	158.0.1-1	firefox	supported (metadata only)	158.0.1	modules/nixos/desktop.nix	carry	
-vesktop-bin	1.6.8-1	vesktop	supported (metadata only)	1.6.8	new on custard; desktop.nix uses Discord/Equibop	carry	Selected by modules/home/arm/desktop.nix.
+vesktop-bin	1.6.8-1	equibop	supported (metadata only)	3.2.2	modules/home/desktop.nix	replace	Use Equibop, matching roundabout; Vesktop is commented out.
 github-desktop-bin	3.4.13_linux1-1	github-desktop	supported (metadata only)	3.6.6	modules/home/dev-gui.nix	carry	Selected by modules/home/arm/dev-gui.nix.
 dolphin	26.08.2-1	kdePackages.dolphin	supported (metadata only)	26.08.2	modules/home/kde-apps.nix	carry	
 flameshot-git	r2195.f8ab6a67-1	flameshot	supported (metadata only)	14.0.0	modules/home/desktop.nix + flameshot/	carry	Selected by modules/home/arm/desktop.nix.
@@ -48,7 +48,7 @@ thunar-archive-plugin	0.6.0-1	thunar-archive-plugin	supported (metadata only)	0.
 thunar-volman	4.20.0-2	thunar-volman	supported (metadata only)	4.20.0	new on custard	replace	Dolphin uses UDisks/KIO for removable volumes; Thunar volume management is commented out.
 xfce4-terminal	1.2.0-1	xfce4-terminal	supported (metadata only)	1.2.0	new on custard	replace	Use Kitty and the shared roundabout terminal configuration.
 xarchiver	0.5.4.27-1	xarchiver	supported (metadata only)	0.5.4.27	new on custard	replace	Use Ark from kde-apps.nix, matching roundabout.
-xed	3.9.0-1	xed-editor	supported (metadata only)	3.9.0	new on custard	carry	Selected by modules/home/arm/desktop.nix.
+xed	3.9.0-1	code-cursor	supported (metadata only)	3.25.9	modules/home/dev-gui.nix	replace	Use Cursor from arm/dev-gui.nix with mutable settings/extensions, matching roundabout; Xed is commented out.
 wezterm	20240203.110809.5046fc22.r869.g76b606ec5-3	wezterm	supported (metadata only)	0-unstable-2026-10-10	new on custard	replace	Use Kitty, matching roundabout; WezTerm is commented out.
 rsync	3.5.1-3	rsync	supported (metadata only)	3.5.0	new on custard	carry	Already in the system package set; the duplicate Home Manager selection is commented out.
 sshfs	3.7.6-1	sshfs	supported (metadata only)	3.7.6	new on custard	carry	Already supplied by the SD-image base profile as sshfs-fuse; the duplicate Home Manager selection is commented out.
@@ -85,8 +85,8 @@ rofi	1.7.5-3	rofi	supported (metadata only)	2.0.0	old desktop stack	replace	DMS 
 rofi-adi1090x	r118.b76c16b-1	rofi-themes-collection	absent in nixpkgs; local Linux data package		old desktop stack	replace	Not in vanilla nixpkgs; repo pkgs/rofi-themes is a Linux data package. DMS is the selected launcher.
 arandr	0.1.11-6	arandr	supported (metadata only)	0.1.11	old desktop stack	replace	X11 display configuration; use DMS/niri outputs.
 feh	3.13.1-1	feh	supported (metadata only)	3.13.1	old desktop stack	replace	X11 wallpaper/image tool; not selected automatically.
-lxappearance	0.6.4-3	lxappearance	supported (metadata only)	0.6.4	old desktop stack	replace	DMS controls GTK appearance.
-xterm	411-1	xterm	supported (metadata only)	411	old desktop stack	replace	Kitty and WezTerm retained.
+lxappearance	0.6.4-3	lxappearance	supported (metadata only)	0.6.4	modules/home/desktop.nix	carry	Retained as a theme testing tool, matching roundabout; DMS controls live GTK appearance.
+xterm	411-1	xterm	supported (metadata only)	411	old desktop stack	replace	Use Kitty, matching roundabout; WezTerm is commented out.
 betterlockscreen	4.4.0-1	betterlockscreen	supported (metadata only)	4.4.0	old desktop stack	replace	X11 locker; DMS supplies the lock screen.
 i3lock-color	2.13.c.5-3	i3lock-color	supported (metadata only)	2.13.c.5	old desktop stack	replace	X11 locker; DMS supplies the lock screen.
 hyprlock	0.9.6-3	hyprlock	supported (metadata only)	0.9.6	old desktop stack	replace	Use DMS lock integration.

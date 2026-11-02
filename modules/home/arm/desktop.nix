@@ -1,19 +1,25 @@
 { pkgs, ... }:
 
 {
-  # Curated aarch64 Linux desktop apps. The host also selects common, niri,
-  # kitty, kde-apps, and dev-tui, just as it does with the x86 desktop profile.
+  # Roundabout's daily apps and appearance, with a smaller native ARM selection.
+  # Keep extra VM GUIs, benchmarks, and duplicate Discord clients off the 4 GB Pi.
   imports = [ ../flameshot ];
 
   home.packages = with pkgs; [
-    chromium
-    vesktop
+    (google-chrome.override {
+      commandLineArgs = "--password-store=kwallet6";
+    })
+    equibop
+    bluebubbles
     mpv
+    qbittorrent
+    singularcard
+    libimobiledevice
+    usbmuxd
     # JDownloader is not packaged in this nixpkgs pin.
     galculator
     gparted
     kdePackages.partitionmanager
-    xed-editor
     flameshot
     grim
     playerctl
@@ -24,14 +30,26 @@
     iperf3
     mesa-demos
     inxi
+    wlr-randr
+    xev
+    wev
+    # Match desktop.nix; DMS/qtengine own the live GTK/Qt themes via niri.
+    nwg-look
+    lxappearance
     libsForQt5.qt5ct
     qt6Packages.qt6ct
     adw-gtk3
+    gtk3
+    gtk4
     kdePackages.breeze
+    kdePackages.breeze.qt5
     kdePackages.breeze-gtk
     kdePackages.breeze-icons
 
     # Shelved EndeavourOS alternatives; use roundabout's app defaults.
+    # chromium # Google Chrome has a native ARM package in this pin.
+    # vesktop # Use Equibop, matching roundabout.
+    # xed-editor # Cursor comes from arm/dev-gui.nix.
     # grsync # Use the system-provided rsync CLI.
     # thunar # Dolphin comes from kde-apps.nix.
     # thunar-archive-plugin # Dolphin uses Ark.
@@ -48,7 +66,6 @@
     # rsync
     # sshfs
     # wget
-    # kdePackages.breeze.qt5
   ];
 
   home.pointerCursor = {

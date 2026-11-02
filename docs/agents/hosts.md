@@ -96,6 +96,9 @@ image without this enrollment/provisioning step.
 
 Home imports common, niri, kitty, KDE apps, dev-tui, and the ARM desktop,
 GUI development, creative, and gaming profiles under `modules/home/arm/*.nix`.
+The ARM profiles follow roundabout's native app choices (Chrome with KWallet,
+Equibop, BlueBubbles, Cursor, qBittorrent) and the same Qt/GTK appearance packages,
+while omitting the heavier VM, creative, and gaming selections.
 The ARM desktop profile owns Flameshot settings, cursor, and Dolphin defaults;
 `hosts/custard/home.nix` selects profiles and sets the host's T3 binding. See the
 [app manifest and migration guide](../custard/README.md) for exceptions.
