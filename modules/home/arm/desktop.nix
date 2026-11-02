@@ -10,7 +10,7 @@
       commandLineArgs = "--password-store=kwallet6";
     })
     equibop
-    bluebubbles
+    # bluebubbles # Disabled on custard at Potter's request.
     mpv
     qbittorrent
     singularcard

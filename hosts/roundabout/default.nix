@@ -200,8 +200,15 @@
   };
   boot.kernelParams = [ "nohibernate" ];
 
-  # Lid close: do not suspend (keeps host + QEMU alive during long macOS installs)
-  services.logind.settings.Login = { };
+  # Stay reachable on AC, including when a closed-lid HDMI connection drops.
+  # Lock instead of suspending; retain lid-close suspend when undocked on battery.
+  services.logind.settings.Login = {
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "lock";
+    HandleLidSwitchDocked = "lock";
+    # DMS owns idle locking; logind must not put locked sessions to sleep.
+    IdleAction = "ignore";
+  };
 
   system.stateVersion = "25.11";
 }

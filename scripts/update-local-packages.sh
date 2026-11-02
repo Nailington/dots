@@ -29,7 +29,7 @@ t3code             latest published nightly; source + pnpm dependencies
 auto-rob           latest stable release from Cattn/auto-rob; desktop + headless CLI
 google-sans        latest stable release
 google-sans-flex   latest stable release
-twitch-drops-miner current dev-build ZIP; refresh hash even if version is unchanged
+twitch-drops-miner current x86_64 + aarch64 dev-build ZIPs; refresh both hashes even if version is unchanged
 EOF
 }
 
@@ -154,7 +154,7 @@ for package in "${packages[@]}"; do
       # prefetch the original download, rather than checking release versions
       # or trying to hash the extracted AppImage used by the runtime wrapper.
       args+=(--version=skip --no-src --custom-dep zip)
-      downloads='current dev-build AppImage ZIP; rehash even when the version is unchanged'
+      downloads='current x86_64 + aarch64 dev-build AppImage ZIPs; rehash even when the version is unchanged'
       ;;
   esac
   args+=(--override-filename "$file")
@@ -167,7 +167,12 @@ for package in "${packages[@]}"; do
   cp -p -- "$file" "$backup_dir/package.nix"
   active_file="$file"
   package_failed=false
-  if run_command nix-update "${args[@]}" "$attr"; then
+  if run_command nix-update "${args[@]}" "$attr" && {
+    # Fetch the ARM download too, without requiring an ARM application build.
+    [[ "$package" != twitch-drops-miner ]] ||
+      run_command nix-update --flake --system aarch64-linux --version=skip \
+        --no-src --custom-dep zip --override-filename "$file" "$attr"
+  }; then
     # nix-update --build builds the CLI; verify the extension separately too.
     if [[ "$package" == sweetpad ]] && "$build" && ! run_command nix build --no-link --print-build-logs .#sweetpad-vscode; then
       cp -p -- "$backup_dir/package.nix" "$file"

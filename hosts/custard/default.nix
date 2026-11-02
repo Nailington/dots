@@ -17,6 +17,9 @@
   networking.hostName = "custard";
   networking.networkmanager.wifi.powersave = false;
 
+  # Advertise this Pi as an exit node whenever Tailscale starts.
+  services.tailscale.extraSetFlags = [ "--advertise-exit-node" ];
+
   # Codex Desktop's bundled Node dependency audit segfaults under QEMU ARM.
   # Re-enable after the packaging/emulation issue is resolved or built natively.
   programs.codexDesktopLinux.enable = lib.mkForce false;

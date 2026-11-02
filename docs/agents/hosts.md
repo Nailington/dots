@@ -97,7 +97,7 @@ image without this enrollment/provisioning step.
 Home imports common, niri, kitty, KDE apps, dev-tui, and the ARM desktop,
 GUI development, creative, and gaming profiles under `modules/home/arm/*.nix`.
 The ARM profiles follow roundabout's native app choices (Chrome with KWallet,
-Equibop, BlueBubbles, Cursor, qBittorrent) and the same Qt/GTK appearance packages,
+Equibop, Cursor, qBittorrent) and the same Qt/GTK appearance packages,
 while omitting the heavier VM, creative, and gaming selections.
 The ARM desktop profile owns Flameshot settings, cursor, and Dolphin defaults;
 `hosts/custard/home.nix` selects profiles and sets the host's T3 binding. See the
@@ -105,8 +105,9 @@ The ARM desktop profile owns Flameshot settings, cursor, and Dolphin defaults;
 Potter's initial desktop/sudo password is set through `initialHashedPassword`
 in the host configuration. It was supplied privately and hashed locally;
 plaintext is not stored in the flake. Later `passwd` changes persist across
-rebuilds. No fixed Tailscale/T3 address is embedded. T3 keeps its default
-loopback binding until a host address is explicitly configured.
+rebuilds. Tailscale advertises custard as an exit node on startup through
+`services.tailscale.extraSetFlags`. T3 binds to `100.71.39.67:3773` and uses the
+shared Tailscale startup guard to wait for that address before starting.
 
 Wi-Fi can connect before login: place the private `custard-wifi.nmconnection`
 on the flashed card's firmware partition. A host-local service imports it

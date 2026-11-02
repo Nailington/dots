@@ -70,6 +70,18 @@ Plugin installs/settings (including Acer Sense), wallpaper/session state,
 notepad contents, and generated GTK files stay local. Custard gets the shared
 bar/theme/settings without installing the laptop's Acer hardware plugin.
 
+### Locking and sleep
+
+The shared DMS settings lock after 3 minutes of inactivity on AC or battery and
+turn displays off after 2 more minutes locked. Automatic idle suspend is disabled
+on both power sources so the lock screen can remain reachable online. Keep Awake
+still inhibits idle locking; it does not inhibit logind's lid policy.
+
+Roundabout's logind policy locks on lid events while on AC or docked, including
+when HDMI briefly disconnects with the lid closed. Undocked lid close on battery
+still suspends. Manual suspend remains available. Keep DMS's
+`loginctlLockIntegration` enabled so logind's lock requests reach the lock screen.
+
 ### Steam cursor recovery
 
 `steam-fix-cursor` (also **Fix Steam cursor** in the app launcher) recovers when

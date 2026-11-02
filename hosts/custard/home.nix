@@ -24,14 +24,11 @@
     "${config.potter.flakeDirectory}/hosts/custard/outputs.kdl"
   );
 
-  # No fixed Tailscale bind address has been assigned to this new host.
-  # Keep T3's default loopback binding until enrollment; the shared guard is for
-  # roundabout/abacab, whose host.conf supplies their explicit T3CODE_HOST.
-  xdg.configFile."systemd/user/t3code.service.d/tailscale.conf".enable = false;
+  # Bind the background T3 server to custard's Tailscale address.
   xdg.configFile."systemd/user/t3code.service.d/host.conf".text = ''
     [Service]
     Environment="T3CODE_HOME=%h/.t3"
-    Environment="T3CODE_HOST=127.0.0.1"
+    Environment="T3CODE_HOST=100.71.39.67"
     Environment="T3CODE_PORT=3773"
   '';
 }

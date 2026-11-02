@@ -4,6 +4,7 @@
 # Wrapper copies to writable dir on first run (app writes to its installation dir)
 
 { lib
+, stdenv
 , appimageTools
 , fetchurl
 , runCommand
@@ -14,12 +15,16 @@
 let
   pname = "twitch-drops-miner";
   version = "dev-build";
+  arch = stdenv.hostPlatform.parsed.cpu.name;
 
   # Upstream replaces this ZIP in-place under the same dev-build tag/URL.
   # Refresh the hash from the current asset when it changes.
   zip = fetchurl {
-    url = "https://github.com/DevilXD/TwitchDropsMiner/releases/download/dev-build/Twitch.Drops.Miner.Linux.AppImage-x86_64.zip";
-    hash = "sha256-sr9/nyLrjfcjUU+AM9HlqruGsVVKuby/is8X2ItWf20=";
+    url = "https://github.com/DevilXD/TwitchDropsMiner/releases/download/dev-build/Twitch.Drops.Miner.Linux.AppImage-${arch}.zip";
+    hash = {
+      x86_64-linux = "sha256-sr9/nyLrjfcjUU+AM9HlqruGsVVKuby/is8X2ItWf20=";
+      aarch64-linux = "sha256-/CmQlu/+kzQUfRi/OC0jT/kZzMtcTkpVVzj/aVCAVF8=";
+    }.${stdenv.hostPlatform.system};
   };
 
   # Extract AppImage from zip (zip contains single .AppImage file)
@@ -54,7 +59,7 @@ let
     fi
     chmod -R u+w "$TDM_DATA"
     # Remove app's conflicting system libs - use FHS env libs (keeps Python site-packages)
-    rm -rf "$TDM_DATA/usr/lib/x86_64-linux-gnu"
+    rm -rf "$TDM_DATA/usr/lib/${arch}-linux-gnu"
     exec appimage-exec.sh -w "$TDM_DATA" -- "$@"
   '';
 in
@@ -89,7 +94,7 @@ DESKTOP
     description = "Automatically farm Twitch drops without actively watching streams";
     homepage = "https://github.com/DevilXD/TwitchDropsMiner";
     license = licenses.mit;
-    platforms = [ "x86_64-linux" ];
+    platforms = [ "x86_64-linux" "aarch64-linux" ];
     mainProgram = "twitch-drops-miner";
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
   };

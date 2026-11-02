@@ -90,8 +90,8 @@ This is a package/launcher inventory, not an audit of arbitrary scripts, browser
 extensions, npm/pip environments, or every downloaded application in the home.
 
 The carried app base follows roundabout: Firefox, Google Chrome (with KWallet),
-Equibop, BlueBubbles, GitHub Desktop, Cursor, DiscordChatExporter, Dolphin, Ark,
-Inkscape, Prism Launcher, Kitty, mpv, qBittorrent, SingularCard, Flameshot,
+Equibop, GitHub Desktop, Cursor, DiscordChatExporter, Dolphin, Ark,
+Inkscape, Prism Launcher, Twitch Drops Miner, Kitty, mpv, qBittorrent, SingularCard, Flameshot,
 and familiar CLI/development tools. Meld and the partition tools remain available.
 The shared common, KDE, dev-tui and NixOS desktop modules already cover many of
 these. Like roundabout, custard selects app profiles from `modules/home`:
@@ -104,6 +104,7 @@ Equibop, and Cursor. The lighter selection omits extra VM GUIs, benchmarks, dupl
 Discord clients, Steam/Wine, CUDA OBS, and the larger creative/emulator set.
 Slack, Zoom, Cider, Quickgui, and the local SweetPad/sim-relay binaries remain
 excluded because these pinned packages do not support ARM Linux.
+BlueBubbles is disabled on custard at Potter's request.
 
 App defaults follow roundabout: Dolphin for files/removable volumes, Ark for
 archives, Kitty for terminals, btop for monitoring, and DMS for audio/network
@@ -131,9 +132,6 @@ Exceptions:
   carried. A replacement remote desktop workflow needs a separate decision.
 - JDownloader has no `jdownloader` attribute in this pinned nixpkgs. Keep its data
   for a later packaging/runtime choice; no unverified installer is added.
-- The repo's Twitch Drops Miner package downloads an **x86_64 AppImage**. Nixpkgs
-  has no matching package at this pin, so that binary is not installed on ARM.
-  Keep its settings/tokens privately for a future source-based ARM package.
 - Neofetch was removed upstream; Fastfetch is already in the common profile.
 - i3, Picom, Polybar, Dunst, LightDM/SDDM, and the old lockers are replaced by
   niri/DMS/greetd. Rofi themes stay available in the repo but DMS is the launcher.
@@ -270,8 +268,9 @@ nh os switch -- --flake .#custard
 
 That wrapper runs recipient sync and may commit/push when keys change; keep
 unrelated work unstaged. Tailscale needs authentication/state migration before
-its old identity is usable. T3 is explicitly bound to loopback until a host-specific address and
-corresponding Tailscale startup guard are configured.
+its old identity is usable. Once authenticated, Tailscale advertises custard as
+an exit node on startup. T3 binds to `100.71.39.67:3773`, with the shared
+Tailscale startup guard waiting for that address before starting the service.
 
 ## First-boot Wi-Fi
 

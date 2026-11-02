@@ -1,6 +1,7 @@
 # Packages and overlays
 
-`overlays.default` in `flake.nix` is `x86_64-linux` only. Darwin hosts do not use it. See [darwin.md](darwin.md).
+`overlays.default` in `flake.nix` is Linux-only and resolves packages for the target
+platform. Darwin hosts do not use it. See [darwin.md](darwin.md).
 
 ## Local packages (`pkgs/*/default.nix`)
 
@@ -13,7 +14,7 @@ Each is `callPackage`'d in the overlay.
 | `seguiemj`, `hojas-de-plata`, `google-sans`, `google-sans-flex` | fonts, also listed in `modules/nixos/common.nix` |
 | `althea`, `singularcard` | Potter's apps |
 | `cider` | Cider music client (packaged; the extracted AppImage under the workspace parent is leftover) |
-| `twitch-drops-miner` | AppImage wrapper; copies itself to a writable dir because the app writes next to its binary |
+| `twitch-drops-miner` | x86_64 + aarch64 AppImage wrapper, exposed under both Linux `packages` outputs; copies itself to a writable dir because the app writes next to its binary |
 | `auto-rob` | Cattn/auto-rob releases: standalone headless CLI + Electron GUI in an FHS env. Installed on both NixOS hosts by `modules/home/common.nix`. Abacab's cron uses the packaged CLI with `/mnt/storage/auto-rob` as its workspace |
 | `kde-craft` | FHS sandbox. See [kde-craft.md](kde-craft.md) |
 | `sweetpad` | Nailington's remote Mac fork; matching Cursor extension at `sweetpad.vscodeExtension` |
@@ -37,7 +38,7 @@ this checkout, or supply `--flake /path/to/newFlake` (`NH_FLAKE` also works):
 ```sh
 update-local-packages --list
 update-local-packages sweetpad althea    # selected packages
-update-local-packages twitch-drops-miner # rehash the mutable dev-build ZIP
+update-local-packages twitch-drops-miner # rehash both mutable dev-build ZIPs
 update-local-packages --all             # all supported packages
 update-local-packages --build sweetpad  # also build CLI and extension
 git diff
@@ -57,11 +58,12 @@ Althea and SingularCard follow their default branches; SweetPad stays on
 T3 Code stays on published nightlies and refreshes its source and pnpm hashes.
 Auto-rob follows stable releases from `Cattn/auto-rob`; the two Google Sans font
 packages also follow stable GitHub releases.
-Twitch Drops Miner always rehashes the current `dev-build` ZIP, even when its
-tag/version is unchanged; it is also included in `--all`. The package exposes
-the original download as `zip` for nix-update's `--custom-dep` handling. Hash
-checks fetch that ZIP without extracting or building the application; `--build`
-also verifies the full wrapper.
+Twitch Drops Miner always rehashes the current x86_64 and aarch64 `dev-build`
+ZIPs, even when its tag/version is unchanged; it is also included in `--all`.
+The package exposes the selected platform's original download as `zip` for
+nix-update's `--custom-dep` handling. Hash checks fetch both ZIPs without
+extracting or building the ARM application; `--build` also verifies the x86_64
+wrapper.
 The supported targets and policies are in `scripts/update-local-packages.sh`;
 expose new targets under `packages.x86_64-linux` before adding them there.
 

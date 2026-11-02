@@ -238,6 +238,7 @@
           google-sans = pkgs.google-sans;
           google-sans-flex = pkgs.google-sans-flex;
           t3code = pkgs.t3code;
+          twitch-drops-miner = pkgs.twitch-drops-miner;
           nixos-remote-install = pkgs.writeShellApplication {
             name = "nixos-remote-install";
             runtimeInputs = (with pkgs; [
@@ -266,7 +267,7 @@
             text = builtins.readFile ./scripts/nixos-sd-image.sh;
           };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          inherit (pkgs) althea singularcard twitch-drops-miner auto-rob kde-craft sweetpad sim-relay;
+          inherit (pkgs) althea singularcard auto-rob kde-craft sweetpad sim-relay;
           sweetpad-vscode = pkgs.sweetpad.vscodeExtension;
         });
 
