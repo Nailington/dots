@@ -8,8 +8,9 @@
     systemCronJobs = [
       "TZ=America/New_York"
       # "53 9 * * * potter . /etc/profile; echo \"$PATH\" > /home/potter/test.txt"
-      "0 9,12,16 * * 1-5 potter . /etc/profile; AUTO_ROB_WORKSPACE=/mnt/storage/auto-rob ${pkgs.auto-rob}/bin/auto-rob >> /var/log/auto-rob.log 2>&1"
-      "30 9,16 * * 1-5 potter . /etc/profile; AUTO_ROB_WORKSPACE=/mnt/storage/auto-rob ${pkgs.auto-rob}/bin/auto-rob >> /var/log/auto-rob.log 2>&1"
+      # Use the desktop app's default workspace, with its saved strategy and notes.
+      "0 9,12,16 * * 1-5 potter . /etc/profile; ${pkgs.auto-rob}/bin/auto-rob >> /var/log/auto-rob.log 2>&1"
+      "30 9,16 * * 1-5 potter . /etc/profile; ${pkgs.auto-rob}/bin/auto-rob >> /var/log/auto-rob.log 2>&1"
     ];
   };
 
