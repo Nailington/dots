@@ -127,14 +127,18 @@
           fi
         done
       }
-      if ! "$updates_ok" || ! "$eval_ok" || ! "$base_ok"; then
+      if ! "$eval_ok"; then
         request_review
-        echo "Update PR requires review; cache build is blocked: $pr" >&2
+        echo "Evaluation failed; review requested and cache build blocked: $pr" >&2
+        exit 1
+      fi
+      if ! "$updates_ok" || ! "$base_ok"; then
+        echo "Update incomplete or main advanced; blocking without review notifications: $pr" >&2
         exit 1
       fi
       # Respect repository protection and reject a concurrently changed PR head.
       if ! gh pr merge "$pr" --repo "$repo" --squash --match-head-commit "$head"; then
-        request_review
+        echo "Merge failed; blocking without review notifications: $pr" >&2
         exit 1
       fi
       if [ "$(gh pr view "$pr" --repo "$repo" --json state --jq .state)" != MERGED ]; then
