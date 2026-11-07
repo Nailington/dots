@@ -42,6 +42,10 @@ Imports: `common`, `tailscale`, `nginx.nix`, `cron.nix`, disko. Home is `common`
 Other facts:
 
 - ARM image builds: `boot.binfmt.emulatedSystems = [ "aarch64-linux" ]` enables QEMU user-mode emulation after switching; abacab's own platform remains x86_64.
+- Binary cache: `nix-serve` binds only `100.120.61.10:5000` (Tailscale), using `secrets/abacab-cache.age`. The Nix daemon signs remote-build outputs with the same key. Only custard registers abacab as a remote builder; its managed user key authenticates as the dedicated `nix-builder` user.
+- `nix-cache-build.timer` prebuilds roundabout and custard from GitHub `main` daily at 04:00 with up to 30 minutes jitter. It never activates either configuration or updates the lock. `/var/lib/nix-cache-build/roots/<host>/` retains the last three successful builds per host as GC roots; failed builds preserve previous roots. Logs: `journalctl -u nix-cache-build`. Run immediately with `sudo systemctl start nix-cache-build` (can take hours). Uncommitted/unpushed changes are not prebuilt. Server builds are limited to two jobs/three cores per job.
+- Before every cache-build run, the required `nix-flake-update.service` runs `nix flake update` and `update-local-packages --all` in its own `/var/lib/nix-flake-update/checkout`, commits changed pins on a fresh `automation/flake-update-*` branch, and opens a PR against `main`. It evaluates all exported package systems plus every NixOS, Darwin, and standalone Home Manager host; it never builds Darwin on Linux. Successful updates are squash-merged only if evaluation passed and `main` has not advanced. Then the build service fetches the merged `main` revision. No changes means no PR.
+- Update/evaluation/merge failures block that cache-build run and leave any created PR open. Failure PRs request HammerPot and Nailington as reviewers where permitted and assign both; the token currently acts as Nailington, so Nailington is assigned rather than requested to review its own PR. Existing open automation PRs block new runs until merged or closed. Detailed update logs and the PR URL are under `/var/lib/nix-flake-update/runs/<timestamp>/`; also use `journalctl -u nix-flake-update`. `secrets/github-automation.age` holds a repository-authorized credential from abacab's existing GitHub CLI login; systemd delivers it from agenix without storing plaintext in the checkout or remote URL. The SSH-enrollment PAT is separate. Failures before a publishable diff exists can only be logged, since GitHub cannot open an empty PR.
 - SSH: passwords off, root is `prohibit-password`. Login is GitHub keys via `ssh-github.nix`.
 - `users.mutableUsers = true`. potter has a `hashedPassword` in `hosts/abacab/default.nix` so the first boot has a local password. `wheel` sudo still asks for it. Do not copy that hash into docs or chat.
 - `programs.nix-ld` comes from `common.nix` (wanted so unpacked binaries work here too).
@@ -117,8 +121,11 @@ guide for provisioning. This does not configure a separate RAM installer.
 
 `system.stateVersion = "26.05"` for this new install; shared Linux home identity
 retains `home.stateVersion = "25.11"`. zram enabled with a 64 GiB `/swapfile`
-on the microSD root filesystem; Nix builds limited to one
-job/two cores on the 4 GB Pi. Builds need native ARM or an emulated builder;
+on the microSD root filesystem; `max-jobs = 0` offloads builds to abacab's
+ARM-emulated `ssh-ng` builder, with two remote jobs and remote cache substitution.
+The daemon uses the agenix-managed user key and a pinned abacab SSH host key.
+Abacab must be reachable over Tailscale for uncached builds; roundabout and the
+iMac use its binary cache only. Builds need native ARM or an emulated builder;
 roundabout and abacab provide QEMU ARM emulation after switching their updated
 host configurations. Building custard's image does not activate it on the builder.
 The shared system profile enables `nixos-raspberrypi.cachix.org` and its signing

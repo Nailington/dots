@@ -64,7 +64,25 @@
     enableOnBoot = false;
   };
 
-  # This Pi has 4 GB of RAM. Avoid exhausting it during native builds.
+  # Only this client offloads uncached ARM builds to abacab.
+  nix.distributedBuilds = true;
+  nix.buildMachines = [
+    {
+      hostName = "100.120.61.10";
+      protocol = "ssh-ng";
+      sshUser = "nix-builder";
+      sshKey = "/home/potter/.ssh/id_ed25519";
+      system = "aarch64-linux";
+      maxJobs = 2;
+      supportedFeatures = [ "big-parallel" ];
+    }
+  ];
+  programs.ssh.knownHosts.abacab-builder = {
+    hostNames = [ "100.120.61.10" "abacab" ];
+    publicKey = lib.trim (builtins.readFile ../../secrets/ssh/abacab/ssh_host_ed25519_key.pub);
+  };
+
+  # This Pi has 4 GB of RAM. Leave compilation to the remote builder.
   zramSwap.enable = true;
   swapDevices = [
     {
@@ -73,8 +91,9 @@
     }
   ];
   nix.settings = {
-    max-jobs = 1;
+    max-jobs = 0;
     cores = 2;
+    builders-use-substitutes = true;
   };
 
   # A new installation; existing hosts retain their original stateVersion.
