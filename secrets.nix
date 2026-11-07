@@ -30,4 +30,6 @@ let
 in
 builtins.foldl' (acc: host: acc // mkHostSecrets host) {
   "secrets/github.age".publicKeys = recipients;
+  "secrets/github-automation.age".publicKeys = recipients;
+  "secrets/abacab-cache.age".publicKeys = recipients;
 } hosts

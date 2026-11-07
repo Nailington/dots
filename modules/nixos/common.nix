@@ -1,4 +1,4 @@
-{ config, pkgs, self, ... }:
+{ config, lib, pkgs, self, ... }:
 
 {
   imports = [ ./ssh-github.nix ];
@@ -77,12 +77,16 @@
       "https://hyprland.cachix.org"
       # Custard's vendor kernel/firmware, also needed by the x86 image builders.
       "https://nixos-raspberrypi.cachix.org"
+    ] ++ lib.optionals (config.networking.hostName != "abacab") [
+      # Private cache over Tailscale; abacab must not substitute from itself.
+      "http://100.120.61.10:5000"
     ];
     extra-trusted-substituters = [
       "https://hyprland.cachix.org"
       "https://nixos-raspberrypi.cachix.org"
     ];
     extra-trusted-public-keys = [
+      (lib.trim (builtins.readFile ../../secrets/abacab-cache.pub))
       "lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
