@@ -11,6 +11,11 @@
     max-jobs = 2;
     lazy-trees = true;
     eval-cores = 1;
+    # Download any matching Darwin outputs copied to abacab; no remote builds.
+    extra-substituters = [ "http://100.120.61.10:5000" ];
+    extra-trusted-public-keys = [
+      (pkgs.lib.trim (builtins.readFile ../../secrets/abacab-cache.pub))
+    ];
   };
 
   system.primaryUser = "potter";

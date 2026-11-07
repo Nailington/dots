@@ -1,9 +1,10 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 
 {
   imports = [
     ./hardware-configuration.nix
     ./disk.nix
+    ./wifi-bootstrap.nix # Import the provisioned Wi-Fi profile before networking starts.
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/niri.nix
@@ -24,29 +25,6 @@
   # Re-enable after the packaging/emulation issue is resolved or built natively.
   programs.codexDesktopLinux.enable = lib.mkForce false;
 
-  # Place this private keyfile on the flashed card, outside the Nix build/store.
-  # Import before NetworkManager starts so Wi-Fi connects without a login.
-  systemd.services.custard-wifi-bootstrap = {
-    description = "Import custard's first-boot Wi-Fi connection";
-    wantedBy = [ "NetworkManager.service" ];
-    before = [ "NetworkManager.service" ];
-    unitConfig = {
-      RequiresMountsFor = "/boot/firmware";
-      ConditionPathExists = "/boot/firmware/custard-wifi.nmconnection";
-    };
-    serviceConfig.Type = "oneshot";
-    path = [ pkgs.coreutils ];
-    script = ''
-      profiles=/etc/NetworkManager/system-connections
-      install -d -m 0700 "$profiles"
-      install -m 0600 -o root -g root /boot/firmware/custard-wifi.nmconnection \
-        "$profiles/custard-wifi.nmconnection.tmp"
-      mv -f "$profiles/custard-wifi.nmconnection.tmp" "$profiles/custard-wifi.nmconnection"
-      sync -f "$profiles/custard-wifi.nmconnection"
-      rm /boot/firmware/custard-wifi.nmconnection
-    '';
-  };
-
   hardware.enableRedistributableFirmware = true;
   hardware.graphics.enable = true;
   boot.supportedFilesystems = [ "ntfs" ];
@@ -64,7 +42,25 @@
     enableOnBoot = false;
   };
 
-  # This Pi has 4 GB of RAM. Avoid exhausting it during native builds.
+  # Only this client offloads uncached ARM builds to abacab.
+  nix.distributedBuilds = true;
+  nix.buildMachines = [
+    {
+      hostName = "100.120.61.10";
+      protocol = "ssh-ng";
+      sshUser = "nix-builder";
+      sshKey = "/home/potter/.ssh/id_ed25519";
+      system = "aarch64-linux";
+      maxJobs = 2;
+      supportedFeatures = [ "big-parallel" ];
+    }
+  ];
+  programs.ssh.knownHosts.abacab-builder = {
+    hostNames = [ "100.120.61.10" "abacab" ];
+    publicKey = lib.trim (builtins.readFile ../../secrets/ssh/abacab/ssh_host_ed25519_key.pub);
+  };
+
+  # This Pi has 4 GB of RAM. Leave compilation to the remote builder.
   zramSwap.enable = true;
   swapDevices = [
     {
@@ -73,8 +69,9 @@
     }
   ];
   nix.settings = {
-    max-jobs = 1;
+    max-jobs = 0;
     cores = 2;
+    builders-use-substitutes = true;
   };
 
   # A new installation; existing hosts retain their original stateVersion.

@@ -15,7 +15,17 @@ Public keys live on GitHub (`Nailington` and `HammerPot`, `lib/github-users.nix`
 | `secrets/ssh/<host>/*.pub` | snapshot of that host's user and host public keys | yes |
 | `secrets/ssh/<host>/*.age` | encrypted private keys | yes (ciphertext) |
 | `secrets/github.age` | GitHub PAT (`write:public_key`, plus `repo` if HTTPS push is the fallback) | yes (ciphertext) |
+| `secrets/github-automation.age` | repository-authorized GitHub CLI credential for abacab's scheduled update PRs | yes (ciphertext) |
+| `secrets/abacab-cache.age` | abacab binary-cache signing key; installed only there | yes (ciphertext) |
+| `secrets/abacab-cache.pub` | public cache verification key, trusted by clients | yes |
 | `~/.ssh/id_ed25519` on a machine | decrypted user key, installed by agenix | never |
+
+Abacab decrypts `github-automation.age` for its scheduled update
+service. systemd passes it as a credential to the service, which uses it for
+GitHub PRs and authenticated HTTPS pushes. The token needs contents and pull
+request write access for this automation. The SSH-enrollment PAT in `github.age`
+does not have the required push access and is kept separate. It is not embedded in Nix expressions,
+Git remotes, PR bodies, or committed files.
 
 Host public keys are age recipients so a server can decrypt during activation using `/etc/ssh/ssh_host_ed25519_key`. They are **not** login keys. `sync-age-recipients` keeps them out of `secrets/github-login-keys.nix`. Putting a host key in `authorized_keys` would not help, and the script is written to avoid it.
 

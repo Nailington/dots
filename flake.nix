@@ -526,6 +526,8 @@
       homeConfigurations."potter@roundabout" = mkHomeConfiguration {
         inherit system;
         modules = [
+          # Standalone HM does not inherit this from niri's NixOS module.
+          inputs.niri.homeModules.niri
           ./home/potter
           ./hosts/roundabout/home.nix
         ];

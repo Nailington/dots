@@ -235,6 +235,26 @@ extension when its upstream package generates those certificates itself.
 
 ## Caches
 
+The Linux clients and iMac also trust abacab's private cache at
+`http://100.120.61.10:5000`, reachable over Tailscale. Its public signing key is
+`secrets/abacab-cache.pub`; the private key is agenix-encrypted in
+`secrets/abacab-cache.age` and installed only on abacab. Abacab does not add itself
+as a substituter. Darwin settings use `determinateNix.customSettings`; Linux uses
+`nix.settings`. Linux builds cannot produce Darwin packages, but the cache can
+serve signed Darwin results copied into abacab's store.
+
+`nix-serve` serves existing store outputs; a miss never starts a build. Abacab's
+daily `nix-cache-build` service first requires `nix-flake-update` to update inputs
+and local packages in a separate checkout, publish a branch/PR, evaluate all host
+outputs, and merge successful updates. Failed updates leave the PR for review
+and block building; unresolved automation PRs also block subsequent runs.
+The build service then builds both Linux client system closures from the
+exact GitHub `main` revision, reusing upstream caches and retaining three successful
+builds per host. See [hosts.md](hosts.md) for commands and retention paths. Only
+custard also offloads cache misses to abacab; other clients build misses locally.
+The new ciphertext and public key must be included when sharing these changes;
+Git flakes omit untracked files.
+
 `modules/nixos/common.nix` trusts:
 
 - `https://cache.lantian.pub/lantian` (Lantian, used by the CachyOS kernel path)
