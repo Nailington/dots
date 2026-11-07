@@ -17,6 +17,9 @@ Progress, commands, download logs, elapsed times, and file changes are printed.
 --all         Update all supported packages.
 --flake DIR   Local flake checkout to edit.
 --help        Show this help.
+
+google-sans-flex is intentionally skipped, including explicit requests.
+Keep it pinned until Potter explicitly asks to re-enable updates.
 EOF
 }
 
@@ -28,12 +31,13 @@ sweetpad           latest commit on codex/windows-remote-testing; CLI + extensio
 t3code             latest published nightly; source + pnpm dependencies
 auto-rob           latest stable release from Cattn/auto-rob; desktop + headless CLI
 google-sans        latest stable release
-google-sans-flex   latest stable release
 twitch-drops-miner current x86_64 + aarch64 dev-build ZIPs; refresh both hashes even if version is unchanged
 EOF
 }
 
-all_packages=(althea singularcard sweetpad t3code auto-rob google-sans google-sans-flex twitch-drops-miner)
+# Keep google-sans-flex disabled until Potter explicitly asks to re-enable it.
+# Upstream's unrelated tags can select versions with nonexistent font archives.
+all_packages=(althea singularcard sweetpad t3code auto-rob google-sans twitch-drops-miner)
 packages=()
 build=false
 all=false
@@ -66,12 +70,22 @@ if ((${#packages[@]} == 0)); then
   packages=("${all_packages[@]}")
 fi
 # Validate the entire selection before making any changes.
+enabled_packages=()
 for package in "${packages[@]}"; do
   case "$package" in
-    althea|singularcard|sweetpad|t3code|auto-rob|google-sans|google-sans-flex|twitch-drops-miner) ;;
+    google-sans-flex)
+      echo 'Skipping google-sans-flex: intentionally pinned; keep skipped until Potter asks to re-enable it.'
+      continue
+      ;;
+    althea|singularcard|sweetpad|t3code|auto-rob|google-sans|twitch-drops-miner) ;;
     *) echo "Unsupported package: $package (see --list)" >&2; exit 2 ;;
   esac
+  enabled_packages+=("$package")
 done
+packages=("${enabled_packages[@]}")
+if ((${#packages[@]} == 0)); then
+  exit 0
+fi
 
 if [[ -z "$flake_dir" ]]; then
   flake_dir="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
@@ -146,7 +160,7 @@ for package in "${packages[@]}"; do
       args+=(--use-github-releases)
       downloads='published desktop + headless CLI ZIP from the latest stable Cattn/auto-rob release'
       ;;
-    google-sans|google-sans-flex)
+    google-sans)
       downloads='font ZIP from the latest stable GitHub release'
       ;;
     twitch-drops-miner)

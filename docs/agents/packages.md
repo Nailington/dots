@@ -56,8 +56,12 @@ are suppressed after `--all`. Completion only lists choices; it runs no updates.
 Althea and SingularCard follow their default branches; SweetPad stays on
 `codex/windows-remote-testing` and refreshes both Cargo and extension npm hashes.
 T3 Code stays on published nightlies and refreshes its source and pnpm hashes.
-Auto-rob follows stable releases from `Cattn/auto-rob`; the two Google Sans font
-packages also follow stable GitHub releases.
+Auto-rob follows stable releases from `Cattn/auto-rob`; Google Sans also follows
+stable GitHub releases. **Keep Google Sans Flex updates disabled until Potter
+explicitly asks to re-enable them.** Its upstream tags can select versions with
+nonexistent font ZIPs (for example, `v97.000`). The updater omits it from default
+and `--all` selections and completion, and explicitly requesting
+`google-sans-flex` prints a skip message without changing its pin or hash.
 Twitch Drops Miner always rehashes the current x86_64 and aarch64 `dev-build`
 ZIPs, even when its tag/version is unchanged; it is also included in `--all`.
 The package exposes the selected platform's original download as `zip` for
