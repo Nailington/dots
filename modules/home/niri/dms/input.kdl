@@ -10,13 +10,7 @@ input {
     touchpad {
         tap
         accel-speed 0.0
-        accel-profile "flat"
-        scroll-method "two-finger"
         natural-scroll
-        tap-button-map "left-right-middle"
-        click-method "clickfinger"
+        dwt
     }
-
-    mod-key "Alt"
 }
-

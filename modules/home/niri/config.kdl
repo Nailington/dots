@@ -5,6 +5,16 @@
 config-notification {
     disable-failed
 }
+
+// DMS owns these generated defaults. Keep permanent preferences below them so
+// regenerating a fragment cannot replace our overrides. Plan C stays last.
+include optional=true "dms/colors.kdl"
+include optional=true "dms/layout.kdl"
+include optional=true "dms/alttab.kdl"
+include optional=true "dms/outputs.kdl"
+include optional=true "dms/cursor.kdl"
+include optional=true "dms/input.kdl"
+
 // Outputs from existing configuration
 /-output "eDP-2" {
     mode "2560x1600@239.998993"
@@ -23,6 +33,17 @@ gestures {
 // Find the full list of options on the wiki:
 // https://github.com/YaLTeR/niri/wiki/Configuration:-Input
 input {
+    // Keep the shortcut modifier outside dms/input.kdl, which DMS regenerates.
+    mod-key "Alt"
+
+    // DMS regenerates input.kdl and drops these custom touchpad preferences.
+    touchpad {
+        accel-profile "flat"
+        scroll-method "two-finger"
+        tap-button-map "left-right-middle"
+        click-method "clickfinger"
+    }
+
     keyboard {
         xkb {
             // You can set rules, model, layout, variant and options.
@@ -233,14 +254,14 @@ debug {
     honor-xdg-activation-with-invalid-serial
 }
 
-// Include dms files
+// Keep the switcher radius independent of DMS's window corner radius.
+recent-windows {
+    highlight {
+        corner-radius 12
+    }
+}
+
 include "pam-kwallet.kdl"
-include optional=true "dms/colors.kdl"
-include optional=true "dms/layout.kdl"
-include optional=true "dms/alttab.kdl"
-include optional=true "dms/outputs.kdl"
-include optional=true "dms/cursor.kdl"
-include optional=true "dms/input.kdl"
 
 // Plan C selects normal bindings or gaming mode. Home Manager initializes this
 // writable include; plan-c validates changes before niri live-reloads them.

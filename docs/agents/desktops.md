@@ -66,6 +66,17 @@ Resolve or commit local DMS edits before pulling if Git reports a conflict.
 Nothing commits, pushes, or pulls these preferences automatically. A NixOS
 rollback does not roll back the writable checkout; use Git to restore configs.
 
+Keep permanent niri overrides in `modules/home/niri/config.kdl`, after the
+generated DMS includes and before Plan C. Alt as Mod, the custom touchpad
+options, and the 12px switcher highlight radius live there. DMS may regenerate
+`dms/*.kdl` at startup or after settings/theme changes; those files are not a
+safe place for manual overrides. Plan C stays last so it can override Mod and
+the switcher while gaming.
+
+Kitty's permanent cursor colors and standard ANSI palette live at the end of
+`modules/home/kitty/config/kitty.conf`, after `dank-tabs.conf` and
+`dank-theme.conf`. Keep manual overrides there; DMS owns the generated includes.
+
 Plugin installs/settings (including Acer Sense), wallpaper/session state,
 notepad contents, and generated GTK files stay local. Custard gets the shared
 bar/theme/settings without installing the laptop's Acer hardware plugin.

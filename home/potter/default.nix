@@ -12,5 +12,6 @@
     home.username = "potter";
     home.homeDirectory = "/home/potter";
     home.stateVersion = "25.11";
+    home.sessionVariables.FLAKE_ROOT = config.potter.flakeDirectory;
   };
 }

@@ -473,5 +473,8 @@
   },
   "appDrawerSectionViewModes": {
     "apps": "list"
-  }
+  },
+  "dmsWindowsFloatingSeeded": [
+    "niri"
+  ]
 }

@@ -1,4 +1,4 @@
-{ config, pkgs, self, ... }:
+{ config, lib, pkgs, self, ... }:
 
 {
   imports = [ ./ssh-github.nix ];
@@ -58,7 +58,19 @@
     };
     script = ''
       export XDG_RUNTIME_DIR="/run/user/$(id -u)"
-      ${pkgs.t3code}/bin/t3 service install
+      # A switch can restart NetworkManager after network-online.target was
+      # reached. Allow DNS/connectivity to recover before giving up the install.
+      for attempt in {1..6}; do
+        if ${pkgs.t3code}/bin/t3 service install; then
+          break
+        fi
+        if [ "$attempt" -eq 6 ]; then
+          echo "T3 Code service installation failed after 6 attempts." >&2
+          exit 1
+        fi
+        echo "T3 Code service installation failed; retrying in 15 seconds ($attempt/6)." >&2
+        sleep 15
+      done
       ${pkgs.t3code}/bin/t3 service restart
     '';
   };
@@ -77,12 +89,16 @@
       "https://hyprland.cachix.org"
       # Custard's vendor kernel/firmware, also needed by the x86 image builders.
       "https://nixos-raspberrypi.cachix.org"
+    ] ++ lib.optionals (config.networking.hostName != "abacab") [
+      # Private cache over Tailscale; abacab must not substitute from itself.
+      "http://100.120.61.10:5000"
     ];
     extra-trusted-substituters = [
       "https://hyprland.cachix.org"
       "https://nixos-raspberrypi.cachix.org"
     ];
     extra-trusted-public-keys = [
+      (lib.trim (builtins.readFile ../../secrets/abacab-cache.pub))
       "lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ="
       "hyprland.cachix.org-1:a7pgxzMz7+chwVL3/pzj6jIBMioiJM7ypFP8PwtkuGc="
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="

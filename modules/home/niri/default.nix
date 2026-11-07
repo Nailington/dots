@@ -130,7 +130,13 @@ let
       fi
       # Use upstream's NixOS-aware copy/patch logic, including upgrade detection.
       bash ${inputs.dms}/quickshell/scripts/gtk.sh "$config_dir" apply "$is_light"
-      bash ${inputs.dms}/quickshell/scripts/gtk.sh "$config_dir" patch "$is_light"
+      # Upstream uses 2 for skipped and 3 for already current; both are harmless.
+      patch_status=0
+      bash ${inputs.dms}/quickshell/scripts/gtk.sh "$config_dir" patch "$is_light" || patch_status=$?
+      case "$patch_status" in
+        0|2|3) ;;
+        *) exit "$patch_status" ;;
+      esac
       dconf write /org/gnome/desktop/interface/gtk-theme "'$theme'"
     '';
   };

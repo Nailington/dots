@@ -9,6 +9,7 @@
     wineWow64Packages.stagingFull
     winetricks
     protonup-qt
+    wowup-cf
     lutris
     gamescope
     mangohud

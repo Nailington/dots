@@ -170,8 +170,11 @@ package.
 On both NixOS hosts, `t3code-install.service` runs as potter after Home Manager
 and the lingering user manager are ready: `t3 service install`, then
 `t3 service restart`. It runs at boot and again when the home generation or T3
-package changes. The first install needs network access to download T3's
-standalone runtime. The base user unit stays writable and owned by T3.
+package changes. Installing a new version needs network access to download T3's
+standalone runtime. Installation retries up to six times, 15 seconds apart, to
+allow DNS/connectivity to recover if a switch restarts NetworkManager. A
+persistent failure still fails the unit. The base user unit stays writable and
+owned by T3.
 Each host's `home.nix` supplies `~/.config/systemd/user/t3code.service.d/host.conf`,
 binding port 3773 to that host's Tailscale IPv4 address. Update that drop-in if
 the machine is re-enrolled with a different Tailscale address.

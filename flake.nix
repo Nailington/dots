@@ -329,16 +329,16 @@
         # Pin the published nightly and its dependencies together.
         t3code = let
           unwrapped = prev.t3code.unwrapped.overrideAttrs (finalAttrs: old: {
-            version = "0.1.6-nightly.20261029.3892";
+            version = "0.1.8-nightly.20261106.4288";
             src = final.fetchFromGitHub {
               owner = "pingdotgg";
               repo = "t3code";
-              rev = "v0.1.6-nightly.20261029.3892";
-              hash = "sha256-FFPC549L0Q1N0YSHK4BdSVQL1/mu0nGTqBhGtplSgxI=";
+              rev = "v0.1.8-nightly.20261106.4288";
+              hash = "sha256-1Glugl9frb1gK4dwTbwUV2FFevaDXWnd6YemztuS28o=";
             };
             pnpmDeps = old.pnpmDeps.override {
               inherit (finalAttrs) src version;
-              hash = "sha256-uj7IxNMdubCtIqkv1M/vg5dRTeUaysC+1l/7ag+D7/4=";
+              hash = "sha256-+dNJoQzAIAx8QFov2dW9eN/TVoTwdWQiPrw2xHfBeEU=";
             };
             meta = old.meta // {
               changelog = "https://github.com/pingdotgg/t3code/releases/tag/v${finalAttrs.version}";
