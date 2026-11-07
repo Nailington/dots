@@ -97,6 +97,20 @@ Adding a Darwin host: [darwin.md](darwin.md). Adding an HM-only host: `homeConfi
 | `damx/` | DAMX daemon + GUI module |
 | `acer-sense/` | `acer-ctl` helper for the DAMX plugin, not part of linuwu |
 | `ssh-github.nix` | authorized keys + agenix identity. See [secrets-and-ssh.md](secrets-and-ssh.md) |
+| `t3code.nix` | T3 user-service installation and linger; imported by `common.nix` |
+
+Host-specific service modules stay beside the host configuration:
+
+- `hosts/abacab/{nix-serve,nix-flake-update,nix-cache-build,qbittorrent}.nix`
+  own the cache/remote builder, update automation, nightly build service and
+  timer, and torrent services respectively. `hosts/abacab/default.nix` imports them.
+- `hosts/custard/wifi-bootstrap.nix` imports the provisioned Wi-Fi profile and
+  is imported by `hosts/custard/default.nix`.
+- `hosts/roundabout/bt51-pointer-bridge.nix` owns the mouse user service and
+  is imported by `hosts/roundabout/home.nix`, which supplies its helper package.
+
+Shared DMS user services and their GTK helpers live in
+`modules/home/niri/dms-services.nix`, imported by the niri home profile.
 
 ## Flake packages on PATH
 
