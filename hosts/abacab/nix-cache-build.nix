@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 
 {
   # Prebuild main only after updates have merged (or found no changes).
@@ -8,7 +8,7 @@
     wants = [ "network-online.target" ];
     requires = [ "nix-flake-update.service" ];
     after = [ "network-online.target" "nix-flake-update.service" ];
-    path = [ pkgs.git pkgs.nix pkgs.coreutils pkgs.findutils ];
+    path = [ pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils ];
     environment.HOME = "/var/lib/nix-cache-build";
     serviceConfig = {
       Type = "oneshot";
@@ -16,6 +16,7 @@
       Group = "users";
       StateDirectory = "nix-cache-build";
       WorkingDirectory = "/var/lib/nix-cache-build";
+      LoadCredential = "github-token:${config.age.secrets.github-automation.path}";
       Nice = 10;
       IOSchedulingClass = "idle";
       TimeoutStartSec = "infinity";
@@ -29,6 +30,26 @@
       git -C checkout checkout --detach FETCH_HEAD
       revision=$(git -C checkout rev-parse HEAD)
       stamp=$(date -u +%Y%m%dT%H%M%S%N)
+      report_build_failure() {
+        local host="$1" title issue token body
+        title="Cache build failed: $host at $revision"
+        token=$(cat "$CREDENTIALS_DIRECTORY/github-token") || return 1
+        issue=$(GH_TOKEN="$token" gh issue list --repo Nailington/dots --state open \
+          --search "\"$title\" in:title" --json number --jq '.[0].number // empty') || return 1
+        if [ -n "$issue" ]; then
+          echo "Build failure already reported in issue #$issue; not tagging again."
+          return 0
+        fi
+        body="$PWD/build-failure-$host-$revision.md"
+        {
+          printf '@HammerPot @Nailington — please review this failed cache build.\n\n'
+          printf 'Host: %s\nCommit: https://github.com/Nailington/dots/commit/%s\n' "$host" "$revision"
+          printf '\nThe system was not activated. Previous successful cache roots are preserved.\n'
+          printf '\nLogs on abacab: sudo journalctl -u nix-cache-build.service\n'
+        } > "$body"
+        GH_TOKEN="$token" gh issue create --repo Nailington/dots --title "$title" \
+          --body-file "$body" --assignee HammerPot --assignee Nailington
+      }
       failed=0
       for host in roundabout custard; do
         mkdir -p "roots/$host"
@@ -42,6 +63,9 @@
             | while IFS= read -r old; do rm -- "roots/$host/$old"; done
         else
           failed=1
+          # Merged PRs cannot request another review; report a build failure as
+          # an issue, once per host/revision. Successful builds never tag anyone.
+          report_build_failure "$host" || echo "Could not report $host build failure to GitHub." >&2
         fi
       done
       exit "$failed"
