@@ -17,8 +17,8 @@
     after = [ "network-online.target" "nix-flake-update.service" ];
     path = [ pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils ];
     environment.HOME = "/var/lib/nix-cache-build";
-    environment.TMPDIR = "/mnt/storage/nix-automation/tmp";
-    unitConfig.RequiresMountsFor = [ "/var/lib/nix-cache-build" "/mnt/storage/nix-automation/tmp" ];
+    environment.TMPDIR = "/var/lib/nix-automation-tmp";
+    unitConfig.RequiresMountsFor = [ "/var/lib/nix-cache-build" "/var/lib/nix-automation-tmp" ];
     serviceConfig = {
       Type = "oneshot";
       User = "potter";

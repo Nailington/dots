@@ -37,14 +37,15 @@
     # Leave capacity for the server's other services, including during ARM emulation.
     max-jobs = 2;
     cores = 3;
-    build-dir = "/mnt/storage/nix-builds";
+    # Compile on the root SSD; completed outputs stay in the HDD-backed store.
+    build-dir = "/var/lib/nix-builds";
     # Sign remote-build outputs too, so custard can verify copied results.
     secret-key-files = [ config.age.secrets.abacab-cache.path ];
   };
   systemd.tmpfiles.rules = [
-    "d /mnt/storage/nix-builds 0755 root root -"
-    "d /mnt/storage/nix-automation/tmp 1777 root root -"
+    "d /var/lib/nix-builds 0755 root root -"
+    "d /var/lib/nix-automation-tmp 1777 root root -"
   ];
-  systemd.services.nix-daemon.environment.TMPDIR = "/mnt/storage/nix-builds";
-  systemd.services.nix-daemon.unitConfig.RequiresMountsFor = [ "/mnt/storage/nix-builds" ];
+  systemd.services.nix-daemon.environment.TMPDIR = "/var/lib/nix-builds";
+  systemd.services.nix-daemon.unitConfig.RequiresMountsFor = [ "/var/lib/nix-builds" ];
 }

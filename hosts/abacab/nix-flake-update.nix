@@ -15,14 +15,14 @@
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
     before = [ "nix-cache-build.service" ];
-    unitConfig.RequiresMountsFor = [ "/var/lib/nix-flake-update" "/mnt/storage/nix-automation/tmp" ];
+    unitConfig.RequiresMountsFor = [ "/var/lib/nix-flake-update" "/var/lib/nix-automation-tmp" ];
     path = [
       pkgs.git pkgs.gh pkgs.nix pkgs.jq pkgs.coreutils
       self.packages.${pkgs.stdenv.hostPlatform.system}.update-local-packages
     ];
     environment = {
       HOME = "/var/lib/nix-flake-update";
-      TMPDIR = "/mnt/storage/nix-automation/tmp";
+      TMPDIR = "/var/lib/nix-automation-tmp";
       GIT_TERMINAL_PROMPT = "0";
       GH_PROMPT_DISABLED = "1";
     };

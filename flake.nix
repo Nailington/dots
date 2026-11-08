@@ -294,6 +294,16 @@
             });
         };
       in {
+        # Backport nixpkgs 16b463698a5b: Rust hooks require these system libraries.
+        # Remove when that fix reaches the locked nixpkgs inputs.
+        # Older pins (including custard's 0.166.0) predate the affected Rust hooks.
+        codex = if prev.codex.version == "0.167.0" then prev.codex.overrideAttrs (old: {
+          # Preserve upstream's dependency list once its fix lands, for cache hits.
+          buildInputs = final.lib.unique ((old.buildInputs or []) ++ [
+            final.aws-lc final.oniguruma final.sqlite final.zstd
+          ]);
+        }) else prev.codex;
+
         rofi-themes-collection = final.callPackage ./pkgs/rofi-themes {
           rofiThemesSrc = rofi-themes;
         };
