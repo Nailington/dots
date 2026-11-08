@@ -329,12 +329,12 @@
         # Pin the published nightly and its dependencies together.
         t3code = let
           unwrapped = prev.t3code.unwrapped.overrideAttrs (finalAttrs: old: {
-            version = "0.1.8-nightly.20261107.4327";
+            version = "0.1.8-nightly.20261108.4353";
             src = final.fetchFromGitHub {
               owner = "pingdotgg";
               repo = "t3code";
-              rev = "v0.1.8-nightly.20261107.4327";
-              hash = "sha256-NDHG5hgO3xawdwC8RZ0S0QMVEdbIh78ox8GG5uRDdR0=";
+              rev = "v0.1.8-nightly.20261108.4353";
+              hash = "sha256-t3drsGtD+Hk5ibFcy2i8ZVeskOaxH8ODI4II36SUlqk=";
             };
             pnpmDeps = old.pnpmDeps.override {
               inherit (finalAttrs) src version;
