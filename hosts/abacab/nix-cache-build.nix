@@ -1,6 +1,13 @@
 { config, pkgs, ... }:
 
 {
+  # Keep existing log/GC-root paths while placing run state on the data disk.
+  fileSystems."/var/lib/nix-cache-build" = {
+    device = "/mnt/storage/nix-automation/cache-build";
+    fsType = "none";
+    options = [ "bind" ];
+    depends = [ "/mnt/storage" ];
+  };
   # Prebuild main only after updates have merged (or found no changes).
   # Each output link is a GC root; retain three successful revisions per client.
   systemd.services.nix-cache-build = {
@@ -10,6 +17,8 @@
     after = [ "network-online.target" "nix-flake-update.service" ];
     path = [ pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils ];
     environment.HOME = "/var/lib/nix-cache-build";
+    environment.TMPDIR = "/mnt/storage/nix-automation/tmp";
+    unitConfig.RequiresMountsFor = [ "/var/lib/nix-cache-build" "/mnt/storage/nix-automation/tmp" ];
     serviceConfig = {
       Type = "oneshot";
       User = "potter";

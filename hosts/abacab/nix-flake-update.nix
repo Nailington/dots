@@ -1,6 +1,12 @@
 { config, pkgs, self, ... }:
 
 {
+  fileSystems."/var/lib/nix-flake-update" = {
+    device = "/mnt/storage/nix-automation/flake-update";
+    fsType = "none";
+    options = [ "bind" ];
+    depends = [ "/mnt/storage" ];
+  };
   # Update in an automation-owned checkout, never in Potter's working tree.
   # Credentials are decrypted outside the store and passed through systemd.
   age.secrets.github-automation.file = ../../secrets/github-automation.age;
@@ -9,12 +15,14 @@
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
     before = [ "nix-cache-build.service" ];
+    unitConfig.RequiresMountsFor = [ "/var/lib/nix-flake-update" "/mnt/storage/nix-automation/tmp" ];
     path = [
       pkgs.git pkgs.gh pkgs.nix pkgs.jq pkgs.coreutils
       self.packages.${pkgs.stdenv.hostPlatform.system}.update-local-packages
     ];
     environment = {
       HOME = "/var/lib/nix-flake-update";
+      TMPDIR = "/mnt/storage/nix-automation/tmp";
       GIT_TERMINAL_PROMPT = "0";
       GH_PROMPT_DISABLED = "1";
     };

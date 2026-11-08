@@ -44,14 +44,22 @@
   };
 
   # Existing data disk — mount only, never format. Kept out of disko on purpose.
+  # Required during boot now that it holds the Nix store and database.
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/39ed1bbb-0ebf-43fd-a02e-62187377b916";
     fsType = "ext4";
+    neededForBoot = true;
     options = [
       "defaults"
-      "nofail"
       "x-systemd.device-timeout=10s"
     ];
+  };
+  fileSystems."/nix" = {
+    device = "/mnt/storage/nix";
+    fsType = "none";
+    options = [ "bind" ];
+    neededForBoot = true;
+    depends = [ "/mnt/storage" ];
   };
 
   # Build custard's ARM image using QEMU user-mode emulation.
