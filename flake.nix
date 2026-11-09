@@ -329,7 +329,10 @@
         auto-rob = final.callPackage ./pkgs/auto-rob { };
         kde-craft = final.callPackage ./pkgs/kde-craft { };
         sweetpad = final.callPackage ./pkgs/sweetpad { };
-        sim-relay = inputs.sim-relay.packages.${system}.default;
+        # Its flake creates a separate package set, so pass our binary runtime.
+        sim-relay = inputs.sim-relay.packages.${system}.default.override {
+          electron = final.electron;
+        };
         kolf = inputs.kolf.packages.${system}.default;
 
         discordchatexporter-cli = (discordChatExporterFork prev.discordchatexporter-cli
