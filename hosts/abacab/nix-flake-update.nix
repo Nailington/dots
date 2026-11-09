@@ -52,6 +52,18 @@
         echo "An update PR still needs attention; blocking this run: $pending" >&2
         exit 1
       fi
+      # The daily cache job still checks for blocked PRs, but only refreshes
+      # packages once per local calendar week (Sunday through Saturday).
+      week=$(date -d "today -$(date +%w) days" +%F)
+      week_file="$PWD/last-successful-update-week"
+      if [ -f "$week_file" ] && [ "$(cat "$week_file")" = "$week" ]; then
+        echo "Updates already completed for week of $week; building main without updating."
+        exit 0
+      fi
+      mark_updated() {
+        printf '%s\n' "$week" > "$week_file.tmp"
+        mv -f -- "$week_file.tmp" "$week_file"
+      }
       stamp=$(date -u +%Y%m%dT%H%M%S)-$RANDOM
       run="$PWD/runs/$stamp"
       mkdir -p "$run"
@@ -81,6 +93,7 @@
           exit 1
         fi
         echo "No package or input updates; cache build may proceed."
+        mark_updated
         exit 0
       fi
       git commit -m "Update flake inputs and local packages ($stamp)"
@@ -153,6 +166,7 @@
         echo "PR is not merged yet; cache build remains blocked: $pr" >&2
         exit 1
       fi
+      mark_updated
     '';
   };
 }

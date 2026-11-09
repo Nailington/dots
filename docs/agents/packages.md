@@ -257,9 +257,11 @@ as a substituter. Darwin settings use `determinateNix.customSettings`; Linux use
 serve signed Darwin results copied into abacab's store.
 
 `nix-serve` serves existing store outputs; a miss never starts a build. Abacab's
-daily `nix-cache-build` service first requires `nix-flake-update` to update inputs
-and local packages in a separate checkout, publish a branch/PR, evaluate all host
-outputs, and merge successful updates. Failed updates block building; unresolved
+daily `nix-cache-build` service first requires `nix-flake-update`. It updates inputs
+and local packages once per local Sunday-to-Saturday week in a separate checkout,
+publishes a branch/PR, evaluates all host outputs, and merges successful updates.
+After a successful update, remaining daily runs skip updates and build `main`.
+Failed updates can retry; they block building, and unresolved
 automation PRs also block subsequent runs. Only evaluation failures request PR
 review, and only failed builds open an issue tagging both accounts. Ordinary
 update/merge problems and successful runs do not send review notifications.
