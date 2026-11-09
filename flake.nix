@@ -131,6 +131,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Online multiplayer fork; retain upstream's tested nixpkgs pin.
+    kolf.url = "github:Cattn/kolf/multi-proto";
+
   };
 
   outputs =
@@ -237,6 +240,7 @@
           });
           google-sans = pkgs.google-sans;
           google-sans-flex = pkgs.google-sans-flex;
+          kolf = pkgs.kolf;
           t3code = pkgs.t3code;
           twitch-drops-miner = pkgs.twitch-drops-miner;
           nixos-remote-install = pkgs.writeShellApplication {
@@ -294,6 +298,12 @@
             });
         };
       in {
+        # Use upstream binaries at the locked versions: unstable-small can miss
+        # cached source builds, making Electron/Chromium take hours to compile.
+        electron_43 = prev.electron_43-bin;
+        electron_44 = prev.electron_44-bin;
+        electron_45 = prev.electron_45-bin;
+
         # Backport nixpkgs 16b463698a5b: Rust hooks require these system libraries.
         # Remove when that fix reaches the locked nixpkgs inputs.
         # Older pins (including custard's 0.166.0) predate the affected Rust hooks.
@@ -320,6 +330,7 @@
         kde-craft = final.callPackage ./pkgs/kde-craft { };
         sweetpad = final.callPackage ./pkgs/sweetpad { };
         sim-relay = inputs.sim-relay.packages.${system}.default;
+        kolf = inputs.kolf.packages.${system}.default;
 
         discordchatexporter-cli = (discordChatExporterFork prev.discordchatexporter-cli
           ./pkgs/discordchatexporter/cli-deps.json).overrideAttrs (_: {

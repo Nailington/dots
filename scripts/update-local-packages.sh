@@ -7,6 +7,7 @@ Usage: update-local-packages [--flake DIR] [--build] [PACKAGE ... | --all]
        update-local-packages --list
 
 Update local GitHub package pins and source/dependency hashes using nix-update.
+Kolf instead updates its flake input lock on the multi-proto branch.
 With no package names, update all supported packages. Run in the flake checkout
 (or use --flake DIR or NH_FLAKE). This edits files; review the diff and switch
 with nh afterwards. It does not commit, push, or switch the system.
@@ -32,12 +33,13 @@ t3code             latest published nightly; source + pnpm dependencies
 auto-rob           latest stable release from Cattn/auto-rob; desktop + headless CLI
 google-sans        latest stable release
 twitch-drops-miner current x86_64 + aarch64 dev-build ZIPs; refresh both hashes even if version is unchanged
+kolf               latest commit on Cattn/kolf multi-proto; flake input lock
 EOF
 }
 
 # Keep google-sans-flex disabled until Potter explicitly asks to re-enable it.
 # Upstream's unrelated tags can select versions with nonexistent font archives.
-all_packages=(althea singularcard sweetpad t3code auto-rob google-sans twitch-drops-miner)
+all_packages=(althea singularcard sweetpad t3code auto-rob google-sans twitch-drops-miner kolf)
 packages=()
 build=false
 all=false
@@ -77,7 +79,7 @@ for package in "${packages[@]}"; do
       echo 'Skipping google-sans-flex: intentionally pinned; keep skipped until Potter asks to re-enable it.'
       continue
       ;;
-    althea|singularcard|sweetpad|t3code|auto-rob|google-sans|twitch-drops-miner) ;;
+    althea|singularcard|sweetpad|t3code|auto-rob|google-sans|twitch-drops-miner|kolf) ;;
     *) echo "Unsupported package: $package (see --list)" >&2; exit 2 ;;
   esac
   enabled_packages+=("$package")
@@ -170,10 +172,19 @@ for package in "${packages[@]}"; do
       args+=(--version=skip --no-src --custom-dep zip)
       downloads='current x86_64 + aarch64 dev-build AppImage ZIPs; rehash even when the version is unchanged'
       ;;
+    kolf)
+      file=flake.lock
+      downloads='GitHub source archive from Cattn/kolf multi-proto and its locked flake inputs'
+      ;;
   esac
-  args+=(--override-filename "$file")
-  if "$build"; then
-    args+=(--build)
+  if [[ "$package" == kolf ]]; then
+    update_command=(nix flake update kolf)
+  else
+    args+=(--override-filename "$file")
+    if "$build"; then
+      args+=(--build)
+    fi
+    update_command=(nix-update "${args[@]}" "$attr")
   fi
 
   printf '\n[%s] [%d/%d] Updating %s\n' "$(date +%T)" "$package_index" "${#packages[@]}" "$package"
@@ -181,14 +192,19 @@ for package in "${packages[@]}"; do
   cp -p -- "$file" "$backup_dir/package.nix"
   active_file="$file"
   package_failed=false
-  if run_command nix-update "${args[@]}" "$attr" && {
+  if run_command "${update_command[@]}" && {
     # Fetch the ARM download too, without requiring an ARM application build.
     [[ "$package" != twitch-drops-miner ]] ||
       run_command nix-update --flake --system aarch64-linux --version=skip \
         --no-src --custom-dep zip --override-filename "$file" "$attr"
   }; then
     # nix-update --build builds the CLI; verify the extension separately too.
-    if [[ "$package" == sweetpad ]] && "$build" && ! run_command nix build --no-link --print-build-logs .#sweetpad-vscode; then
+    if [[ "$package" == kolf ]] && "$build" && ! run_command nix build --no-update-lock-file --no-link --print-build-logs .#kolf; then
+      cp -p -- "$backup_dir/package.nix" "$file"
+      failed+=("$package")
+      package_failed=true
+      echo "Failed to build Kolf; restored $file." >&2
+    elif [[ "$package" == sweetpad ]] && "$build" && ! run_command nix build --no-link --print-build-logs .#sweetpad-vscode; then
       cp -p -- "$backup_dir/package.nix" "$file"
       failed+=("$package")
       package_failed=true

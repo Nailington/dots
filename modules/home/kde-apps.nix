@@ -26,6 +26,6 @@
     kdePackages.kblocks
     kdePackages.kbounce
     kdePackages.kollision
-    kdePackages.kolf
+    kolf # Cattn's online multiplayer fork (multi-proto).
   ];
 }

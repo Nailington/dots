@@ -68,15 +68,22 @@ The package exposes the selected platform's original download as `zip` for
 nix-update's `--custom-dep` handling. Hash checks fetch both ZIPs without
 extracting or building the ARM application; `--build` also verifies the x86_64
 wrapper.
+
+Kolf uses the upstream flake on `Cattn/kolf`'s `multi-proto` branch, retaining
+its tested nixpkgs pin. It replaces the stock Kolf in the KDE apps profile on
+roundabout and custard and is exposed as `packages.<linux-system>.kolf`.
+`update-local-packages kolf` runs `nix flake update kolf`; `--build` also builds
+the x86_64 package. A failed update or build restores the previous lockfile.
+
 The supported targets and policies are in `scripts/update-local-packages.sh`;
 expose new targets under `packages.x86_64-linux` before adding them there.
 
-This command does not update `flake.lock`, commit, push, or apply the system.
-Use `nix flake update` separately for inputs such as rofi-themes. It restores a
-package's file to its pre-run contents if that update fails (including existing
-uncommitted edits), continues with the other packages, and exits nonzero if any
-failed. Without `--build`, fetching dependency hashes does not prove the app
-builds; upstream changes can still need packaging fixes.
+This command updates `flake.lock` only for Kolf; it does not commit, push, or
+apply the system. Use `nix flake update` separately for other inputs such as
+rofi-themes. It restores a package's file to its pre-run contents if that update
+fails (including existing uncommitted edits), continues with the other packages,
+and exits nonzero if any failed. Without `--build`, fetching dependency hashes
+does not prove the app builds; upstream changes can still need packaging fixes.
 
 Output is verbose by default: each package prints its position in the run,
 expected downloads, commands, live hash-fetching logs, elapsed time, and its
