@@ -318,6 +318,19 @@
           rofiThemesSrc = rofi-themes;
         };
         posys-cursor-scalable = final.callPackage ./pkgs/posys-cursor-scalable { };
+        # fix-nwse-resize-symlink-name: use the standard nwse-resize cursor name.
+        posy-cursors = prev.posy-cursors.overrideAttrs (old: {
+          version = "1.6-unstable-2025-05-08";
+          src = final.fetchFromGitHub {
+            owner = "nsn90255";
+            repo = "posy-improved-cursor-linux";
+            rev = "577988ace2ebff466a44324abe9a01970b183716";
+            hash = "sha256-xce/y79oNvg7FAcoSIgDKiEAiXFncz6boA1n/WOaUjs=";
+          };
+          meta = old.meta // {
+            homepage = "https://github.com/nsn90255/posy-improved-cursor-linux/tree/fix-nwse-resize-symlink-name";
+          };
+        });
         seguiemj = final.callPackage ./pkgs/seguiemj { };
         hojas-de-plata = final.callPackage ./pkgs/hojas-de-plata { };
         google-sans = final.callPackage ./pkgs/google-sans { };

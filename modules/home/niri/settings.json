@@ -333,8 +333,8 @@
           "id": "focusedWindow",
           "enabled": true,
           "focusedWindowShowIcon": true,
-          "focusedWindowCompactMode": false,
-          "focusedWindowSize": 1
+          "focusedWindowSize": 1,
+          "focusedWindowShowAppName": true
         }
       ],
       "centerWidgets": [
@@ -464,7 +464,7 @@
       "trigger": "pw"
     }
   },
-  "configVersion": 42,
+  "configVersion": 43,
   "dashOptions": {
     "media": {
       "titleFont": "ui",

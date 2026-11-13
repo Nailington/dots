@@ -225,6 +225,40 @@ Both launchers retain the C++ runtime in `LD_LIBRARY_PATH` because Linux
 `node-pty` prebuilds lack a runtime search path. Remove those runtime additions once
 nixpkgs#569702 reaches the pinned input; keep the nightly pin and desktop home default.
 
+## T3 Code for World of Warcraft
+
+`modules/home/gaming.nix` supplies Node.js and grim for the upstream
+`ryanrhughes/t3code-wow` installer, and adds `~/.local/bin` to the shell PATH.
+Zsh also adds it on each shell start so terminals opened from an existing
+desktop session pick it up without logging out.
+The bridge and addon stay writable under `~/.local/share/t3code-wow`, so the
+same upstream install command works for installation and updates:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/ryanrhughes/t3code-wow/main/install.sh | bash
+t3code-wow status --log
+```
+
+Home Manager owns only the `t3code-wow.service.d/nix.conf` drop-in. It selects
+the current generation's Node and capture tools instead of the obsolete Node
+store path and terminal PATH saved by the installer. The installer still owns
+the base user service, game discovery, addon files, and scoped T3 session.
+The bridge uses the existing T3 server home (`~/.t3`).
+
+On niri, upstream's generic grim backend reads the strip at desktop coordinates
+`0,0`; keep WoW fullscreen on the display at that origin, with its top-left
+corner unobscured. It does not track a moved/windowed game as its Hyprland backend
+does. After an update, use `/reload` in game; new addon folders require a full
+game restart. Dictation needs a separately configured backend.
+
+Keep Steam's performance monitor and other overlays away from the top-left
+corner too. Steam's monitor can cover the strip's header: the addon still
+receives thread lists and reports connected, but thread contents stay loading
+and outgoing commands queue. `t3code-wow status` then shows `decoded: 0` and no
+addon check-in even though capture itself succeeds. Move the monitor under
+Steam Settings → In Game → Overlay Performance Monitor, then run `/t3 selftest`;
+its round-trip check must pass, not just the bridge/T3 connection checks.
+
 ## Temporary upstream fixes
 
 These live in `overlays.default` and should be deleted once nixpkgs has them. Each has a comment with the reason:
