@@ -68,6 +68,33 @@
       run="$PWD/runs/$stamp"
       mkdir -p "$run"
       exec > >(tee -a "$run/run.log") 2>&1
+      pr=""
+      phase="preparing the update checkout"
+      failure_reason=""
+      record_failure() {
+        failure_reason="$failure_reason- $1"$'\n'
+      }
+      close_failed_pr() {
+        status=$?
+        trap - EXIT
+        if [ "$status" -ne 0 ] && [ -n "$pr" ]; then
+          # Never close a successfully merged PR, even if a later step fails.
+          if state=$(gh pr view "$pr" --repo "$repo" --json state --jq .state); then
+            if [ "$state" = OPEN ]; then
+              comment=$(printf 'Closing this automated update because the run failed.\n\n%s\nStopped while %s (exit status %s).\n\nDetailed logs on abacab: %s/run.log\n\nThe next scheduled or manual run can retry with a fresh PR.' \
+                "$failure_reason" "$phase" "$status" "$run")
+              gh pr close "$pr" --repo "$repo" --comment "$comment" \
+                || echo "Could not close failed update PR; manual cleanup required: $pr" >&2
+            fi
+          else
+            echo "Could not check failed update PR state; manual cleanup required: $pr" >&2
+          fi
+        fi
+        exit "$status"
+      }
+      trap close_failed_pr EXIT
+      trap 'exit 130' INT
+      trap 'exit 143' TERM
       if [ ! -d checkout/.git ]; then
         git clone --depth 1 --branch main "https://github.com/$repo.git" checkout
       fi
@@ -83,9 +110,11 @@
       git config user.email "$actor_id+$actor@users.noreply.github.com"
       git config credential.helper '!gh auth git-credential'
 
+      phase="updating inputs and local packages"
       updates_ok=true
-      nix flake update || updates_ok=false
-      update-local-packages --flake "$PWD" --all || updates_ok=false
+      nix flake update || { updates_ok=false; record_failure "nix flake update failed."; }
+      update-local-packages --flake "$PWD" --all \
+        || { updates_ok=false; record_failure "update-local-packages --all failed."; }
       git add --update -- flake.nix flake.lock pkgs
       if git diff --cached --quiet; then
         if ! "$updates_ok"; then
@@ -101,8 +130,10 @@
 
       # Check all exported package systems and explicitly force every host.
       # Darwin is evaluated here, never built or activated on Linux.
+      phase="evaluating the updated configuration"
       eval_ok=true
-      nix flake check --no-build --all-systems --no-update-lock-file || eval_ok=false
+      nix flake check --no-build --all-systems --no-update-lock-file \
+        || { eval_ok=false; record_failure "All-system flake evaluation failed."; }
       for kind in nixosConfigurations darwinConfigurations homeConfigurations; do
         if nix eval --no-update-lock-file --json ".#$kind" \
           --apply builtins.attrNames > "$run/$kind.json"; then
@@ -112,18 +143,26 @@
               darwinConfigurations) target="system.drvPath" ;;
               homeConfigurations) target="activationPackage.drvPath" ;;
             esac
-            nix eval --no-update-lock-file --raw ".#$kind.\"$host\".$target" || eval_ok=false
+            nix eval --no-update-lock-file --raw ".#$kind.\"$host\".$target" \
+              || { eval_ok=false; record_failure "Evaluation failed for $kind.$host.$target."; }
             printf '\n'
           done < <(jq -r '.[]' "$run/$kind.json")
         else
           eval_ok=false
+          record_failure "Could not list hosts in $kind."
         fi
       done
       # The exact committed tree must be the tree checked above.
-      git diff --quiet && git diff --cached --quiet || eval_ok=false
+      if ! git diff --quiet || ! git diff --cached --quiet; then
+        eval_ok=false
+        record_failure "The checkout changed after the update commit was created."
+      fi
       git fetch --depth 1 origin main
       base_ok=true
-      if [ "$(git rev-parse origin/main)" != "$base" ]; then base_ok=false; fi
+      if [ "$(git rev-parse origin/main)" != "$base" ]; then
+        base_ok=false
+        record_failure "Main advanced during evaluation; the update needs a fresh base."
+      fi
       {
         printf 'Updates flake inputs and the supported local package pins/hashes.\n\n'
         printf -- '- Package/input updates completed: %s\n' "$updates_ok"
@@ -132,6 +171,7 @@
         printf '\nEvaluated commit: %s. No system activation is performed.\n' "$head"
         printf '\nDetailed logs on abacab: %s/run.log.\n' "$run"
       } > "$run/pr-body.md"
+      phase="publishing the update PR"
       git push origin "HEAD:refs/heads/$branch"
       pr=$(gh pr create --repo "$repo" --base main --head "$branch" \
         --title "Update flake inputs and local packages ($stamp)" \
@@ -149,23 +189,29 @@
         done
       }
       if ! "$eval_ok"; then
+        phase="rejecting an update that failed evaluation"
         request_review
-        echo "Evaluation failed; review requested and cache build blocked: $pr" >&2
+        echo "Evaluation failed; review requested, closing PR and blocking this cache build: $pr" >&2
         exit 1
       fi
       if ! "$updates_ok" || ! "$base_ok"; then
-        echo "Update incomplete or main advanced; blocking without review notifications: $pr" >&2
+        phase="rejecting an incomplete or outdated update"
+        echo "Update incomplete or main advanced; closing PR and blocking this cache build: $pr" >&2
         exit 1
       fi
       # Respect repository protection and reject a concurrently changed PR head.
+      phase="merging the evaluated update"
       if ! gh pr merge "$pr" --repo "$repo" --squash --match-head-commit "$head"; then
-        echo "Merge failed; blocking without review notifications: $pr" >&2
+        record_failure "GitHub rejected the squash merge (see the run log for the GitHub error)."
+        echo "Merge failed; closing PR and blocking this cache build: $pr" >&2
         exit 1
       fi
       if [ "$(gh pr view "$pr" --repo "$repo" --json state --jq .state)" != MERGED ]; then
+        record_failure "The merge command returned but the PR was not merged."
         echo "PR is not merged yet; cache build remains blocked: $pr" >&2
         exit 1
       fi
+      phase="recording the successful update week"
       mark_updated
     '';
   };
