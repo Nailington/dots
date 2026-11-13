@@ -37,6 +37,7 @@
     experimental-features = [ "nix-command" "flakes" ];
     # Finish independent builds even when another package fails.
     keep-going = true;
+    download-attempts = 20;
     extra-substituters = [
       # CachyOS/Lantian kernel cache.
       "https://cache.lantian.pub/lantian"
