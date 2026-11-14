@@ -196,6 +196,7 @@
             runtimeInputs = [
               # nix-update captures hash-fetching stderr to parse the result.
               # Tee it to the terminal while retaining that captured output.
+              # Materialize lazy flake sources before nix-update evaluates them.
               (pkgs.nix-update.overrideAttrs (old: {
                 patches = (old.patches or [ ]) ++ [ ./pkgs/nix-update-stream-logs.patch ];
               }))

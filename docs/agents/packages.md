@@ -92,6 +92,11 @@ while retaining it for hash parsing; Python output is unbuffered. A hash mismatc
 with a `got:` value is expected during hash discovery. The updater uses that
 value to replace the old hash; the final package status reports success/failure.
 
+The same patch handles Nix's lazy source trees: if `nix flake metadata` reports
+a source path that is not on disk yet, nix-update runs `nix flake archive`
+with `--no-update-lock-file` before evaluating it. This materializes the flake
+and its inputs while preserving Git's tracked-file filtering and the lockfile.
+
 Source-based packages download GitHub repository archives. SweetPad additionally
 fetches Rust crates and npm packages from its lockfiles; T3 fetches pnpm packages.
 Auto-rob downloads the published application ZIP, and the Google Sans packages
