@@ -1,6 +1,16 @@
 { config, pkgs, self, ... }:
 
 {
+  environment.systemPackages = [
+    (pkgs.writeShellApplication {
+      name = "nix-cache-update";
+      runtimeInputs = [ pkgs.systemd ];
+      text = ''
+        exec /run/wrappers/bin/sudo systemctl start --no-block nix-flake-update.service
+      '';
+    })
+  ];
+
   fileSystems."/var/lib/nix-flake-update" = {
     device = "/mnt/storage/nix-automation/flake-update";
     fsType = "none";
@@ -52,14 +62,9 @@
         echo "An update PR still needs attention; blocking this run: $pending" >&2
         exit 1
       fi
-      # The daily cache job still checks for blocked PRs, but only refreshes
-      # packages once per local calendar week (Sunday through Saturday).
+      # The scheduler checks this marker; manual starts always update.
       week=$(date -d "today -$(date +%w) days" +%F)
       week_file="$PWD/last-successful-update-week"
-      if [ -f "$week_file" ] && [ "$(cat "$week_file")" = "$week" ]; then
-        echo "Updates already completed for week of $week; building main without updating."
-        exit 0
-      fi
       mark_updated() {
         printf '%s\n' "$week" > "$week_file.tmp"
         mv -f -- "$week_file.tmp" "$week_file"

@@ -1,6 +1,16 @@
 { config, pkgs, ... }:
 
 {
+  environment.systemPackages = [
+    (pkgs.writeShellApplication {
+      name = "nix-cache-build";
+      runtimeInputs = [ pkgs.systemd ];
+      text = ''
+        exec /run/wrappers/bin/sudo systemctl start --no-block nix-cache-build.service
+      '';
+    })
+  ];
+
   # Keep existing log/GC-root paths while placing run state on the data disk.
   fileSystems."/var/lib/nix-cache-build" = {
     device = "/mnt/storage/nix-automation/cache-build";
@@ -8,12 +18,11 @@
     options = [ "bind" ];
     depends = [ "/mnt/storage" ];
   };
-  # Prebuild main only after updates have merged (or found no changes).
+  # Build main independently; the scheduled flow runs updates first when due.
   # Each output link is a GC root; retain three successful revisions per client.
   systemd.services.nix-cache-build = {
     description = "Prebuild flake clients for abacab's binary cache";
     wants = [ "network-online.target" ];
-    requires = [ "nix-flake-update.service" ];
     after = [ "network-online.target" "nix-flake-update.service" ];
     path = [ pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils ];
     environment.HOME = "/var/lib/nix-cache-build";
@@ -32,6 +41,14 @@
     };
     script = ''
       set -euo pipefail
+      token=$(cat "$CREDENTIALS_DIRECTORY/github-token")
+      pending=$(GH_TOKEN="$token" gh pr list --repo Nailington/dots --base main --state open \
+        --json headRefName,url \
+        --jq '.[] | select(.headRefName | startswith("automation/flake-update-")) | .url')
+      if [ -n "$pending" ]; then
+        echo "An update PR still needs attention; blocking this build: $pending" >&2
+        exit 1
+      fi
       if [ ! -d checkout/.git ]; then
         git clone --depth 1 --branch main https://github.com/Nailington/dots.git checkout
       fi
@@ -80,9 +97,31 @@
       exit "$failed"
     '';
   };
+
+  systemd.services.nix-cache-scheduled = {
+    description = "Update the flake when due, then prebuild the binary cache";
+    path = [ pkgs.coreutils pkgs.systemd ];
+    unitConfig.RequiresMountsFor = [ "/var/lib/nix-flake-update" ];
+    serviceConfig = {
+      Type = "oneshot";
+      TimeoutStartSec = "infinity";
+    };
+    script = ''
+      set -euo pipefail
+      # Sunday through Saturday, matching the updater's success marker.
+      week=$(date -d "today -$(date +%w) days" +%F)
+      week_file=/var/lib/nix-flake-update/last-successful-update-week
+      if [ ! -f "$week_file" ] || [ "$(cat "$week_file")" != "$week" ]; then
+        systemctl start nix-flake-update.service
+      fi
+      # A failed update exits above; unresolved PRs are checked by the build.
+      systemctl start nix-cache-build.service
+    '';
+  };
   systemd.timers.nix-cache-build = {
     wantedBy = [ "timers.target" ];
     timerConfig = {
+      Unit = "nix-cache-scheduled.service";
       OnCalendar = "*-*-* 04:00:00";
       RandomizedDelaySec = "30m";
       Persistent = true;
