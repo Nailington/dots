@@ -66,7 +66,8 @@
 
     # renatus777rr/OSX-KVM-updated — scripts + OpenCore + OVMF (devShell flake ignored via flake = false)
     osx-kvm = {
-      url = "github:renatus777rr/OSX-KVM-updated?submodules=1";
+      # GitHub archives do not support submodules; keep the existing locked source.
+      url = "github:renatus777rr/OSX-KVM-updated";
       flake = false;
     };
 

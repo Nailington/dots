@@ -1,3 +1,5 @@
+{ pkgs, ... }:
+
 {
   imports = [
     ../../modules/home/zsh.nix
@@ -11,5 +13,5 @@
   home.sessionVariables.EDITOR = "nano";
   programs.home-manager.enable = true;
 
-  home.packages = [ ];
+  home.packages = [ pkgs.lynx pkgs.w3m ];
 }

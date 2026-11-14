@@ -13,6 +13,8 @@
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
+    lynx
+    w3m
     nix-du
     ncdu
     unrar
