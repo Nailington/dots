@@ -13,6 +13,7 @@
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
+    claude-code
     lynx
     w3m
     nix-du

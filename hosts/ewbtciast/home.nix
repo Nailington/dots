@@ -13,5 +13,5 @@
   home.sessionVariables.EDITOR = "nano";
   programs.home-manager.enable = true;
 
-  home.packages = [ pkgs.lynx pkgs.w3m ];
+  home.packages = [ pkgs.claude-code pkgs.lynx pkgs.w3m ];
 }
