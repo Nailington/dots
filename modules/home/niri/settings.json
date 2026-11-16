@@ -464,7 +464,7 @@
       "trigger": "pw"
     }
   },
-  "configVersion": 43,
+  "configVersion": 44,
   "dashOptions": {
     "media": {
       "titleFont": "ui",
