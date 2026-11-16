@@ -2,7 +2,7 @@
 # Keep two public-key lists: who can log in, and who can decrypt secrets.
 # Login keys follow GitHub; age recipients keep old keys and add new ones.
 # New recipients trigger re-encryption of every secrets/**/*.age file.
-# Changed files are staged, committed and pushed automatically.
+# Changed files are staged, then committed and pushed after fresh sudo authentication.
 # Run from the flake root. nh calls this before switch/boot/test as appropriate.
 # Full flow and phone-key examples: docs/agents/secrets-and-ssh.md.
 set -euo pipefail
@@ -241,16 +241,36 @@ commit_and_push_secrets() {
     return 0
   fi
 
+  # Authenticate only for an actual commit, ignoring any cached sudo credentials.
+  # Use the system sudo (NixOS's setuid wrapper or macOS's system binary).
+  local sudo_bin=/run/wrappers/bin/sudo
+  if [[ ! -x "$sudo_bin" ]]; then
+    sudo_bin=/usr/bin/sudo
+  fi
+  if [[ "$EUID" -eq 0 || ! -x "$sudo_bin" ]]; then
+    echo "==> commit/push requires sudo authentication as your regular user; changes remain staged" >&2
+    return 1
+  fi
+  if ! (: </dev/tty) 2>/dev/null; then
+    echo "==> commit/push requires an interactive terminal for your password; changes remain staged" >&2
+    return 1
+  fi
+  git diff --cached --stat
+
   echo "==> commit age recipients"
   local msg=""
-  if [[ -r /dev/tty ]]; then
-    printf 'Commit message [Sync age recipients] (30s): ' >/dev/tty
-    if ! IFS= read -r -t 30 msg </dev/tty; then
-      printf '\n' >/dev/tty
-      msg=""
-    fi
+  printf 'Commit message [Sync age recipients] (30s): ' >/dev/tty
+  if ! IFS= read -r -t 30 msg </dev/tty; then
+    printf '\n' >/dev/tty
+    msg=""
   fi
   msg="${msg:-Sync age recipients}"
+
+  echo "==> authenticate to approve this commit and push"
+  if ! "$sudo_bin" -k -v -p '[sync-age-recipients] Password for %u to commit and push: '; then
+    echo "==> authentication failed; no commit or push made; changes remain staged" >&2
+    return 1
+  fi
   git commit -m "$msg"
 
   local origin ssh_origin

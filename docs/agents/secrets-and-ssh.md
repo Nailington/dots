@@ -53,7 +53,15 @@ From the flake root it:
 2. Fetches `https://github.com/<user>.keys` for each user in `lib/github-users.nix`.
 3. Updates the login snapshot to GitHub's current keys. Adds newly discovered keys to the age recipient list, keeping all previous recipients.
 4. When there are new recipients, re-encrypts every `secrets/**/*.age` with the installer's identity (`~/.ssh/id_ed25519`, else the host key). Login-only changes and unchanged recipients skip re-encryption. Adding a new `.age` file alone does not trigger re-encryption.
-5. Commits and pushes **only** when the Git index has changes. Default message: `Sync age recipients`. Push uses SSH (`git@github.com:...`) even when `origin` is HTTPS.
+5. Commits and pushes **only** when the Git index has changes, after fresh sudo authentication with your account password (`sudo -k -v`, ignoring cached credentials). Default message: `Sync age recipients`. Push uses SSH (`git@github.com:...`) even when `origin` is HTTPS.
+
+An unchanged sync needs no password, so it does not delay the build. When there
+are changes to commit, authentication requires an interactive terminal and a
+regular user with password-protected sudo access. Failed or cancelled
+authentication stops sync (and the invoking `nh` command) before committing or
+pushing, leaving changes staged. Sudo only validates authentication; Git still
+runs as your regular user. This guards the script's automatic commit/push path;
+it does not restrict direct `git push` or replace GitHub access controls.
 
 If this machine cannot decrypt (a new Mac whose key is not a recipient yet), it still commits new `.pub` snapshots and tells you to add `secrets/ssh/<host>/id_ed25519.pub` to GitHub, then run `nh os switch` on roundabout to re-encrypt. Do not invent a second path for that.
 
