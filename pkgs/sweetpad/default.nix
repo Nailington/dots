@@ -16,8 +16,8 @@ let
   src = fetchFromGitHub {
     owner = "Nailington";
     repo = "sweetpad";
-    rev = "4ca8adc734854c49acd9b61440522853659c4719";
-    hash = "sha256-WKY7eZpcBY66d8oQJBczb9Og4ZgRG3rVloXdabp95ho=";
+    rev = "faa56b037eaf574a5cfd4bf9f213da5033c9f82f";
+    hash = "sha256-DY2HwBw3nBeKl+B1FPcEB6yR4pJ43Qdf3Cw/aKyKlBI=";
   };
 
   vscodeExtension = buildNpmPackage {
@@ -25,7 +25,7 @@ let
     version = "0.2.18";
     inherit src;
 
-    npmDepsHash = "sha256-TwN7PEmPA5j2h+WnZ22mfZQGi5kco0wH/h79QR5xkac=";
+    npmDepsHash = "sha256-dnZeH5n/nIsCd5p4EkSjCU6AUSkg3emI79gYREwCSpQ=";
     npmDepsFetcherVersion = 2;
     # Select by package name; the directory selector includes the native workspace.
     npmWorkspace = "sweetpad";
@@ -59,10 +59,10 @@ let
 in
 rustPlatform.buildRustPackage {
   pname = "sweetpad";
-  version = "0-unstable-2026-10-16";
+  version = "0.2.18-nailington-unstable-2026-11-14";
   inherit src;
 
-  cargoHash = "sha256-LyhqV4L3KJQjwgQSj0KJje+aMZjzENqaL5Pjocoixx4=";
+  cargoHash = "sha256-qKv6+nKRhJYkb9hbomW37nw9FAedhaEkcL9zfKmd9Tw=";
   cargoBuildFlags = [ "-p" "sweetpad-cli" ];
   cargoTestFlags = [ "-p" "sweetpad-cli" ];
   # Nix supplies a log terminal without an interactive /dev/tty for prompts.
