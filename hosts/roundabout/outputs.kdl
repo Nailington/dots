@@ -4,4 +4,6 @@ output "eDP-1" {
 
 output "HDMI-A-1" {
     mode "3840x2160@119.880"
+    // VRR (G-Sync/HDMI 2.1, TV reports 40-120 Hz) — shelved; try on-demand=true + steam_app window rule later
+    // variable-refresh-rate
 }
