@@ -299,14 +299,21 @@ serve signed Darwin results copied into abacab's store.
 daily timer runs `nix-cache-scheduled`, which starts `nix-flake-update` when due
 and then `nix-cache-build` after a successful update. The updater refreshes inputs
 and local packages once per local Sunday-to-Saturday week in a separate checkout,
-publishes a branch/PR, evaluates all host outputs, and merges successful updates.
+evaluates all host outputs, builds the supported local x86_64 packages, and
+publishes a branch/PR. It merges only updates that pass validation.
 After a successful update, remaining daily runs skip updates and build `main`.
 Manual `nix-cache-update` runs updates regardless of the weekly marker, without
-starting a build; `nix-cache-build` builds `main` without running updates.
+starting client system builds; `nix-cache-build` builds `main` without running updates.
+Both commands accept `--skip-custard` for a local-package-only pass. The update PR
+close comment names each failed package and its target system, lists evaluated
+NixOS hosts that depend on that exact output, includes failing `.drv` paths when
+Nix reports them, and points to the full run log. A failed `x86_64-linux` package
+build does not imply failure of the same package on `aarch64-linux`.
 Failed scheduled updates can retry; they block that scheduled build, and unresolved
-automation PRs also block subsequent runs. Only evaluation failures request PR
-review, and only failed builds open an issue tagging both accounts. Ordinary
-update/merge problems and successful runs do not send review notifications.
+automation PRs also block subsequent runs. Failed evaluations and pre-merge
+package builds request PR review; failures in the separate cache build open an
+issue tagging both accounts. Ordinary update/merge problems and successful runs
+do not send review notifications.
 The build service then builds both Linux client system closures from the
 exact GitHub `main` revision, reusing upstream caches and retaining three successful
 builds per host. See [hosts.md](hosts.md) for commands and retention paths. Only

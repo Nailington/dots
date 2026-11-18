@@ -1,4 +1,4 @@
-{ config, pkgs, self, ... }:
+{ config, lib, pkgs, self, ... }:
 
 {
   environment.systemPackages = [
@@ -6,7 +6,13 @@
       name = "nix-cache-update";
       runtimeInputs = [ pkgs.systemd ];
       text = ''
-        exec /run/wrappers/bin/sudo systemctl start --no-block nix-flake-update.service
+        case "$#:$*" in
+          0:) unit=nix-flake-update.service ;;
+          1:--skip-custard) unit=nix-flake-update-skip-custard.service ;;
+          1:--help|1:-h) echo 'Usage: nix-cache-update [--skip-custard]'; exit 0 ;;
+          *) echo 'Usage: nix-cache-update [--skip-custard]' >&2; exit 2 ;;
+        esac
+        exec /run/wrappers/bin/sudo systemctl start --no-block "$unit"
       '';
     })
   ];
@@ -20,14 +26,16 @@
   # Update in an automation-owned checkout, never in Potter's working tree.
   # Credentials are decrypted outside the store and passed through systemd.
   age.secrets.github-automation.file = ../../secrets/github-automation.age;
-  systemd.services.nix-flake-update = {
+  systemd.services = lib.genAttrs [ "nix-flake-update" "nix-flake-update-skip-custard" ] (name:
+  let
+    skipCustard = name == "nix-flake-update-skip-custard";
+  in {
     description = "Update flake packages and merge evaluated updates through a PR";
     wants = [ "network-online.target" ];
     after = [ "network-online.target" ];
-    before = [ "nix-cache-build.service" ];
     unitConfig.RequiresMountsFor = [ "/var/lib/nix-flake-update" "/var/lib/nix-automation-tmp" ];
     path = [
-      pkgs.git pkgs.gh pkgs.nix pkgs.jq pkgs.coreutils
+      pkgs.git pkgs.gh pkgs.nix pkgs.jq pkgs.coreutils pkgs.gnused pkgs.util-linux
       self.packages.${pkgs.stdenv.hostPlatform.system}.update-local-packages
     ];
     environment = {
@@ -50,6 +58,12 @@
     };
     script = ''
       set -euo pipefail
+      exec 9>update.lock
+      flock 9
+      scope=()
+      if ${lib.boolToString skipCustard}; then
+        scope=(--skip-custard)
+      fi
       GH_TOKEN=$(cat "$CREDENTIALS_DIRECTORY/github-token")
       export GH_TOKEN
       export GITHUB_TOKEN="$GH_TOKEN"
@@ -66,6 +80,9 @@
       week=$(date -d "today -$(date +%w) days" +%F)
       week_file="$PWD/last-successful-update-week"
       mark_updated() {
+        if ${lib.boolToString skipCustard}; then
+          return 0
+        fi
         printf '%s\n' "$week" > "$week_file.tmp"
         mv -f -- "$week_file.tmp" "$week_file"
       }
@@ -78,6 +95,45 @@
       failure_reason=""
       record_failure() {
         failure_reason="$failure_reason- $1"$'\n'
+      }
+      record_affected_hosts() {
+        local installable="$1" package_drv host closure
+        local -a affected_hosts=() unchecked_hosts=()
+        if ! package_drv=$(nix eval --no-update-lock-file --raw "$installable.drvPath" </dev/null) || [ -z "$package_drv" ]; then
+          record_failure 'Affected NixOS hosts for this output: unknown (could not resolve the package derivation).'
+          return 0
+        fi
+        for host in "''${!nixos_drvs[@]}"; do
+          closure="$run/nixos-$host.requisites"
+          if [ ! -e "$closure" ]; then
+            if ! nix-store --query --requisites "''${nixos_drvs[$host]}" > "$closure"; then
+              : > "$closure"
+            fi
+          fi
+          if [ ! -s "$closure" ]; then
+            unchecked_hosts+=("$host")
+          elif grep -Fxq -- "$package_drv" "$closure"; then
+            affected_hosts+=("$host")
+          fi
+        done
+        record_failure "Affected NixOS hosts for this output: ''${affected_hosts[*]:-none found among checked hosts}."
+        if ((''${#unchecked_hosts[@]})); then
+          record_failure "Could not check host dependencies for this output: ''${unchecked_hosts[*]}."
+        fi
+      }
+      record_build_failure() {
+        local target="$1" target_system="$2" installable="$3" log="$4" failed_drv
+        local drv="/nix/store/[a-z0-9]{32}-[a-zA-Z0-9+._?=-]+\.drv"
+        record_failure "Package build failed: \`$target\` (target system: \`$target_system\`)."
+        record_affected_hosts "$installable"
+        while IFS= read -r failed_drv; do
+          record_failure "Failing derivation for \`$target\` on \`$target_system\`: \`$failed_drv\`."
+        done < <(
+          sed -nE \
+            -e "s@^[[:space:]]*error: (builder for|hash mismatch in fixed-output derivation) '($drv)'.*@\2@p" \
+            -e "\@^[[:space:]]*error: Cannot build '($drv)'\.\$@ {N; s@^[[:space:]]*error: Cannot build '($drv)'\.\n[[:space:]]*Reason: builder .*@\1@p;}" \
+            "$log" | sort -u | sed -n '1,5p'
+        )
       }
       close_failed_pr() {
         status=$?
@@ -117,9 +173,20 @@
 
       phase="updating inputs and local packages"
       updates_ok=true
-      nix flake update || { updates_ok=false; record_failure "nix flake update failed."; }
-      update-local-packages --flake "$PWD" --all \
-        || { updates_ok=false; record_failure "update-local-packages --all failed."; }
+      if ! ${lib.boolToString skipCustard}; then
+        nix flake update || { updates_ok=false; record_failure "nix flake update failed."; }
+      fi
+      if ! UPDATE_LOCAL_PACKAGES_FAILURE_FILE="$run/failed-updates" \
+        update-local-packages --flake "$PWD" --all "''${scope[@]}"; then
+        updates_ok=false
+        if [ -s "$run/failed-updates" ]; then
+          while IFS= read -r package; do
+            record_failure "Package update failed: $package."
+          done < "$run/failed-updates"
+        else
+          record_failure "update-local-packages failed before reporting individual packages."
+        fi
+      fi
       git add --update -- flake.nix flake.lock pkgs
       if git diff --cached --quiet; then
         if ! "$updates_ok"; then
@@ -130,33 +197,71 @@
         mark_updated
         exit 0
       fi
-      git commit -m "Update flake inputs and local packages ($stamp)"
+      title="Update flake inputs and local packages ($stamp)"
+      if ${lib.boolToString skipCustard}; then
+        title="Update local packages not used by custard ($stamp)"
+      fi
+      git commit -m "$title"
       head=$(git rev-parse HEAD)
 
-      # Check all exported package systems and explicitly force every host.
-      # Darwin is evaluated here, never built or activated on Linux.
+      # Full runs evaluate Darwin but never build or activate it on Linux.
       phase="evaluating the updated configuration"
       eval_ok=true
-      nix flake check --no-build --all-systems --no-update-lock-file \
-        || { eval_ok=false; record_failure "All-system flake evaluation failed."; }
-      for kind in nixosConfigurations darwinConfigurations homeConfigurations; do
+      declare -A nixos_drvs=()
+      kinds=(nixosConfigurations darwinConfigurations homeConfigurations)
+      eval_scope="All-system flake and explicit host evaluations"
+      if ${lib.boolToString skipCustard}; then
+        kinds=(nixosConfigurations)
+        eval_scope="Roundabout and abacab evaluations"
+      else
+        nix flake check --no-build --all-systems --no-update-lock-file \
+          || { eval_ok=false; record_failure "All-system flake evaluation failed."; }
+      fi
+      for kind in "''${kinds[@]}"; do
         if nix eval --no-update-lock-file --json ".#$kind" \
           --apply builtins.attrNames > "$run/$kind.json"; then
           while IFS= read -r host; do
+            if ${lib.boolToString skipCustard} && [[ "$host" != roundabout && "$host" != abacab ]]; then
+              continue
+            fi
             case "$kind" in
               nixosConfigurations) target="config.system.build.toplevel.drvPath" ;;
               darwinConfigurations) target="system.drvPath" ;;
               homeConfigurations) target="activationPackage.drvPath" ;;
             esac
-            nix eval --no-update-lock-file --raw ".#$kind.\"$host\".$target" \
-              || { eval_ok=false; record_failure "Evaluation failed for $kind.$host.$target."; }
-            printf '\n'
+            if host_drv=$(nix eval --no-update-lock-file --raw ".#$kind.\"$host\".$target"); then
+              printf '%s\n' "$host_drv"
+              if [ "$kind" = nixosConfigurations ]; then
+                nixos_drvs["$host"]="$host_drv"
+              fi
+            else
+              eval_ok=false
+              record_failure "Evaluation failed for $kind.$host.$target."
+            fi
           done < <(jq -r '.[]' "$run/$kind.json")
         else
           eval_ok=false
           record_failure "Could not list hosts in $kind."
         fi
       done
+
+      phase="building the local packages"
+      target_system=x86_64-linux
+      builds_ok=skipped
+      if "$updates_ok" && "$eval_ok"; then
+        builds_ok=true
+        targets=$(update-local-packages --list-build-targets "''${scope[@]}")
+        while IFS= read -r target; do
+          installable=".#packages.$target_system.$target"
+          echo "Building $target for $target_system before merge."
+          build_log="$run/build-$target.log"
+          if ! NO_COLOR=1 nix build --no-link --no-update-lock-file --max-jobs 2 --cores 3 --print-build-logs \
+            "$installable" </dev/null 2>&1 | tee "$build_log"; then
+            builds_ok=false
+            record_build_failure "$target" "$target_system" "$installable" "$build_log"
+          fi
+        done <<< "$targets"
+      fi
       # The exact committed tree must be the tree checked above.
       if ! git diff --quiet || ! git diff --cached --quiet; then
         eval_ok=false
@@ -166,20 +271,21 @@
       base_ok=true
       if [ "$(git rev-parse origin/main)" != "$base" ]; then
         base_ok=false
-        record_failure "Main advanced during evaluation; the update needs a fresh base."
+        record_failure "Main advanced during validation; the update needs a fresh base."
       fi
       {
-        printf 'Updates flake inputs and the supported local package pins/hashes.\n\n'
+        printf '%s\n\n' "$title"
         printf -- '- Package/input updates completed: %s\n' "$updates_ok"
-        printf -- '- All-system flake and explicit host evaluations passed: %s\n' "$eval_ok"
-        printf -- '- Main unchanged during evaluation: %s\n' "$base_ok"
-        printf '\nEvaluated commit: %s. No system activation is performed.\n' "$head"
+        printf -- '- %s passed: %s\n' "$eval_scope" "$eval_ok"
+        printf -- '- Local %s package builds passed: %s\n' "$target_system" "$builds_ok"
+        printf -- '- Main unchanged during validation: %s\n' "$base_ok"
+        printf '\nValidated commit: %s. No system activation is performed.\n' "$head"
         printf '\nDetailed logs on abacab: %s/run.log.\n' "$run"
       } > "$run/pr-body.md"
       phase="publishing the update PR"
       git push origin "HEAD:refs/heads/$branch"
       pr=$(gh pr create --repo "$repo" --base main --head "$branch" \
-        --title "Update flake inputs and local packages ($stamp)" \
+        --title "$title" \
         --body-file "$run/pr-body.md")
       printf '%s\n' "$pr" | tee "$run/pr-url"
 
@@ -193,10 +299,10 @@
           fi
         done
       }
-      if ! "$eval_ok"; then
-        phase="rejecting an update that failed evaluation"
+      if ! "$eval_ok" || [ "$builds_ok" = false ]; then
+        phase="rejecting an update that failed evaluation or package builds"
         request_review
-        echo "Evaluation failed; review requested, closing PR and blocking this cache build: $pr" >&2
+        echo "Validation failed; review requested, closing PR and blocking this cache build: $pr" >&2
         exit 1
       fi
       if ! "$updates_ok" || ! "$base_ok"; then
@@ -219,5 +325,5 @@
       phase="recording the successful update week"
       mark_updated
     '';
-  };
+  });
 }

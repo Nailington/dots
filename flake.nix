@@ -226,6 +226,7 @@
                 '(-h --help --list *)'{-h,--help}'[Show help]'
                 '(-h --help --list *)--list[Show supported packages and update policies]'
                 '--build[Build each updated package]'
+                '--skip-custard[Only update local packages not used by custard]'
                 '--flake[Local flake checkout]:directory:_directories'
               )
               if ! $have_package; then

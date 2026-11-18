@@ -3,8 +3,9 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: update-local-packages [--flake DIR] [--build] [PACKAGE ... | --all]
+Usage: update-local-packages [--flake DIR] [--build] [--skip-custard] [PACKAGE ... | --all]
        update-local-packages --list
+       update-local-packages [--skip-custard] --list-build-targets
 
 Update local GitHub package pins and source/dependency hashes using nix-update.
 Kolf instead updates its flake input lock on the multi-proto branch.
@@ -14,7 +15,9 @@ with nh afterwards. It does not commit, push, or switch the system.
 Progress, commands, download logs, elapsed times, and file changes are printed.
 
 --build       Also build each updated package (SweetPad includes the extension).
+--skip-custard Limit updates to local packages not used by custard.
 --list        Show supported packages and their update policies.
+--list-build-targets  Print selected x86_64-linux flake outputs, one per line.
 --all         Update all supported packages.
 --flake DIR   Local flake checkout to edit.
 --help        Show this help.
@@ -40,9 +43,12 @@ EOF
 # Keep google-sans-flex disabled until Potter explicitly asks to re-enable it.
 # Upstream's unrelated tags can select versions with nonexistent font archives.
 all_packages=(althea singularcard sweetpad t3code auto-rob google-sans twitch-drops-miner kolf)
+non_custard_packages=(althea sweetpad auto-rob)
 packages=()
 build=false
 all=false
+skip_custard=false
+list_build_targets=false
 flake_dir="${NH_FLAKE:-}"
 
 while (($#)); do
@@ -50,6 +56,8 @@ while (($#)); do
     --help|-h) usage; exit 0 ;;
     --list) list_packages; exit 0 ;;
     --build) build=true; shift ;;
+    --skip-custard) skip_custard=true; shift ;;
+    --list-build-targets) list_build_targets=true; shift ;;
     --all) all=true; shift ;;
     --flake)
       if (($# < 2)); then
@@ -69,7 +77,11 @@ if "$all" && ((${#packages[@]})); then
   exit 2
 fi
 if ((${#packages[@]} == 0)); then
-  packages=("${all_packages[@]}")
+  if "$skip_custard"; then
+    packages=("${non_custard_packages[@]}")
+  else
+    packages=("${all_packages[@]}")
+  fi
 fi
 # Validate the entire selection before making any changes.
 enabled_packages=()
@@ -82,9 +94,22 @@ for package in "${packages[@]}"; do
     althea|singularcard|sweetpad|t3code|auto-rob|google-sans|twitch-drops-miner|kolf) ;;
     *) echo "Unsupported package: $package (see --list)" >&2; exit 2 ;;
   esac
+  if "$skip_custard" && [[ " ${non_custard_packages[*]} " != *" $package "* ]]; then
+    echo "Cannot select $package with --skip-custard: custard uses it." >&2
+    exit 2
+  fi
   enabled_packages+=("$package")
 done
 packages=("${enabled_packages[@]}")
+if "$list_build_targets"; then
+  for package in "${packages[@]}"; do
+    printf '%s\n' "$package"
+    if [[ "$package" == sweetpad ]]; then
+      printf '%s\n' sweetpad-vscode
+    fi
+  done
+  exit 0
+fi
 if ((${#packages[@]} == 0)); then
   exit 0
 fi
@@ -240,5 +265,8 @@ printf '\nFinished %d package(s) in %ds; %d failed.\n' "${#packages[@]}" "$((SEC
 echo "Review changes with: git diff"
 if ((${#failed[@]})); then
   printf 'Failed packages: %s\n' "${failed[*]}" >&2
+  if [[ -n "${UPDATE_LOCAL_PACKAGES_FAILURE_FILE:-}" ]]; then
+    printf '%s\n' "${failed[@]}" > "$UPDATE_LOCAL_PACKAGES_FAILURE_FILE"
+  fi
   exit 1
 fi

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, lib, pkgs, self, ... }:
 
 {
   environment.systemPackages = [
@@ -6,7 +6,13 @@
       name = "nix-cache-build";
       runtimeInputs = [ pkgs.systemd ];
       text = ''
-        exec /run/wrappers/bin/sudo systemctl start --no-block nix-cache-build.service
+        case "$#:$*" in
+          0:) unit=nix-cache-build.service ;;
+          1:--skip-custard) unit=nix-cache-build-skip-custard.service ;;
+          1:--help|1:-h) echo 'Usage: nix-cache-build [--skip-custard]'; exit 0 ;;
+          *) echo 'Usage: nix-cache-build [--skip-custard]' >&2; exit 2 ;;
+        esac
+        exec /run/wrappers/bin/sudo systemctl start --no-block "$unit"
       '';
     })
   ];
@@ -20,11 +26,17 @@
   };
   # Build main independently; the scheduled flow runs updates first when due.
   # Each output link is a GC root; retain three successful revisions per client.
-  systemd.services.nix-cache-build = {
+  systemd.services = (lib.genAttrs [ "nix-cache-build" "nix-cache-build-skip-custard" ] (name:
+  let
+    skipCustard = name == "nix-cache-build-skip-custard";
+  in {
     description = "Prebuild flake clients for abacab's binary cache";
     wants = [ "network-online.target" ];
-    after = [ "network-online.target" "nix-flake-update.service" ];
-    path = [ pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils ];
+    after = [ "network-online.target" "nix-flake-update.service" "nix-flake-update-skip-custard.service" ];
+    path = [
+      pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils pkgs.util-linux
+      self.packages.${pkgs.stdenv.hostPlatform.system}.update-local-packages
+    ];
     environment.HOME = "/var/lib/nix-cache-build";
     environment.TMPDIR = "/var/lib/nix-automation-tmp";
     unitConfig.RequiresMountsFor = [ "/var/lib/nix-cache-build" "/var/lib/nix-automation-tmp" ];
@@ -41,6 +53,13 @@
     };
     script = ''
       set -euo pipefail
+      exec 9>build.lock
+      flock 9
+      targets=(roundabout custard)
+      if ${lib.boolToString skipCustard}; then
+        packages=$(update-local-packages --skip-custard --list-build-targets)
+        mapfile -t targets <<< "$packages"
+      fi
       token=$(cat "$CREDENTIALS_DIRECTORY/github-token")
       pending=$(GH_TOKEN="$token" gh pr list --repo Nailington/dots --base main --state open \
         --json headRefName,url \
@@ -57,8 +76,8 @@
       revision=$(git -C checkout rev-parse HEAD)
       stamp=$(date -u +%Y%m%dT%H%M%S%N)
       report_build_failure() {
-        local host="$1" title issue token body
-        title="Cache build failed: $host at $revision"
+        local target="$1" title issue token body
+        title="Cache build failed: $target at $revision"
         token=$(cat "$CREDENTIALS_DIRECTORY/github-token") || return 1
         issue=$(GH_TOKEN="$token" gh issue list --repo Nailington/dots --state open \
           --search "\"$title\" in:title" --json number --jq '.[0].number // empty') || return 1
@@ -66,39 +85,45 @@
           echo "Build failure already reported in issue #$issue; not tagging again."
           return 0
         fi
-        body="$PWD/build-failure-$host-$revision.md"
+        body="$PWD/build-failure-$target-$revision.md"
         {
           printf '@HammerPot @Nailington — please review this failed cache build.\n\n'
-          printf 'Host: %s\nCommit: https://github.com/Nailington/dots/commit/%s\n' "$host" "$revision"
+          printf 'Build target: %s\nCommit: https://github.com/Nailington/dots/commit/%s\n' "$target" "$revision"
           printf '\nThe system was not activated. Previous successful cache roots are preserved.\n'
-          printf '\nLogs on abacab: sudo journalctl -u nix-cache-build.service\n'
+          printf '\nLogs on abacab: sudo journalctl -u ${name}.service\n'
         } > "$body"
         GH_TOKEN="$token" gh issue create --repo Nailington/dots --title "$title" \
           --body-file "$body" --assignee HammerPot --assignee Nailington
       }
       failed=0
-      for host in roundabout custard; do
-        mkdir -p "roots/$host"
-        output="$PWD/roots/$host/$stamp-$revision"
+      for target in "''${targets[@]}"; do
+        roots="roots/$target"
+        installable="./checkout#nixosConfigurations.$target.config.system.build.toplevel"
+        if ${lib.boolToString skipCustard}; then
+          roots="roots/packages/$target"
+          installable="./checkout#packages.x86_64-linux.$target"
+        fi
+        mkdir -p "$roots"
+        output="$PWD/$roots/$stamp-$revision"
         if nix build --no-update-lock-file --max-jobs 2 --cores 3 \
           --out-link "$output" \
-          "./checkout#nixosConfigurations.$host.config.system.build.toplevel"; then
+          "$installable"; then
           # Only prune this host after a successful build; failures keep old roots.
-          find "roots/$host" -maxdepth 1 -type l -printf '%f\n' \
+          find "$roots" -maxdepth 1 -type l -printf '%f\n' \
             | sort -r | tail -n +4 \
-            | while IFS= read -r old; do rm -- "roots/$host/$old"; done
+            | while IFS= read -r old; do rm -- "$roots/$old"; done
         else
           failed=1
           # Merged PRs cannot request another review; report a build failure as
           # an issue, once per host/revision. Successful builds never tag anyone.
-          report_build_failure "$host" || echo "Could not report $host build failure to GitHub." >&2
+          report_build_failure "$target" || echo "Could not report $target build failure to GitHub." >&2
         fi
       done
       exit "$failed"
     '';
-  };
+  })) // {
 
-  systemd.services.nix-cache-scheduled = {
+  nix-cache-scheduled = {
     description = "Update the flake when due, then prebuild the binary cache";
     path = [ pkgs.coreutils pkgs.systemd ];
     unitConfig.RequiresMountsFor = [ "/var/lib/nix-flake-update" ];
@@ -117,6 +142,7 @@
       # A failed update exits above; unresolved PRs are checked by the build.
       systemctl start nix-cache-build.service
     '';
+  };
   };
   systemd.timers.nix-cache-build = {
     wantedBy = [ "timers.target" ];
