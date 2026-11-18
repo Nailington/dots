@@ -15,6 +15,22 @@
         exec /run/wrappers/bin/sudo systemctl start --no-block "$unit"
       '';
     })
+    (pkgs.writeShellApplication {
+      name = "nix-cache-logs";
+      runtimeInputs = [ pkgs.systemd ];
+      text = ''
+        if [ "$#" -eq 0 ]; then
+          set -- --follow
+        fi
+        exec journalctl \
+          --unit=nix-flake-update.service \
+          --unit=nix-flake-update-skip-custard.service \
+          --unit=nix-cache-build.service \
+          --unit=nix-cache-build-skip-custard.service \
+          --unit=nix-cache-scheduled.service \
+          "$@"
+      '';
+    })
   ];
 
   # Keep existing log/GC-root paths while placing run state on the data disk.
