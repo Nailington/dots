@@ -1,4 +1,4 @@
-{ lib, pkgs, self, ... }:
+{ config, lib, pkgs, self, ... }:
 
 {
   imports = [
@@ -85,6 +85,68 @@
 
   networking.hostName = "roundabout";
   networking.firewall.allowedTCPPorts = [ 45454 ];
+
+  # Check before filter/INPUT: Tailscale accepts peers before nixos-fw runs.
+  networking.firewall.extraCommands = ''
+    ip46tables -t mangle -N cliproxy-home 2>/dev/null || true
+    ip46tables -t mangle -F cliproxy-home
+    iptables -t mangle -A cliproxy-home -i ${config.services.tailscale.interfaceName} \
+      -s 100.87.123.57 -d 100.67.7.114 -j RETURN
+    ip46tables -t mangle -A cliproxy-home -j DROP
+    ip46tables -t mangle -I INPUT 1 -p tcp --dport 8320 -j cliproxy-home
+  '';
+  networking.firewall.extraStopCommands = ''
+    ip46tables -t mangle -D INPUT -p tcp --dport 8320 -j cliproxy-home 2>/dev/null || true
+    ip46tables -t mangle -F cliproxy-home 2>/dev/null || true
+    ip46tables -t mangle -X cliproxy-home 2>/dev/null || true
+  '';
+
+  users.groups.cliproxy-home = { };
+  users.users.cliproxy-home = {
+    isSystemUser = true;
+    group = "cliproxy-home";
+  };
+  age.secrets.roundabout-home-proxy = {
+    file = ../../secrets/roundabout-home-proxy.age;
+    owner = "cliproxy-home";
+    group = "cliproxy-home";
+    mode = "0400";
+  };
+  systemd.services.cliproxy-home = {
+    description = "Provider CONNECT proxy for Crack's account-policy relay";
+    wantedBy = [ "multi-user.target" ]; # Start at boot; manual stop lasts until reboot.
+    wants = [ "network-online.target" "tailscaled.service" ];
+    after = [ "network-online.target" "tailscaled.service" "tailscaled-autoconnect.service" "firewall.service" ];
+    requires = [ "firewall.service" ];
+    path = [ pkgs.tailscale ];
+    preStart = ''
+      tailscale wait --timeout=0
+      tailscale ip --assert=100.67.7.114
+    '';
+    serviceConfig = {
+      Type = "simple";
+      User = "cliproxy-home";
+      Group = "cliproxy-home";
+      ExecStart = "${lib.getExe pkgs.nodejs} ${./home_proxy.mjs} --listen 100.67.7.114 --port 8320 --token-file ${config.age.secrets.roundabout-home-proxy.path} --allow-client 100.87.123.57";
+      Restart = "on-failure";
+      RestartSec = "5s";
+      TimeoutStartSec = "infinity";
+      TimeoutStopSec = "10s";
+      UMask = "0077";
+      NoNewPrivileges = true;
+      CapabilityBoundingSet = "";
+      PrivateTmp = true;
+      PrivateDevices = true;
+      ProtectSystem = "strict";
+      ProtectHome = true;
+      ProtectKernelTunables = true;
+      ProtectKernelModules = true;
+      ProtectControlGroups = true;
+      RestrictSUIDSGID = true;
+      RestrictRealtime = true;
+      RestrictAddressFamilies = [ "AF_INET" "AF_INET6" "AF_UNIX" "AF_NETLINK" ];
+    };
+  };
 
   services.openssh.enable = true;
   services.usbmuxd.enable = true;
@@ -184,6 +246,19 @@
     lm_sensors
     nbfc-linux
     self.packages.${pkgs.system}.nixos-remote-install
+    (pkgs.writeShellApplication {
+      name = "home-proxy";
+      runtimeInputs = [ pkgs.systemd pkgs.sudo ];
+      text = ''
+        case "''${1:-status}" in
+          on|start) sudo systemctl start cliproxy-home.service ;;
+          off|stop) sudo systemctl stop cliproxy-home.service ;;
+          restart) sudo systemctl restart cliproxy-home.service ;;
+          status) systemctl status cliproxy-home.service ;;
+          *) echo 'Usage: home-proxy {on|off|restart|status}' >&2; exit 2 ;;
+        esac
+      '';
+    })
   ];
 
   swapDevices = [

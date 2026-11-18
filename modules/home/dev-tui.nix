@@ -17,6 +17,7 @@
 
   home.packages = with pkgs; [
     cursor-cli
+    antigravity-acp
     t3code
     gh
     nodejs

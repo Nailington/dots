@@ -32,4 +32,5 @@ builtins.foldl' (acc: host: acc // mkHostSecrets host) {
   "secrets/github.age".publicKeys = recipients;
   "secrets/github-automation.age".publicKeys = recipients;
   "secrets/abacab-cache.age".publicKeys = recipients;
+  "secrets/roundabout-home-proxy.age".publicKeys = recipients;
 } hosts
