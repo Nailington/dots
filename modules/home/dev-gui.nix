@@ -18,7 +18,7 @@
     mutableExtensionsDir = true;
     profiles.default = {
       extensions = [
-        pkgs.sweetpad.vscodeExtension
+        pkgs.sweetpad-vscode
         pkgs.vscode-extensions.vadimcn.vscode-lldb
       ];
       # Merge this path into the existing settings; keep GUI edits writable.

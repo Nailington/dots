@@ -274,8 +274,7 @@
             text = builtins.readFile ./scripts/nixos-sd-image.sh;
           };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          inherit (pkgs) althea singularcard auto-rob kde-craft sweetpad sim-relay;
-          sweetpad-vscode = pkgs.sweetpad.vscodeExtension;
+          inherit (pkgs) althea singularcard auto-rob kde-craft sweetpad sweetpad-vscode sim-relay;
         });
 
       overlays.default = final: prev:
@@ -345,6 +344,7 @@
         auto-rob = final.callPackage ./pkgs/auto-rob { };
         kde-craft = final.callPackage ./pkgs/kde-craft { };
         sweetpad = final.callPackage ./pkgs/sweetpad { };
+        sweetpad-vscode = final.callPackage ./pkgs/sweetpad-vscode { };
         # Its flake creates a separate package set, so pass our binary runtime.
         sim-relay = inputs.sim-relay.packages.${system}.default.override {
           electron = final.electron;

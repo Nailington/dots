@@ -17,7 +17,7 @@ Each is `callPackage`'d in the overlay.
 | `twitch-drops-miner` | x86_64 + aarch64 AppImage wrapper, exposed under both Linux `packages` outputs; copies itself to a writable dir because the app writes next to its binary |
 | `auto-rob` | Cattn/auto-rob releases: standalone headless CLI + Electron GUI in an FHS env. Installed on both NixOS hosts by `modules/home/common.nix`. Abacab's cron uses the packaged CLI with the desktop app's default workspace |
 | `kde-craft` | FHS sandbox. See [kde-craft.md](kde-craft.md) |
-| `sweetpad` | Nailington's remote Mac fork; matching Cursor extension at `sweetpad.vscodeExtension` |
+| `sweetpad`, `sweetpad-vscode` | Nailington's remote Mac fork: Linux CLI archive and editor VSIX from separate GitHub releases |
 
 `nix-index` in the overlay is `inputs.nix-index.packages.x86_64-linux.default`, not nixpkgs' copy.
 
@@ -40,7 +40,7 @@ update-local-packages --list
 update-local-packages sweetpad althea    # selected packages
 update-local-packages twitch-drops-miner # rehash both mutable dev-build ZIPs
 update-local-packages --all             # all supported packages
-update-local-packages --build sweetpad  # also build CLI and extension
+update-local-packages --build sweetpad sweetpad-vscode # update and build both release packages
 git diff
 nh os switch -- --flake .#roundabout
 ```
@@ -53,8 +53,9 @@ policies), and directories after `--flake`. Open a new terminal after switching.
 Package suggestions come from `--list`, exclude packages already selected, and
 are suppressed after `--all`. Completion only lists choices; it runs no updates.
 
-Althea and SingularCard follow their default branches; SweetPad stays on
-`codex/windows-remote-testing` and refreshes both Cargo and extension npm hashes.
+Althea and SingularCard follow their default branches. The two SweetPad
+packages track the fork's stable `cli-v…-nailington` and `v…-nailington` release
+tags respectively, including numbered respins.
 T3 Code stays on published nightlies and refreshes its source and pnpm hashes.
 Auto-rob follows stable releases from `Cattn/auto-rob`; Google Sans also follows
 stable GitHub releases. **Keep Google Sans Flex updates disabled until Potter
@@ -97,11 +98,11 @@ a source path that is not on disk yet, nix-update runs `nix flake archive`
 with `--no-update-lock-file` before evaluating it. This materializes the flake
 and its inputs while preserving Git's tracked-file filtering and the lockfile.
 
-Source-based packages download GitHub repository archives. SweetPad additionally
-fetches Rust crates and npm packages from its lockfiles; T3 fetches pnpm packages.
-Auto-rob downloads the published application ZIP, and the Google Sans packages
-download font ZIPs. These go into the Nix store. Nix may also fetch or build
-tools required by the fetchers; application builds require `--build`.
+Source-based packages download GitHub repository archives; T3 also fetches
+pnpm packages. SweetPad downloads the published CLI tarball and VSIX, Auto-rob
+downloads the published application ZIP, and the Google Sans packages download
+font ZIPs. These go into the Nix store. Nix may also fetch or build tools required
+by the fetchers; application builds require `--build`.
 
 Release-only binaries cannot track source commits: Auto-rob needs a newly
 published ZIP. The updater currently excludes Posy's multi-archive cursor
@@ -137,38 +138,34 @@ Use `update-local-packages auto-rob` to refresh the released ZIP and hash, or
 
 ## SweetPad on NixOS
 
-`pkgs/sweetpad/default.nix` pins the CLI and editor extension to the same revision of
-Nailington/sweetpad's `codex/windows-remote-testing` branch. The fork's `main`,
-Homebrew formula, and Marketplace extension do not supply this remote workflow.
+`pkgs/sweetpad/default.nix` and `pkgs/sweetpad-vscode/default.nix` pin separate
+GitHub release assets from Nailington/sweetpad. Nix installs the published
+x86_64 Linux CLI and unpacks the published VSIX without compiling either app.
 `modules/home/dev-gui.nix` installs the CLI and uses Home Manager's `programs.cursor`
-to link the extension and its CodeLLDB dependency. Its registry-regeneration
-marker is explicitly disabled: Home Manager's default hook deletes Cursor's
+to link the fork extension and CodeLLDB. The linked fork keeps the previous
+`sweetpad.sweetpad` identity so Cursor can reuse saved workspace state. The
+registry-regeneration marker stays disabled: Home Manager's default hook deletes Cursor's
 `extensions.json`, and Cursor then loses the existing installed-extension list.
 Keep that hook disabled. Cursor's extensions remain mutable; existing settings
 are merged with an absolute `sweetpad.remote.cliPath` and stay writable.
-No Rust toolchain or manual Cargo install is needed on the laptop.
-
-Apply the configuration, then install the fork VSIX through Cursor's normal
-installer on the first setup or when upgrading the fork. This preserves the
-existing extension registry and replaces a Marketplace SweetPad copy:
+No config migration or manual extension install is needed on the managed laptop.
 
 ```sh
 nh os switch -- --flake .#roundabout
-nix build .#sweetpad-vscode -o /tmp/sweetpad-vscode
-cursor --install-extension /tmp/sweetpad-vscode/share/vsix/sweetpad.vsix --force
 ```
 
 Reload Cursor after switching. Disable auto-update for **SweetPad** in its
 extension menu so a Marketplace update cannot replace the remote fork. Keep the
 Mac unselected until its setup is ready. This setup does not target `ewbtciast`.
 
-The CLI and extension are also exposed as `packages.x86_64-linux.sweetpad` and
-`sweetpad-vscode`. The latter includes `share/vsix/sweetpad.vsix` for a manual
-install in another editor.
+The x86_64 Linux flake outputs are `sweetpad` and `sweetpad-vscode`. The latter
+also includes the original `share/vsix/sweetpad.vsix` for manual installs in
+other editors. The original VSIX uses `nailington.sweetpad-nailington`; don't
+install it alongside the Home Manager copy in Cursor.
 
-When the other Mac is ready, install the same fork revision there, enable Remote
-Login, configure Xcode/signing, and check that a noninteractive SSH session can
-find its CLI. Then, from the laptop:
+When the other Mac is ready, install the matching fork CLI release there,
+enable Remote Login, configure Xcode/signing, and check that a noninteractive
+SSH session can find its CLI. Then, from the laptop:
 
 ```sh
 sweetpad remote add "iMac" <ssh-alias-or-user@host>

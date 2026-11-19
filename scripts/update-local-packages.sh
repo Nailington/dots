@@ -14,7 +14,7 @@ With no package names, update all supported packages. Run in the flake checkout
 with nh afterwards. It does not commit, push, or switch the system.
 Progress, commands, download logs, elapsed times, and file changes are printed.
 
---build       Also build each updated package (SweetPad includes the extension).
+--build       Also build each updated package.
 --skip-custard Limit updates to local packages not used by custard.
 --list        Show supported packages and their update policies.
 --list-build-targets  Print selected x86_64-linux flake outputs, one per line.
@@ -31,7 +31,8 @@ list_packages() {
   cat <<'EOF'
 althea             latest commit on the default branch
 singularcard       latest commit on the default branch
-sweetpad           latest commit on codex/windows-remote-testing; CLI + extension
+sweetpad           latest stable Nailington SweetPad CLI release; Linux x64 archive
+sweetpad-vscode    latest stable Nailington SweetPad extension release; VSIX
 t3code             latest published nightly; source + pnpm dependencies
 auto-rob           latest stable release from Cattn/auto-rob; desktop + headless CLI
 google-sans        latest stable release
@@ -42,8 +43,8 @@ EOF
 
 # Keep google-sans-flex disabled until Potter explicitly asks to re-enable it.
 # Upstream's unrelated tags can select versions with nonexistent font archives.
-all_packages=(althea singularcard sweetpad t3code auto-rob google-sans twitch-drops-miner kolf)
-non_custard_packages=(althea sweetpad auto-rob)
+all_packages=(althea singularcard sweetpad sweetpad-vscode t3code auto-rob google-sans twitch-drops-miner kolf)
+non_custard_packages=(althea sweetpad sweetpad-vscode auto-rob)
 packages=()
 build=false
 all=false
@@ -91,7 +92,7 @@ for package in "${packages[@]}"; do
       echo 'Skipping google-sans-flex: intentionally pinned; keep skipped until Potter asks to re-enable it.'
       continue
       ;;
-    althea|singularcard|sweetpad|t3code|auto-rob|google-sans|twitch-drops-miner|kolf) ;;
+    althea|singularcard|sweetpad|sweetpad-vscode|t3code|auto-rob|google-sans|twitch-drops-miner|kolf) ;;
     *) echo "Unsupported package: $package (see --list)" >&2; exit 2 ;;
   esac
   if "$skip_custard" && [[ " ${non_custard_packages[*]} " != *" $package "* ]]; then
@@ -102,12 +103,9 @@ for package in "${packages[@]}"; do
 done
 packages=("${enabled_packages[@]}")
 if "$list_build_targets"; then
-  for package in "${packages[@]}"; do
-    printf '%s\n' "$package"
-    if [[ "$package" == sweetpad ]]; then
-      printf '%s\n' sweetpad-vscode
-    fi
-  done
+  if ((${#packages[@]})); then
+    printf '%s\n' "${packages[@]}"
+  fi
   exit 0
 fi
 if ((${#packages[@]} == 0)); then
@@ -173,8 +171,12 @@ for package in "${packages[@]}"; do
       downloads='GitHub source archive at the latest default-branch commit'
       ;;
     sweetpad)
-      args+=(--version=branch=codex/windows-remote-testing --subpackage vscodeExtension)
-      downloads='GitHub source archive from codex/windows-remote-testing, npm packages, and Rust crates'
+      args+=(--use-github-releases --version-regex '^cli-v([0-9]+\.[0-9]+\.[0-9]+-nailington(?:\.[0-9]+)?)$')
+      downloads='Linux x64 archive from the latest stable Nailington SweetPad CLI release'
+      ;;
+    sweetpad-vscode)
+      args+=(--use-github-releases --version-regex '^v([0-9]+\.[0-9]+\.[0-9]+-nailington(?:\.[0-9]+)?)$')
+      downloads='VSIX from the latest stable Nailington SweetPad extension release'
       ;;
     t3code)
       attr=t3code.unwrapped
@@ -223,17 +225,11 @@ for package in "${packages[@]}"; do
       run_command nix-update --flake --system aarch64-linux --version=skip \
         --no-src --custom-dep zip --override-filename "$file" "$attr"
   }; then
-    # nix-update --build builds the CLI; verify the extension separately too.
     if [[ "$package" == kolf ]] && "$build" && ! run_command nix build --no-update-lock-file --no-link --print-build-logs .#kolf; then
       cp -p -- "$backup_dir/package.nix" "$file"
       failed+=("$package")
       package_failed=true
       echo "Failed to build Kolf; restored $file." >&2
-    elif [[ "$package" == sweetpad ]] && "$build" && ! run_command nix build --no-link --print-build-logs .#sweetpad-vscode; then
-      cp -p -- "$backup_dir/package.nix" "$file"
-      failed+=("$package")
-      package_failed=true
-      echo "Failed to build the SweetPad extension; restored $file." >&2
     elif [[ "$package" == auto-rob ]] && "$build" && ! run_command nix build --no-link --print-build-logs .#auto-rob; then
       # The update target is unwrapped; also verify the public CLI/GUI package.
       cp -p -- "$backup_dir/package.nix" "$file"

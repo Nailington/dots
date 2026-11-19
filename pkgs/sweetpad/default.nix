@@ -1,95 +1,46 @@
 { lib
-, fetchFromGitHub
-, rustPlatform
-, buildNpmPackage
-, pkg-config
-, openssl
+, stdenv
+, fetchurl
+, autoPatchelfHook
 , makeWrapper
 , installShellFiles
 , openssh
-, vsce
-, python3
 }:
 
-let
-  # Remote Mac support is on this fork branch, not main or the Marketplace.
-  src = fetchFromGitHub {
-    owner = "Nailington";
-    repo = "sweetpad";
-    rev = "faa56b037eaf574a5cfd4bf9f213da5033c9f82f";
-    hash = "sha256-DY2HwBw3nBeKl+B1FPcEB6yR4pJ43Qdf3Cw/aKyKlBI=";
-  };
-
-  vscodeExtension = buildNpmPackage {
-    pname = "sweetpad-vscode";
-    version = "0.2.18";
-    inherit src;
-
-    npmDepsHash = "sha256-dnZeH5n/nIsCd5p4EkSjCU6AUSkg3emI79gYREwCSpQ=";
-    npmDepsFetcherVersion = 2;
-    # Select by package name; the directory selector includes the native workspace.
-    npmWorkspace = "sweetpad";
-    # The Linux remote extension needs no Mac native addon or node-pty build.
-    npmFlags = [ "--ignore-scripts" ];
-    nativeBuildInputs = [ vsce ];
-
-    installPhase = ''
-      runHook preInstall
-      cd sweetpad-vscode
-      mkdir -p "$out/share/vscode/extensions/sweetpad.sweetpad" "$out/share/vsix"
-      vsce package --no-dependencies --out "$out/share/vsix/sweetpad.vsix"
-      cp -r package.json out images README.md CHANGELOG.md LICENSE.md \
-        "$out/share/vscode/extensions/sweetpad.sweetpad/"
-      runHook postInstall
-    '';
-
-    passthru = {
-      vscodeExtPublisher = "sweetpad";
-      vscodeExtName = "sweetpad";
-      vscodeExtUniqueId = "sweetpad.sweetpad";
-    };
-
-    meta = {
-      description = "SweetPad editor extension with remote Mac support";
-      homepage = "https://github.com/Nailington/sweetpad/tree/codex/windows-remote-testing";
-      license = lib.licenses.mit;
-      platforms = lib.platforms.linux;
-    };
-  };
-in
-rustPlatform.buildRustPackage {
+stdenv.mkDerivation (finalAttrs: {
   pname = "sweetpad";
-  version = "0.2.18-nailington-unstable-2026-11-14";
-  inherit src;
+  version = "0.1.12-nailington.3";
 
-  cargoHash = "sha256-qKv6+nKRhJYkb9hbomW37nw9FAedhaEkcL9zfKmd9Tw=";
-  cargoBuildFlags = [ "-p" "sweetpad-cli" ];
-  cargoTestFlags = [ "-p" "sweetpad-cli" ];
-  # Nix supplies a log terminal without an interactive /dev/tty for prompts.
-  env.CI = "true";
-  nativeBuildInputs = [ pkg-config makeWrapper installShellFiles ];
-  nativeCheckInputs = [ python3 ];
-  buildInputs = [ openssl ];
+  src = fetchurl {
+    url = "https://github.com/Nailington/sweetpad/releases/download/cli-v${finalAttrs.version}/sweetpad-cli-${finalAttrs.version}-linux-x64.tar.gz";
+    hash = "sha256-1mJg2rxFsnnomcNJnHsQDmv49FKqBgLzDQ7zHX4NYnM=";
+  };
 
-  postPatch = ''
-    # The DAP tests generate this executable from a Rust string at runtime.
-    substituteInPlace sweetpad-cli/tests/dap_proxy.rs \
-      --replace-fail '#!/usr/bin/env python3' '#!${python3}/bin/python3'
+  sourceRoot = ".";
+  nativeBuildInputs = [ autoPatchelfHook makeWrapper installShellFiles ];
+  buildInputs = [ stdenv.cc.cc.lib ];
+  dontBuild = true;
+
+  installPhase = ''
+    runHook preInstall
+    install -Dm755 sweetpad "$out/bin/sweetpad"
+    wrapProgram "$out/bin/sweetpad" --prefix PATH : ${lib.makeBinPath [ openssh ]}
+    runHook postInstall
   '';
 
   postInstall = ''
-    "$out/bin/sweetpad" completions zsh > _sweetpad
-    installShellCompletion --zsh _sweetpad
-    wrapProgram "$out/bin/sweetpad" --prefix PATH : ${lib.makeBinPath [ openssh ]}
+    sweetpadCompletions() {
+      "$out/bin/sweetpad" completions zsh > _sweetpad
+      installShellCompletion --zsh _sweetpad
+    }
+    postFixupHooks+=(sweetpadCompletions)
   '';
-
-  passthru = { inherit vscodeExtension; };
 
   meta = {
     description = "SweetPad CLI with remote Xcode builds from Linux";
-    homepage = "https://github.com/Nailington/sweetpad/tree/codex/windows-remote-testing";
+    homepage = "https://github.com/Nailington/sweetpad";
     license = with lib.licenses; [ mit asl20 ];
     mainProgram = "sweetpad";
-    platforms = lib.platforms.linux;
+    platforms = [ "x86_64-linux" ];
   };
-}
+})
