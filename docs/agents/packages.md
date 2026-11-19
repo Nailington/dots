@@ -303,8 +303,8 @@ Manual `nix-cache-update` runs updates regardless of the weekly marker, without
 starting client system builds; `nix-cache-build` builds `main` without running updates.
 Both commands accept `--skip-custard`. The updater still refreshes shared flake
 inputs, skipping only the dedicated `nixpkgs-aarch64` and `nixos-raspberrypi`
-pins. The cache build prebuilds only the selected x86_64 Linux local packages
-instead of client system closures. The update PR close comment names each
+pins. The scoped cache build prebuilds the full roundabout and abacab system
+closures instead of roundabout and custard. The update PR close comment names each
 failed package and its target system, lists evaluated
 NixOS hosts that depend on that exact output, includes failing `.drv` paths when
 Nix reports them, and points to the full run log. A failed `x86_64-linux` package
@@ -314,7 +314,7 @@ automation PRs also block subsequent runs. Failed evaluations and pre-merge
 package builds request PR review; failures in the separate cache build open an
 issue tagging both accounts. Ordinary update/merge problems and successful runs
 do not send review notifications.
-The build service then builds both Linux client system closures from the
+The build service builds the selected Linux system closures from the
 exact GitHub `main` revision, reusing upstream caches and retaining three successful
 builds per host. See [hosts.md](hosts.md) for commands and retention paths. Only
 custard also offloads cache misses to abacab; other clients build misses locally.

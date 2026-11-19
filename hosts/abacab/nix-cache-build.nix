@@ -1,4 +1,4 @@
-{ config, lib, pkgs, self, ... }:
+{ config, lib, pkgs, ... }:
 
 {
   environment.systemPackages = [
@@ -41,17 +41,18 @@
     depends = [ "/mnt/storage" ];
   };
   # Build main independently; the scheduled flow runs updates first when due.
-  # Each output link is a GC root; retain three successful revisions per client.
+  # Each output link is a GC root; retain three successful revisions per host.
   systemd.services = (lib.genAttrs [ "nix-cache-build" "nix-cache-build-skip-custard" ] (name:
   let
-    skipCustard = name == "nix-cache-build-skip-custard";
+    targets = if name == "nix-cache-build-skip-custard"
+      then [ "roundabout" "abacab" ]
+      else [ "roundabout" "custard" ];
   in {
-    description = "Prebuild flake clients for abacab's binary cache";
+    description = "Prebuild ${lib.concatStringsSep " and " targets} for abacab's binary cache";
     wants = [ "network-online.target" ];
     after = [ "network-online.target" "nix-flake-update.service" "nix-flake-update-skip-custard.service" ];
     path = [
       pkgs.git pkgs.gh pkgs.nix pkgs.coreutils pkgs.findutils pkgs.util-linux
-      self.packages.${pkgs.stdenv.hostPlatform.system}.update-local-packages
     ];
     environment.HOME = "/var/lib/nix-cache-build";
     environment.TMPDIR = "/var/lib/nix-automation-tmp";
@@ -71,11 +72,6 @@
       set -euo pipefail
       exec 9>build.lock
       flock 9
-      targets=(roundabout custard)
-      if ${lib.boolToString skipCustard}; then
-        packages=$(update-local-packages --skip-custard --list-build-targets)
-        mapfile -t targets <<< "$packages"
-      fi
       token=$(cat "$CREDENTIALS_DIRECTORY/github-token")
       pending=$(GH_TOKEN="$token" gh pr list --repo Nailington/dots --base main --state open \
         --json headRefName,url \
@@ -112,15 +108,12 @@
           --body-file "$body" --assignee HammerPot --assignee Nailington
       }
       failed=0
-      for target in "''${targets[@]}"; do
+      for target in ${lib.escapeShellArgs targets}; do
         roots="roots/$target"
         installable="./checkout#nixosConfigurations.$target.config.system.build.toplevel"
-        if ${lib.boolToString skipCustard}; then
-          roots="roots/packages/$target"
-          installable="./checkout#packages.x86_64-linux.$target"
-        fi
         mkdir -p "$roots"
         output="$PWD/$roots/$stamp-$revision"
+        printf 'Building the %s system closure at %s.\n' "$target" "$revision"
         if nix build --no-update-lock-file --max-jobs 2 --cores 3 \
           --out-link "$output" \
           "$installable"; then
