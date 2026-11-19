@@ -301,8 +301,11 @@ publishes a branch/PR. It merges only updates that pass validation.
 After a successful update, remaining daily runs skip updates and build `main`.
 Manual `nix-cache-update` runs updates regardless of the weekly marker, without
 starting client system builds; `nix-cache-build` builds `main` without running updates.
-Both commands accept `--skip-custard` for a local-package-only pass. The update PR
-close comment names each failed package and its target system, lists evaluated
+Both commands accept `--skip-custard`. The updater still refreshes shared flake
+inputs, skipping only the dedicated `nixpkgs-aarch64` and `nixos-raspberrypi`
+pins. The cache build prebuilds only the selected x86_64 Linux local packages
+instead of client system closures. The update PR close comment names each
+failed package and its target system, lists evaluated
 NixOS hosts that depend on that exact output, includes failing `.drv` paths when
 Nix reports them, and points to the full run log. A failed `x86_64-linux` package
 build does not imply failure of the same package on `aarch64-linux`.

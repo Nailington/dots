@@ -171,11 +171,25 @@
       git config user.email "$actor_id+$actor@users.noreply.github.com"
       git config credential.helper '!gh auth git-credential'
 
+      update_flake_inputs() {
+        if ! ${lib.boolToString skipCustard}; then
+          nix flake update
+          return
+        fi
+        local inputs
+        local -a input_names
+        inputs=$(jq -er '
+          . as $lock | $lock.nodes[$lock.root].inputs | keys[]
+          | select(. != "nixpkgs-aarch64" and . != "nixos-raspberrypi")
+        ' flake.lock) || return 1
+        mapfile -t input_names <<< "$inputs"
+        echo "Updating flake inputs except nixpkgs-aarch64 and nixos-raspberrypi."
+        nix flake update "''${input_names[@]}"
+      }
+
       phase="updating inputs and local packages"
       updates_ok=true
-      if ! ${lib.boolToString skipCustard}; then
-        nix flake update || { updates_ok=false; record_failure "nix flake update failed."; }
-      fi
+      update_flake_inputs || { updates_ok=false; record_failure "nix flake update failed."; }
       if ! UPDATE_LOCAL_PACKAGES_FAILURE_FILE="$run/failed-updates" \
         update-local-packages --flake "$PWD" --all "''${scope[@]}"; then
         updates_ok=false
@@ -199,7 +213,7 @@
       fi
       title="Update flake inputs and local packages ($stamp)"
       if ${lib.boolToString skipCustard}; then
-        title="Update local packages not used by custard ($stamp)"
+        title="Update flake inputs and local packages (skip custard; $stamp)"
       fi
       git commit -m "$title"
       head=$(git rev-parse HEAD)
@@ -275,6 +289,9 @@
       fi
       {
         printf '%s\n\n' "$title"
+        if ${lib.boolToString skipCustard}; then
+          printf -- '- Input refresh excludes only the custard-specific pins: `nixpkgs-aarch64` and `nixos-raspberrypi`.\n'
+        fi
         printf -- '- Package/input updates completed: %s\n' "$updates_ok"
         printf -- '- %s passed: %s\n' "$eval_scope" "$eval_ok"
         printf -- '- Local %s package builds passed: %s\n' "$target_system" "$builds_ok"
