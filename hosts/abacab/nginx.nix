@@ -1,6 +1,7 @@
 # Nginx on abacab — vhosts from the Ubuntu site files in ../../nginx-conf/.
 # TLS: one ACME cert per hostname (isolated renewals).
 # Proxy/alias paths are unchanged from those configs.
+{ inputs, pkgs, ... }:
 {
   networking.firewall.allowedTCPPorts = [
     80
@@ -14,6 +15,8 @@
 
   services.nginx = {
     enable = true;
+    # CVE-2026-123007 / CVE-2026-123633: retain the module's package overrides.
+    package = pkgs.callPackage "${inputs.nixpkgs-nginx}/pkgs/servers/http/nginx/stable.nix" { };
     recommendedTlsSettings = true;
     recommendedProxySettings = true;
     recommendedGzipSettings = true;

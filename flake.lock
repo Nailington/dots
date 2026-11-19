@@ -1062,6 +1062,23 @@
         "type": "github"
       }
     },
+    "nixpkgs-nginx": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795016073,
+        "narHash": "sha256-OUhRt/thIUIEVhBD3iYx1p8CXmWGTUXVquGT7/KR30w=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "f0a5d452ddf1d33975d62054a1999327d952a98d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "f0a5d452ddf1d33975d62054a1999327d952a98d",
+        "type": "github"
+      }
+    },
     "nixpkgs-regression": {
       "locked": {
         "lastModified": 1643052045,
@@ -1448,6 +1465,7 @@
         "nixpkgs": "nixpkgs_11",
         "nixpkgs-aarch64": "nixpkgs-aarch64",
         "nixpkgs-darwin": "nixpkgs-darwin",
+        "nixpkgs-nginx": "nixpkgs-nginx",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "osx-kvm": "osx-kvm",
         "qtengine": "qtengine",

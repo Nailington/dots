@@ -4,6 +4,13 @@
   inputs = {   
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable-small";
 
+    # Abacab's NGINX 1.30.7 security fix from the NixOS 26.11 package tree.
+    # Pin only the package expression; keep its dependencies on the host's nixpkgs.
+    nixpkgs-nginx = {
+      url = "github:NixOS/nixpkgs/f0a5d452ddf1d33975d62054a1999327d952a98d";
+      flake = false;
+    };
+
     # Custard's OS and apps use full unstable, independently of x86_64.
     nixpkgs-aarch64.url = "github:NixOS/nixpkgs/nixos-unstable";
     # Keep its own nixpkgs pin: the Pi kernel/firmware must match its Cachix builds.
