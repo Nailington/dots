@@ -15,8 +15,11 @@
 
   services.nginx = {
     enable = true;
-    # CVE-2026-123007 / CVE-2026-123633: retain the module's package overrides.
-    package = pkgs.callPackage "${inputs.nixpkgs-nginx}/pkgs/servers/http/nginx/stable.nix" { };
+    # Explicit NGINX 1.30.7 pin for CVE-2026-123007 / CVE-2026-123633 (see flake.nix).
+    package = pkgs.callPackage "${inputs.nixpkgs-nginx}/pkgs/servers/http/nginx/stable.nix" {
+      # Direct callPackage bypasses nginxStable's zlib compatibility override.
+      zlib-ng = pkgs.zlib-ng.override { withZlibCompat = true; };
+    };
     recommendedTlsSettings = true;
     recommendedProxySettings = true;
     recommendedGzipSettings = true;
