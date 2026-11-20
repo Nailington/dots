@@ -1,1 +1,4 @@
-// Let niri detect custard's connected monitors; DMS can save Pi-specific modes here.
+// Custard's HDMI mode stays writable by DMS.
+output "HDMI-A-1" {
+    mode "2560x1440@119.998"
+}
