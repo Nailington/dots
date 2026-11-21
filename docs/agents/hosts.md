@@ -125,6 +125,23 @@ before NetworkManager starts and removes the firmware copy after persisting
 the profile. Credentials remain outside Git/the Nix store; see the migration
 guide for provisioning. This does not configure a separate RAM installer.
 
+USB security key: `hosts/custard/virtual-yubikey.nix` makes the Pi 5 enumerate on
+its USB-C port as a YubiKey-compatible FIDO2/U2F (HID) plus PIV/OpenPGP/OATH
+(CCID) device, using qpernil's `virtual-yubikey` and `usb-gadget-supervisor`
+(`pkgs/virtual-yubikey`, five sibling repos pinned together; the supervisor is
+patched because it hardcodes `/usr/bin/id`). It is software only: keys are plain
+files in `/var/lib/virtual-yubikey` and upstream calls it a test double, not a
+security device. The `dwc2` overlay with `dr_mode=peripheral` (config.txt, needs a
+reboot) puts the USB-C port in device mode; the unit is skipped until
+`/sys/class/udc/*` exists. The worker requires display and button handles, so the
+profile passes `/dev/null` and unused header GPIO 13/16/24/25/27 (24/25/27 are
+driven low). Approve user presence on custard with
+`sudo -u virtual-yubikey virtual-yubikey-touch` within 30 seconds. Powering the Pi
+while the port is in device mode needs a powered hub, header power, or a
+power/data splitter. The OTP key from rpifwcrypto-pkcs11 is not used. Hardware
+behavior on a Pi 5 is untested: check `ls /sys/class/udc` and the UDC `state`
+after rebooting.
+
 `system.stateVersion = "26.05"` for this new install; shared Linux home identity
 retains `home.stateVersion = "25.11"`. zram enabled with a 64 GiB `/swapfile`
 on the microSD root filesystem; `max-jobs = 0` offloads builds to abacab's
