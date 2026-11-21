@@ -352,6 +352,8 @@
         kde-craft = final.callPackage ./pkgs/kde-craft { };
         sweetpad = final.callPackage ./pkgs/sweetpad { };
         sweetpad-vscode = final.callPackage ./pkgs/sweetpad-vscode { };
+        # Pi USB-gadget virtual YubiKey; custard only. `.supervisor` is the root-side helper.
+        virtual-yubikey = final.callPackage ./pkgs/virtual-yubikey { };
         # Its flake creates a separate package set, so pass our binary runtime.
         sim-relay = inputs.sim-relay.packages.${system}.default.override {
           electron = final.electron;

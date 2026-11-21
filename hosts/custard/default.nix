@@ -5,6 +5,7 @@
     ./hardware-configuration.nix
     ./disk.nix
     ./wifi-bootstrap.nix # Import the provisioned Wi-Fi profile before networking starts.
+    ./virtual-yubikey.nix # Pi acts as a USB security key through its USB-C port.
     ../../modules/nixos/common.nix
     ../../modules/nixos/desktop.nix
     ../../modules/nixos/niri.nix
