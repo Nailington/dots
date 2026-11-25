@@ -38,6 +38,11 @@ secrets/                  age files, recipient lists, public key snapshots
 
 `modules/home/zsh.nix` and `modules/home/ssh.nix` are the exception: both Linux `common.nix` and the Darwin home import them. Keep them free of Linux-only packages.
 
+## CLI Code Mode
+
+- NixOS and nix-darwin set `[features.code_mode] enabled = true` in `/etc/codex/config.toml`. This is a default, not a policy: user and project configuration can override it. Check with `codex features list`. On a standalone Home Manager install, set `features.code_mode.enabled = true` in the existing `~/.codex/config.toml` (or pass `codex --enable code_mode`); Home Manager does not manage `/etc`.
+- Claude Code opts in via `home.sessionVariables.CLAUDE_CODE_EXPERIMENTAL_CODE_MODE`. Start a fresh login shell after activation, then start an interactive `claude` session and check its startup banner. The feature needs a supported model and native Claude Code 2.1.323 or newer; it is not available through gateways or noninteractive sessions. Hosts pinned below the minimum borrow only the Claude Code package recipe from the existing x86 Linux nixpkgs input, building it with each host's own package set.
+
 ## Host registration
 
 `flake.nix` wires hosts. The helpers always add agenix, Home Manager (`useGlobalPkgs`, `useUserPackages`, `backupFileExtension = "backup"`), and the right nixpkgs.

@@ -1,4 +1,4 @@
-{ pkgs, lib, ... }:
+{ inputs, pkgs, lib, ... }:
 
 {
   imports = [
@@ -7,13 +7,17 @@
   ];
 
   home.sessionVariables = {
+    CLAUDE_CODE_EXPERIMENTAL_CODE_MODE = "1";
     EDITOR = "nano";
   };
 
   programs.home-manager.enable = true;
 
   home.packages = with pkgs; [
-    claude-code
+    (if lib.versionOlder claude-code.version "2.1.323" then
+      callPackage (inputs.nixpkgs + "/pkgs/by-name/cl/claude-code/package.nix") { }
+    else
+      claude-code)
     lynx
     w3m
     nix-du

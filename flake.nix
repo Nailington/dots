@@ -139,6 +139,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    app-store-connect-cli = {
+      url = "github:rorkai/App-Store-Connect-CLI";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
     # Online multiplayer fork; retain upstream's tested nixpkgs pin.
     kolf.url = "github:Cattn/kolf/multi-proto";
 

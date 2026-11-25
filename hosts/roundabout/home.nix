@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, inputs, pkgs, ... }:
 
 let
   # hwdb sends BTN_FORWARD/BTN_BACK on the keyboard BT HID node; clone onto a virtual pointer.
@@ -57,6 +57,7 @@ in
   home.packages = [
     pkgs.evsieve
     bt51-pointer-bridge
+    inputs.app-store-connect-cli.packages.${pkgs.stdenv.hostPlatform.system}.asc
   ];
 
 }

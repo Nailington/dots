@@ -29,6 +29,11 @@
   programs.zsh.enable = true;
   users.defaultUserShell = pkgs.zsh;
 
+  environment.etc."codex/config.toml".text = ''
+    [features.code_mode]
+    enabled = true
+  '';
+
   # Unpatched dynamic binaries (FHS) — ld.so from nix-ld. abacab + any host on common.
   programs.nix-ld.enable = true;
 

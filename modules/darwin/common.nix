@@ -18,6 +18,11 @@ in
 
   programs.zsh.enable = true;
 
+  environment.etc."codex/config.toml".text = ''
+    [features.code_mode]
+    enabled = true
+  '';
+
   environment.systemPackages = [
     pkgs.vim
     pkgs.git
