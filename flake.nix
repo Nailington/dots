@@ -328,6 +328,22 @@
           ]);
         }) else prev.codex;
 
+        # T3 >= 0.1.10 uses `agy acp`; the standalone ACP ZIP has separate versions.
+        # Keep the legacy entry points on the same runtime as the installed CLI.
+        antigravity-acp = final.runCommand "antigravity-acp-${final.antigravity-cli.version}" {
+          pname = "antigravity-acp";
+          inherit (final.antigravity-cli) version;
+          nativeBuildInputs = [ final.makeBinaryWrapper ];
+          meta = prev.antigravity-acp.meta // {
+            description = "ACP stdio server from the Antigravity CLI";
+          };
+        } ''
+          mkdir -p "$out/bin"
+          makeBinaryWrapper ${final.lib.getExe final.antigravity-cli} "$out/bin/agy_acp_server" \
+            --add-flags acp
+          ln -s agy_acp_server "$out/bin/agy_acp_server.par"
+        '';
+
         rofi-themes-collection = final.callPackage ./pkgs/rofi-themes {
           rofiThemesSrc = rofi-themes;
         };

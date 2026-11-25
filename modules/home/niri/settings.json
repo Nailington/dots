@@ -31,10 +31,12 @@
       "smartAutoHide": false,
       "useOverlayLayer": false,
       "editOnRightClick": false,
+      "showEditWidgetsInContextMenu": true,
       "showOnFullscreen": false,
       "openOnOverview": true,
       "groupByApp": false,
       "separatePinnedAndRunningApps": false,
+      "showRunningApps": true,
       "restoreSpecialWorkspaceOnClick": false,
       "isolateDisplays": false,
       "indicatorStyle": "circle",
@@ -464,7 +466,7 @@
       "trigger": "pw"
     }
   },
-  "configVersion": 44,
+  "configVersion": 46,
   "dashOptions": {
     "media": {
       "titleFont": "ui",
@@ -479,5 +481,6 @@
     "niri"
   ],
   "padHours12Hour": false,
-  "showSeconds": true
+  "showSeconds": true,
+  "motionDuration": 0
 }

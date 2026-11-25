@@ -178,6 +178,18 @@ streaming additionally needs an Apple Silicon Mac with Node/npm. SSH config,
 private keys, the remote registry, and Mac provisioning are not managed by this
 package.
 
+## Antigravity CLI and ACP
+
+`dev-tui.nix` installs both `antigravity-cli` and `antigravity-acp`. The overlay
+makes `agy_acp_server` (and its `.par` alias) launch `agy acp` from the same pinned
+CLI, so their runtime versions stay aligned. Google's older standalone ACP ZIP
+uses a separate release series and cannot be updated using the CLI's versioned URL.
+
+T3 Code 0.1.10 and newer launches `agy acp` directly and recommends CLI 1.5.12
+or newer. In T3's Antigravity provider settings, set the custom executable to
+`/etc/profiles/per-user/potter/bin/agy` to select the Nix-managed runtime over
+an older T3-managed installation. T3 adds the `acp` argument itself.
+
 ## T3 Code nightly
 
 On both NixOS hosts, `t3code-install.service` runs as potter after Home Manager
