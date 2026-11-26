@@ -144,6 +144,12 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
+    # Official Linux helper release for WoW Forever.
+    ahprice = {
+      url = "tarball+https://ahprice.com/download/AHPrice-linux.tar.gz";
+      flake = false;
+    };
+
     # Online multiplayer fork; retain upstream's tested nixpkgs pin.
     kolf.url = "github:Cattn/kolf/multi-proto";
 

@@ -1,6 +1,17 @@
 { config, inputs, pkgs, ... }:
 
 let
+  wowForeverDir = "%h/.local/share/Steam/steamapps/compatdata/3981450589/pfx/drive_c/Program Files (x86)/World of Warcraft/_forever_";
+  ahprice = pkgs.runCommand "ahprice-helper" { } ''
+    mkdir -p "$out"
+    cp -R ${inputs.ahprice}/server "$out/server"
+    chmod u+w "$out/server/ahprice/runtime.py"
+    # The helper is a Nix store build and WoWUp manages the addon.
+    substituteInPlace "$out/server/ahprice/runtime.py" \
+      --replace-fail 'def updates_allowed() -> bool:' \
+      $'def updates_allowed() -> bool:\n    if not os.access(config.SERVER_DIR, os.W_OK):\n        return False'
+  '';
+
   # hwdb sends BTN_FORWARD/BTN_BACK on the keyboard BT HID node; clone onto a virtual pointer.
   # Requires NixOS udev symlink bt51-mouse-kbd and user in `input`.
   bt51-pointer-bridge = pkgs.writeShellScriptBin "bt51-pointer-bridge" ''
@@ -44,6 +55,21 @@ in
   programs.osx-kvm = {
     enable = true;
     resolution = "1920x1080";
+  };
+
+  systemd.user.services.ahprice = {
+    Unit.Description = "AHPrice helper for WoW Forever";
+    Service = {
+      WorkingDirectory = wowForeverDir;
+      ExecStart = "${pkgs.python3}/bin/python3 -u ${ahprice}/server/ahprice_server.py";
+      Environment = [
+        "\"AHPRICE_GAME_ROOT=${wowForeverDir}\""
+        "AHPRICE_HOST=127.0.0.1"
+      ];
+      Restart = "on-failure";
+      RestartSec = "15s";
+    };
+    Install.WantedBy = [ "default.target" ];
   };
 
   # Bind the background T3 server to roundabout's Tailscale address.

@@ -20,6 +20,19 @@
         "type": "github"
       }
     },
+    "ahprice": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1795659833,
+        "narHash": "sha256-V5r1J8MBzDXMZO1MU1cScIcgw3bviW83ySWoLaMpP9g=",
+        "type": "tarball",
+        "url": "https://ahprice.com/download/AHPrice-linux.tar.gz"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://ahprice.com/download/AHPrice-linux.tar.gz"
+      }
+    },
     "app-store-connect-cli": {
       "inputs": {
         "flake-parts": "flake-parts_4",
@@ -1484,6 +1497,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "ahprice": "ahprice",
         "app-store-connect-cli": "app-store-connect-cli",
         "codex-desktop-linux": "codex-desktop-linux",
         "dank-greeter": "dank-greeter",
