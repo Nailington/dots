@@ -58,16 +58,16 @@ diff --git a/nix_update/options.py b/nix_update/options.py
              return None
 +
 +        # Nix with lazy trees can report a store path without copying it.
-+        # Materialize the tracked source before passing it to getFlake.
++        # Materialize just the tracked source before passing it to getFlake.
 +        if not Path(path).is_dir():
 +            result = subprocess.run(
-+                ["nix", "flake", "archive", "--json", "--no-update-lock-file"],
++                ["nix", "flake", "prefetch", "--json"],
 +                cwd=import_path,
 +                capture_output=True,
 +                text=True,
 +                check=True,
 +            )
-+            path = json.loads(result.stdout).get("path")
++            path = json.loads(result.stdout).get("storePath")
 +            if not isinstance(path, str):
 +                return None
 

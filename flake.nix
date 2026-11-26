@@ -286,7 +286,7 @@
             text = builtins.readFile ./scripts/nixos-sd-image.sh;
           };
         } // pkgs.lib.optionalAttrs (system == "x86_64-linux") {
-          inherit (pkgs) althea singularcard auto-rob kde-craft sweetpad sweetpad-vscode sim-relay;
+          inherit (pkgs) althea singularcard auto-rob kde-craft sweetpad sweetpad-vscode sim-relay t3code-wow;
         });
 
       overlays.default = final: prev:
@@ -373,6 +373,30 @@
         kde-craft = final.callPackage ./pkgs/kde-craft { };
         sweetpad = final.callPackage ./pkgs/sweetpad { };
         sweetpad-vscode = final.callPackage ./pkgs/sweetpad-vscode { };
+        t3code-wow = final.stdenvNoCC.mkDerivation (finalAttrs: {
+          pname = "t3code-wow";
+          version = "0.6.0";
+          src = final.fetchFromGitHub {
+            owner = "ryanrhughes";
+            repo = "t3code-wow";
+            tag = "v${finalAttrs.version}";
+            hash = "sha256-MtExSu4y/RQh4Pdk4Rol1LFd2wVS+1vvntBhXXjcn1g=";
+          };
+          postPatch = ''
+            # Keep the installed copy writable for subsequent upstream installs.
+            substituteInPlace install.sh \
+              --replace-fail 'cp -r "$src/bridge"' 'cp -r --no-preserve=mode "$src/bridge"' \
+              --replace-fail 'cp -r "$src/addon"' 'cp -r --no-preserve=mode "$src/addon"'
+          '';
+          dontBuild = true;
+          installPhase = ''
+            runHook preInstall
+            mkdir -p "$out/share/t3code-wow"
+            cp -r install.sh bridge addon "$out/share/t3code-wow/"
+            runHook postInstall
+          '';
+          meta.homepage = "https://github.com/ryanrhughes/t3code-wow";
+        });
         # Its flake creates a separate package set, so pass our binary runtime.
         sim-relay = inputs.sim-relay.packages.${system}.default.override {
           electron = final.electron;

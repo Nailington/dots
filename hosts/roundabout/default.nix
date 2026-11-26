@@ -84,6 +84,41 @@
   '';
 
   networking.hostName = "roundabout";
+
+  systemd.services.t3code-wow-install = let
+    home = config.home-manager.users.potter;
+    addon = pkgs.t3code-wow;
+  in {
+    description = "Install the pinned T3 Code for World of Warcraft release";
+    wantedBy = [ "multi-user.target" ];
+    requires = [ "t3code-install.service" ];
+    after = [ "t3code-install.service" ];
+    path = with pkgs; [ coreutils nodejs grim systemd procps ];
+    environment = {
+      HOME = home.home.homeDirectory;
+      XDG_CONFIG_HOME = home.xdg.configHome;
+      XDG_DATA_HOME = home.xdg.dataHome;
+      T3CODE_HOME = "${home.home.homeDirectory}/.t3";
+      T3_CLI = "${pkgs.t3code}/bin/t3";
+    };
+    serviceConfig = {
+      Type = "oneshot";
+      User = "potter";
+      RemainAfterExit = true;
+    };
+    script = ''
+      export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+      stamp="$XDG_DATA_HOME/t3code-wow/.nix-installed-version"
+      if [[ -f "$stamp" && $(<"$stamp") == ${lib.escapeShellArg addon.version} ]]; then
+        exit 0
+      fi
+
+      rm -f -- "$stamp"
+      ${pkgs.bash}/bin/bash ${addon}/share/t3code-wow/install.sh
+      printf '%s\n' ${lib.escapeShellArg addon.version} > "$stamp"
+    '';
+  };
+
   networking.firewall.allowedTCPPorts = [ 45454 ];
 
   # Check before filter/INPUT: Tailscale accepts peers before nixos-fw runs.

@@ -57,6 +57,7 @@ Althea and SingularCard follow their default branches. The two SweetPad
 packages track the fork's stable `cli-v…-nailington` and `v…-nailington` release
 tags respectively, including numbered respins.
 T3 Code stays on published nightlies and refreshes its source and pnpm hashes.
+T3 Code for World of Warcraft follows stable tagged releases.
 Auto-rob follows stable releases from `Cattn/auto-rob`; Google Sans also follows
 stable GitHub releases. **Keep Google Sans Flex updates disabled until Potter
 explicitly asks to re-enable them.** Its upstream tags can select versions with
@@ -94,9 +95,9 @@ with a `got:` value is expected during hash discovery. The updater uses that
 value to replace the old hash; the final package status reports success/failure.
 
 The same patch handles Nix's lazy source trees: if `nix flake metadata` reports
-a source path that is not on disk yet, nix-update runs `nix flake archive`
-with `--no-update-lock-file` before evaluating it. This materializes the flake
-and its inputs while preserving Git's tracked-file filtering and the lockfile.
+a source path that is not on disk yet, nix-update runs `nix flake prefetch`
+before evaluating it. This materializes the tracked checkout and lets evaluation
+fetch the inputs needed by the selected package.
 
 Source-based packages download GitHub repository archives; T3 also fetches
 pnpm packages. SweetPad downloads the published CLI tarball and VSIX, Auto-rob
@@ -245,19 +246,22 @@ nixpkgs#569702 reaches the pinned input; keep the nightly pin and desktop home d
 `ryanrhughes/t3code-wow` installer, and adds `~/.local/bin` to the shell PATH.
 Zsh also adds it on each shell start so terminals opened from an existing
 desktop session pick it up without logging out.
-The bridge and addon stay writable under `~/.local/share/t3code-wow`, so the
-same upstream install command works for installation and updates:
+The flake pins the bridge and addon to a tagged GitHub release. On roundabout,
+`t3code-wow-install.service` runs that release's upstream installer as potter
+after the T3 Code service setup. It records the release after success and skips
+reinstalling it on subsequent boots and switches.
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/ryanrhughes/t3code-wow/main/install.sh | bash
+update-local-packages t3code-wow
+nh os switch -- --flake .#roundabout
 t3code-wow status --log
 ```
 
-Home Manager owns only the `t3code-wow.service.d/nix.conf` drop-in. It selects
-the current generation's Node and capture tools instead of the obsolete Node
-store path and terminal PATH saved by the installer. The installer still owns
-the base user service, game discovery, addon files, and scoped T3 session.
-The bridge uses the existing T3 server home (`~/.t3`).
+The installer keeps the bridge and addon writable under
+`~/.local/share/t3code-wow` and reuses the existing game path and scoped T3
+session. It owns the base user service. Home Manager's
+`t3code-wow.service.d/nix.conf` drop-in selects the current generation's Node
+and capture tools. The bridge uses the existing T3 server home (`~/.t3`).
 
 On niri, upstream's generic grim backend reads the strip at desktop coordinates
 `0,0`; keep WoW fullscreen on the display at that origin, with its top-left

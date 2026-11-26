@@ -34,6 +34,7 @@ singularcard       latest commit on the default branch
 sweetpad           latest stable Nailington SweetPad CLI release; Linux x64 archive
 sweetpad-vscode    latest stable Nailington SweetPad extension release; VSIX
 t3code             latest published nightly; source + pnpm dependencies
+t3code-wow         latest stable tagged release; addon and bridge installer
 auto-rob           latest stable release from Cattn/auto-rob; desktop + headless CLI
 google-sans        latest stable release
 twitch-drops-miner current x86_64 + aarch64 dev-build ZIPs; refresh both hashes even if version is unchanged
@@ -43,8 +44,8 @@ EOF
 
 # Keep google-sans-flex disabled until Potter explicitly asks to re-enable it.
 # Upstream's unrelated tags can select versions with nonexistent font archives.
-all_packages=(althea singularcard sweetpad sweetpad-vscode t3code auto-rob google-sans twitch-drops-miner kolf)
-non_custard_packages=(althea sweetpad sweetpad-vscode auto-rob)
+all_packages=(althea singularcard sweetpad sweetpad-vscode t3code t3code-wow auto-rob google-sans twitch-drops-miner kolf)
+non_custard_packages=(althea sweetpad sweetpad-vscode t3code-wow auto-rob)
 packages=()
 build=false
 all=false
@@ -92,7 +93,7 @@ for package in "${packages[@]}"; do
       echo 'Skipping google-sans-flex: intentionally pinned; keep skipped until Potter asks to re-enable it.'
       continue
       ;;
-    althea|singularcard|sweetpad|sweetpad-vscode|t3code|auto-rob|google-sans|twitch-drops-miner|kolf) ;;
+    althea|singularcard|sweetpad|sweetpad-vscode|t3code|t3code-wow|auto-rob|google-sans|twitch-drops-miner|kolf) ;;
     *) echo "Unsupported package: $package (see --list)" >&2; exit 2 ;;
   esac
   if "$skip_custard" && [[ " ${non_custard_packages[*]} " != *" $package "* ]]; then
@@ -183,6 +184,11 @@ for package in "${packages[@]}"; do
       file=flake.nix
       args+=(--version=unstable --version-regex 'v?([0-9].*-nightly\..*)' --use-github-releases)
       downloads='GitHub source archive for the latest published nightly and pnpm packages'
+      ;;
+    t3code-wow)
+      file=flake.nix
+      args+=(--use-github-releases --version-regex '^v([0-9]+\.[0-9]+\.[0-9]+)$')
+      downloads='GitHub source archive from the latest stable t3code-wow release'
       ;;
     auto-rob)
       attr=auto-rob.unwrapped
