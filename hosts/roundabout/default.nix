@@ -51,6 +51,9 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Provide Windows synchronization primitives to Proton games.
+  boot.kernelModules = [ "ntsync" ];
+
   # CachyOS kernel (nvidia-open must support this kernel ABI — verify after upgrades)
   boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest.extend (_: kernelPackages: {
     # VMware copies modules without certificates. Sign after stripping until
